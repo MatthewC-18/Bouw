@@ -1,35 +1,43 @@
 "use client";
 
+import Image from "next/image";
 import { useRef } from "react";
 import { PROJECTS, type Project } from "@/lib/content";
 import { useLang } from "@/lib/i18n";
 import ProjectVisual from "./ProjectVisual";
 import Reveal from "./Reveal";
 
-const ACCENT: Record<Project["accent"], { ring: string; glow: string; text: string }> = {
+const ACCENT: Record<
+  Project["accent"],
+  { border: string; glow: string; text: string; rule: string }
+> = {
   cyan: {
-    ring: "group-hover:border-cyan-brand/60",
-    glow: "rgba(34,181,207,0.22)",
+    border: "group-hover:border-cyan-brand/60",
+    glow: "rgba(34,181,207,0.20)",
     text: "text-cyan-light",
+    rule: "from-cyan-brand",
   },
   orange: {
-    ring: "group-hover:border-orange-brand/60",
-    glow: "rgba(232,119,34,0.22)",
+    border: "group-hover:border-orange-brand/60",
+    glow: "rgba(232,119,34,0.20)",
     text: "text-orange-light",
+    rule: "from-orange-brand",
   },
   navy: {
-    ring: "group-hover:border-navy-600/80",
-    glow: "rgba(31,84,136,0.32)",
+    border: "group-hover:border-navy-600",
+    glow: "rgba(31,84,136,0.30)",
     text: "text-ink",
+    rule: "from-navy-600",
   },
   mixed: {
-    ring: "group-hover:border-orange-brand/50",
-    glow: "rgba(79,214,232,0.2)",
+    border: "group-hover:border-orange-brand/50",
+    glow: "rgba(79,214,232,0.18)",
     text: "text-cyan-light",
+    rule: "from-cyan-brand",
   },
 };
 
-function ProjectCard({ project, i }: { project: Project; i: number }) {
+function ProjectCard({ project }: { project: Project }) {
   const { t, lang } = useLang();
   const cardRef = useRef<HTMLElement>(null);
   const accent = ACCENT[project.accent];
@@ -41,14 +49,14 @@ function ProjectCard({ project, i }: { project: Project; i: number }) {
     const r = el.getBoundingClientRect();
     const px = (e.clientX - r.left) / r.width - 0.5;
     const py = (e.clientY - r.top) / r.height - 0.5;
-    el.style.transform = `perspective(1400px) rotateX(${(-py * 4).toFixed(2)}deg) rotateY(${(px * 5).toFixed(2)}deg) translateZ(0)`;
+    el.style.transform = `perspective(1600px) rotateX(${(-py * 3).toFixed(2)}deg) rotateY(${(px * 4).toFixed(2)}deg)`;
     el.style.setProperty("--mx", `${((e.clientX - r.left) / r.width) * 100}%`);
     el.style.setProperty("--my", `${((e.clientY - r.top) / r.height) * 100}%`);
   };
 
   const onLeave = () => {
     const el = cardRef.current;
-    if (el) el.style.transform = "perspective(1400px)";
+    if (el) el.style.transform = "perspective(1600px)";
   };
 
   return (
@@ -56,53 +64,84 @@ function ProjectCard({ project, i }: { project: Project; i: number }) {
       ref={cardRef}
       onMouseMove={onMove}
       onMouseLeave={onLeave}
-      data-cursor="view"
-      data-cursor-label={lang === "es" ? "Ver" : "View"}
       className={`
         group relative isolate overflow-hidden rounded-3xl border border-white/10
-        bg-navy-900/70 backdrop-blur-xl
-        transition-[border-color,box-shadow] duration-500 ${accent.ring}
-        hover:shadow-[0_40px_120px_-40px_rgba(34,181,207,0.45)]
+        bg-navy-900/75 backdrop-blur-xl
+        transition-[border-color,box-shadow] duration-500 ${accent.border}
+        hover:shadow-[0_50px_140px_-50px_rgba(34,181,207,0.5)]
       `}
-      style={{ transformStyle: "preserve-3d", willChange: "transform" }}
+      style={{ willChange: "transform" }}
     >
-      {/* Halo que sigue al cursor */}
       <div
         className="pointer-events-none absolute inset-0 -z-10 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
         style={{
-          background: `radial-gradient(440px circle at var(--mx, 50%) var(--my, 50%), ${accent.glow}, transparent 70%)`,
+          background: `radial-gradient(480px circle at var(--mx, 50%) var(--my, 50%), ${accent.glow}, transparent 70%)`,
         }}
       />
 
-      <div className="grid gap-8 p-7 sm:p-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-14">
+      {/* Cabecera técnica */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-white/[0.07] px-7 py-4 sm:px-10">
+        <span className="font-mono text-xs tracking-[0.3em] text-ink-dim">
+          {project.index}
+        </span>
+        <span className={`h-px w-10 bg-gradient-to-r ${accent.rule} to-transparent`} />
+        <span className={`font-mono text-[11px] uppercase tracking-[0.22em] ${accent.text}`}>
+          {t(project.category)}
+        </span>
+        <span className="ml-auto flex items-center gap-3">
+          {project.has3D && (
+            <span className="rounded-full border border-cyan-brand/40 bg-cyan-brand/10 px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-cyan-light">
+              3D
+            </span>
+          )}
+          <span className="font-mono text-[11px] text-ink-dim">{project.year}</span>
+        </span>
+      </div>
+
+      <div className="grid gap-8 p-7 sm:p-10 lg:grid-cols-[1fr_0.92fr] lg:items-start lg:gap-12">
         {/* Texto */}
         <div>
-          <div className="flex items-center gap-4">
-            <span className="font-mono text-xs tracking-[0.3em] text-ink-dim">
-              {project.index}
-            </span>
-            <span className="h-px flex-1 max-w-16 bg-white/15" />
-            <span className={`font-mono text-[11px] uppercase tracking-[0.22em] ${accent.text}`}>
-              {t(project.category)}
-            </span>
-            {project.has3D && (
-              <span className="rounded-full border border-cyan-brand/40 bg-cyan-brand/10 px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-cyan-light">
-                3D
-              </span>
-            )}
-          </div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink-dim">
+            {t(project.client)}
+          </p>
 
-          <h3 className="mt-6 font-display text-3xl font-bold leading-tight text-ink sm:text-4xl">
+          <h3 className="mt-3 font-display text-3xl font-bold leading-[1.05] text-ink sm:text-[2.6rem]">
             {t(project.title)}
           </h3>
 
-          <p className="mt-3 text-lg text-ink">{t(project.summary)}</p>
+          <p className="mt-4 text-lg leading-snug text-ink">
+            {t(project.summary)}
+          </p>
 
           <p className="mt-4 max-w-lg leading-relaxed text-ink-dim">
             {t(project.description)}
           </p>
 
-          <ul className="mt-7 flex flex-wrap gap-2">
+          {/* Resultado */}
+          <div className="mt-6 flex gap-3 rounded-xl border-l-2 border-cyan-brand/60 bg-cyan-brand/[0.05] px-4 py-3">
+            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-light">
+              {lang === "es" ? "Resultado" : "Outcome"}
+            </span>
+            <p className="text-sm leading-relaxed text-ink">
+              {t(project.outcome)}
+            </p>
+          </div>
+
+          {/* Cifras */}
+          <dl className="mt-7 grid grid-cols-3 gap-4 border-t border-white/[0.07] pt-6">
+            {project.metrics.map((m) => (
+              <div key={m.value + t(m.label)}>
+                <dt className="font-display text-2xl font-bold text-ink">
+                  {m.value}
+                </dt>
+                <dd className="mt-1 text-[11px] leading-snug text-ink-dim">
+                  {t(m.label)}
+                </dd>
+              </div>
+            ))}
+          </dl>
+
+          <ul className="mt-6 flex flex-wrap gap-2">
             {project.tags.map((tag) => (
               <li
                 key={tag}
@@ -113,36 +152,49 @@ function ProjectCard({ project, i }: { project: Project; i: number }) {
             ))}
           </ul>
 
-          <div className="mt-7 flex items-center gap-4 font-mono text-[11px] uppercase tracking-[0.2em] text-ink-dim">
-            <span>{project.year}</span>
-            {project.href && (
-              <a
-                href={project.href}
-                target="_blank"
-                rel="noreferrer noopener"
-                data-cursor="link"
-                className="inline-flex items-center gap-1.5 text-cyan-light transition-colors hover:text-ink"
-              >
-                {lang === "es" ? "Visitar" : "Visit"}
-                <span aria-hidden>↗</span>
-              </a>
-            )}
-          </div>
+          {project.href && (
+            <a
+              href={project.href}
+              target="_blank"
+              rel="noreferrer noopener"
+              data-cursor="link"
+              className="mt-7 inline-flex items-center gap-2 rounded-full border border-cyan-brand/50 px-5 py-2.5 text-sm font-semibold text-cyan-light transition-colors hover:bg-cyan-brand/10"
+            >
+              {project.href.replace("https://", "")}
+              <span aria-hidden>↗</span>
+            </a>
+          )}
         </div>
 
         {/* Visual */}
         <div
-          className="relative aspect-4/3 overflow-hidden rounded-2xl border border-white/10 bg-navy-950/80"
-          style={{ transform: "translateZ(40px)" }}
+          data-cursor={project.image ? "view" : undefined}
+          data-cursor-label={project.image ? (lang === "es" ? "Ver" : "View") : undefined}
+          className="relative overflow-hidden rounded-2xl border border-white/10 bg-navy-950/85"
         >
-          <div className="absolute inset-0 grid-lines opacity-30" />
-          <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-[1.04]">
-            <ProjectVisual slug={project.slug} />
+          <div className="relative aspect-16/10">
+            {project.image ? (
+              <Image
+                src={project.image}
+                alt={project.imageAlt ? t(project.imageAlt) : t(project.title)}
+                fill
+                sizes="(max-width: 1024px) 100vw, 46vw"
+                className="object-cover transition-transform duration-700 group-hover:scale-[1.05]"
+              />
+            ) : (
+              <>
+                <div className="absolute inset-0 grid-lines opacity-30" />
+                <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-[1.04]">
+                  <ProjectVisual kind={project.visual ?? "device"} />
+                </div>
+              </>
+            )}
           </div>
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-navy-950 to-transparent" />
-          <span className="absolute bottom-4 left-5 font-mono text-[10px] uppercase tracking-[0.3em] text-ink-dim">
-            {String(i + 1).padStart(2, "0")} / {String(PROJECTS.length).padStart(2, "0")}
-          </span>
+
+          <div className="flex items-center justify-between border-t border-white/[0.07] px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.24em] text-ink-dim">
+            <span>{project.slug}</span>
+            <span>{project.image ? "IMG" : "DWG"}</span>
+          </div>
         </div>
       </div>
     </article>
@@ -156,10 +208,17 @@ export default function Projects() {
     <section id="proyectos" className="relative py-28 lg:py-40">
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
         <Reveal>
-          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-cyan-light">
-            {lang === "es" ? "Proyectos" : "Selected work"}
-          </p>
-          <h2 className="mt-5 max-w-2xl font-display text-[clamp(2rem,5vw,3.5rem)] font-bold leading-[1.05] text-ink">
+          <div className="flex items-center gap-4">
+            <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-cyan-light">
+              {lang === "es" ? "Proyectos" : "Selected work"}
+            </span>
+            <span className="h-px flex-1 bg-gradient-to-r from-cyan-brand/50 to-transparent" />
+            <span className="font-mono text-[11px] text-ink-dim">
+              {String(PROJECTS.length).padStart(2, "0")}
+            </span>
+          </div>
+
+          <h2 className="mt-8 max-w-3xl font-display text-[clamp(2.25rem,6vw,4.5rem)] font-bold leading-[1] text-ink">
             {lang === "es" ? (
               <>
                 Lo que hemos <span className="text-gradient-brand">construido</span>
@@ -170,7 +229,7 @@ export default function Projects() {
               </>
             )}
           </h2>
-          <p className="mt-5 max-w-xl text-ink-dim">
+          <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-dim">
             {t({
               es: "Cuatro proyectos, cuatro industrias. El hilo común: un proceso que antes costaba horas y ahora no.",
               en: "Four projects, four industries. The common thread: a process that used to cost hours and no longer does.",
@@ -179,15 +238,15 @@ export default function Projects() {
         </Reveal>
 
         {/* Mazo de tarjetas: se apilan al hacer scroll */}
-        <div className="mt-16 space-y-6 lg:mt-24 lg:space-y-8">
+        <div className="mt-16 space-y-6 lg:mt-24 lg:space-y-10">
           {PROJECTS.map((p, i) => (
             <div
               key={p.slug}
               className="lg:sticky"
-              style={{ top: `calc(7rem + ${i * 1.25}rem)`, zIndex: 10 + i }}
+              style={{ top: `calc(6.5rem + ${i * 1.1}rem)`, zIndex: 10 + i }}
             >
               <Reveal delay={i * 60}>
-                <ProjectCard project={p} i={i} />
+                <ProjectCard project={p} />
               </Reveal>
             </div>
           ))}

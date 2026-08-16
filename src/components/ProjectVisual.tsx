@@ -1,17 +1,18 @@
 /**
- * Gráficos abstractos por proyecto.
+ * Gráficos técnicos para los proyectos que no tienen foto.
  *
- * Son SVG animados, no imágenes: pesan nada y se ven nítidos en cualquier
- * pantalla. Cuando lleguen las capturas reales de cada proyecto, se
- * reemplazan aquí sin tocar el resto del componente de proyectos.
+ * Son SVG, no imágenes: pesan nada y se ven nítidos en cualquier pantalla.
+ * Cuando lleguen capturas reales, se reemplazan por el campo `image` del
+ * proyecto en `content.ts` y estos dejan de usarse.
  */
 
-const STROKE = {
+const C = {
   cyan: "#22b5cf",
   cyanLight: "#4fd6e8",
   orange: "#e87722",
   orangeLight: "#f79b4a",
   navy: "#1f5488",
+  dim: "#6d86a4",
 } as const;
 
 function Frame({ children }: { children: React.ReactNode }) {
@@ -27,253 +28,223 @@ function Frame({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Fisio 3D — malla anatómica en alambre con nodos que pulsan. */
-function FisioVisual() {
-  const rings = [0, 1, 2, 3, 4, 5];
-  return (
-    <Frame>
-      <g
-        fill="none"
-        stroke={STROKE.cyan}
-        strokeWidth="0.7"
-        opacity="0.55"
-        transform="translate(200 150)"
-      >
-        {rings.map((i) => (
-          <ellipse
-            key={`v-${i}`}
-            rx={92}
-            ry={92}
-            transform={`rotate(${(180 / rings.length) * i}) scale(${
-              Math.cos((Math.PI / rings.length) * i) * 0.95 + 0.05
-            } 1)`}
-          />
-        ))}
-        {[-60, -30, 0, 30, 60].map((y) => (
-          <ellipse
-            key={`h-${y}`}
-            cy={y}
-            rx={Math.sqrt(Math.max(92 * 92 - y * y, 1))}
-            ry={Math.sqrt(Math.max(92 * 92 - y * y, 1)) * 0.22}
-          />
-        ))}
-      </g>
-      <g transform="translate(200 150)">
-        {[
-          [62, -46],
-          [-70, 24],
-          [16, 78],
-          [-24, -70],
-        ].map(([x, y], i) => (
-          <circle key={i} cx={x} cy={y} r="4.5" fill={STROKE.cyanLight}>
-            <animate
-              attributeName="r"
-              values="3.5;7;3.5"
-              dur="2.6s"
-              begin={`${i * 0.5}s`}
-              repeatCount="indefinite"
-            />
-            <animate
-              attributeName="opacity"
-              values="1;0.35;1"
-              dur="2.6s"
-              begin={`${i * 0.5}s`}
-              repeatCount="indefinite"
-            />
-          </circle>
-        ))}
-      </g>
-    </Frame>
-  );
-}
-
-/** Dispositivos médicos — plano técnico con cotas. */
+/** Dispositivo médico: plano de taller con cotas y tolerancia. */
 function DeviceVisual() {
   return (
     <Frame>
-      <g stroke={STROKE.navy} strokeWidth="0.6" opacity="0.5">
-        {Array.from({ length: 13 }, (_, i) => (
-          <line key={`x${i}`} x1={i * 32} y1="0" x2={i * 32} y2="300" />
+      <g stroke={C.navy} strokeWidth="0.5" opacity="0.4">
+        {Array.from({ length: 21 }, (_, i) => (
+          <line key={`x${i}`} x1={i * 20} y1="0" x2={i * 20} y2="300" />
         ))}
-        {Array.from({ length: 10 }, (_, i) => (
-          <line key={`y${i}`} x1="0" y1={i * 32} x2="400" y2={i * 32} />
+        {Array.from({ length: 16 }, (_, i) => (
+          <line key={`y${i}`} x1="0" y1={i * 20} x2="400" y2={i * 20} />
         ))}
       </g>
-      <g fill="none" stroke={STROKE.cyan} strokeWidth="1.6">
-        <rect x="110" y="96" width="180" height="108" rx="14" />
-        <rect x="132" y="118" width="88" height="64" rx="6" opacity="0.7" />
-        <circle cx="256" cy="150" r="18" />
-        <circle cx="256" cy="150" r="7" fill={STROKE.cyanLight} stroke="none">
-          <animate
-            attributeName="opacity"
-            values="1;0.2;1"
-            dur="2s"
-            repeatCount="indefinite"
-          />
-        </circle>
+
+      {/* Cuerpo del dispositivo */}
+      <g fill="none" stroke={C.cyan} strokeWidth="1.6" strokeLinejoin="round">
+        <path d="M108 112 h122 a26 26 0 0 1 26 26 v34 a26 26 0 0 1 -26 26 h-122 a14 14 0 0 1 -14 -14 v-58 a14 14 0 0 1 14 -14 z" />
+        <path d="M124 132 h64 v48 h-64 z" opacity="0.65" />
+        <path d="M256 142 h26 v26 h-26" />
+        <circle cx="222" cy="155" r="13" />
       </g>
-      <g stroke={STROKE.orange} strokeWidth="1" opacity="0.9">
-        <line x1="110" y1="76" x2="290" y2="76" />
-        <line x1="110" y1="70" x2="110" y2="82" />
-        <line x1="290" y1="70" x2="290" y2="82" />
-        <line x1="308" y1="96" x2="308" y2="204" />
-        <line x1="302" y1="96" x2="314" y2="96" />
-        <line x1="302" y1="204" x2="314" y2="204" />
+      <circle cx="222" cy="155" r="5" fill={C.cyanLight}>
+        <animate
+          attributeName="opacity"
+          values="1;0.15;1"
+          dur="2.2s"
+          repeatCount="indefinite"
+        />
+      </circle>
+
+      {/* Línea de eje */}
+      <line
+        x1="70"
+        y1="155"
+        x2="330"
+        y2="155"
+        stroke={C.dim}
+        strokeWidth="0.7"
+        strokeDasharray="10 4 2 4"
+        opacity="0.7"
+      />
+
+      {/* Cotas */}
+      <g stroke={C.orange} strokeWidth="0.9" opacity="0.95">
+        <line x1="94" y1="92" x2="256" y2="92" />
+        <line x1="94" y1="86" x2="94" y2="98" />
+        <line x1="256" y1="86" x2="256" y2="98" />
+        <line x1="286" y1="112" x2="286" y2="198" />
+        <line x1="280" y1="112" x2="292" y2="112" />
+        <line x1="280" y1="198" x2="292" y2="198" />
       </g>
-      <text
-        x="200"
-        y="68"
-        textAnchor="middle"
-        fill={STROKE.orangeLight}
-        fontSize="11"
+
+      <g
+        fill={C.orangeLight}
+        fontSize="10"
         fontFamily="ui-monospace, monospace"
       >
-        ±0.01
-      </text>
+        <text x="175" y="84" textAnchor="middle">
+          162.00 ±0.01
+        </text>
+        <text x="298" y="158">
+          86.0
+        </text>
+      </g>
+
+      <g
+        fill={C.dim}
+        fontSize="9"
+        fontFamily="ui-monospace, monospace"
+        opacity="0.9"
+      >
+        <text x="22" y="270">ESC 1:1</text>
+        <text x="22" y="284">REV C · VALIDADO</text>
+        <text x="378" y="284" textAnchor="end">ISO 13485</text>
+      </g>
     </Frame>
   );
 }
 
-/** Sistema contable — hoja de cálculo que se convierte en reporte. */
+/** Programa contable: las hojas reales del libro y su tablero. */
 function LedgerVisual() {
-  const bars = [58, 92, 44, 118, 76, 138, 100];
+  const bars = [46, 78, 58, 104, 88, 132, 112];
+  const sheets = ["MENU", "VENTAS", "KITS", "DASHBOARD", "REPORTES"];
+
   return (
     <Frame>
-      <g opacity="0.35">
-        {Array.from({ length: 8 }, (_, i) => (
-          <line
-            key={`r${i}`}
-            x1="40"
-            y1={40 + i * 28}
-            x2="180"
-            y2={40 + i * 28}
-            stroke={STROKE.navy}
-            strokeWidth="1"
-          />
-        ))}
-        {[40, 96, 152, 180].map((x) => (
-          <line
-            key={`c${x}`}
-            x1={x}
-            y1="40"
-            x2={x}
-            y2="236"
-            stroke={STROKE.navy}
-            strokeWidth="1"
-          />
-        ))}
-      </g>
-      <g fill={STROKE.orange} opacity="0.85">
+      {/* Ventana del libro */}
+      <rect
+        x="26"
+        y="30"
+        width="348"
+        height="216"
+        rx="8"
+        fill="rgba(9,26,46,0.9)"
+        stroke="rgba(255,255,255,0.12)"
+      />
+      <rect x="26" y="30" width="348" height="24" rx="8" fill="rgba(31,84,136,0.35)" />
+      <text
+        x="40"
+        y="47"
+        fill={C.dim}
+        fontSize="10"
+        fontFamily="ui-monospace, monospace"
+      >
+        Programa_contable.xlsm
+      </text>
+
+      {/* Cuadrícula de la hoja */}
+      <g stroke="rgba(109,134,164,0.28)" strokeWidth="0.7">
         {Array.from({ length: 7 }, (_, i) => (
-          <rect key={i} x="46" y={48 + i * 28} width={i % 3 === 0 ? 40 : 26} height="6" rx="3" />
+          <line key={`r${i}`} x1="40" y1={78 + i * 22} x2="180" y2={78 + i * 22} />
+        ))}
+        {[40, 92, 140, 180].map((x) => (
+          <line key={`c${x}`} x1={x} y1="66" x2={x} y2="210" />
+        ))}
+        <line x1="40" y1="66" x2="180" y2="66" />
+      </g>
+      <rect x="40" y="66" width="140" height="12" fill="rgba(34,181,207,0.22)" />
+
+      <g fill={C.orange} opacity="0.8">
+        {Array.from({ length: 6 }, (_, i) => (
+          <rect
+            key={i}
+            x="46"
+            y={84 + i * 22}
+            width={i % 3 === 0 ? 38 : 24}
+            height="5"
+            rx="2.5"
+          />
         ))}
       </g>
-      <path
-        d="M186 138 L212 138"
-        stroke={STROKE.cyanLight}
-        strokeWidth="1.6"
-        markerEnd=""
-      />
-      <path
-        d="M206 132 L216 138 L206 144 Z"
-        fill={STROKE.cyanLight}
-      />
+      <g fill={C.cyan} opacity="0.55">
+        {Array.from({ length: 6 }, (_, i) => (
+          <rect key={i} x="98" y={84 + i * 22} width="30" height="5" rx="2.5" />
+        ))}
+      </g>
+
+      {/* Flecha macro */}
+      <g>
+        <line x1="190" y1="140" x2="212" y2="140" stroke={C.cyanLight} strokeWidth="1.6" />
+        <path d="M206 134 L218 140 L206 146 Z" fill={C.cyanLight} />
+        <text
+          x="204"
+          y="128"
+          textAnchor="middle"
+          fill={C.dim}
+          fontSize="8"
+          fontFamily="ui-monospace, monospace"
+        >
+          VBA
+        </text>
+      </g>
+
+      {/* Tablero */}
       <g>
         {bars.map((h, i) => (
           <rect
             key={i}
-            x={228 + i * 22}
-            y={236 - h}
-            width="13"
+            x={232 + i * 20}
+            y={210 - h}
+            width="12"
             height={h}
-            rx="3"
-            fill={i === 5 ? STROKE.orange : STROKE.cyan}
-            opacity={0.85}
+            rx="2.5"
+            fill={i === 5 ? C.orange : C.cyan}
+            opacity="0.85"
           >
             <animate
               attributeName="height"
-              values={`${h * 0.55};${h};${h * 0.55}`}
-              dur="4s"
-              begin={`${i * 0.18}s`}
+              values={`${h * 0.5};${h};${h * 0.5}`}
+              dur="4.4s"
+              begin={`${i * 0.16}s`}
               repeatCount="indefinite"
             />
             <animate
               attributeName="y"
-              values={`${236 - h * 0.55};${236 - h};${236 - h * 0.55}`}
-              dur="4s"
-              begin={`${i * 0.18}s`}
+              values={`${210 - h * 0.5};${210 - h};${210 - h * 0.5}`}
+              dur="4.4s"
+              begin={`${i * 0.16}s`}
               repeatCount="indefinite"
             />
           </rect>
         ))}
+        <line x1="226" y1="210" x2="364" y2="210" stroke={C.dim} strokeWidth="1" opacity="0.6" />
       </g>
-      <line x1="222" y1="236" x2="384" y2="236" stroke={STROKE.navy} strokeWidth="1.4" />
+
+      {/* Pestañas del libro */}
+      <g fontSize="8" fontFamily="ui-monospace, monospace">
+        {sheets.map((s, i) => {
+          const w = s.length * 5.4 + 12;
+          const x = 30 + sheets.slice(0, i).reduce((acc, p) => acc + p.length * 5.4 + 16, 0);
+          return (
+            <g key={s}>
+              <rect
+                x={x}
+                y="252"
+                width={w}
+                height="16"
+                rx="3"
+                fill={i === 3 ? "rgba(34,181,207,0.22)" : "rgba(255,255,255,0.05)"}
+                stroke={i === 3 ? C.cyan : "rgba(255,255,255,0.1)"}
+                strokeWidth="0.8"
+              />
+              <text
+                x={x + w / 2}
+                y="263"
+                textAnchor="middle"
+                fill={i === 3 ? C.cyanLight : C.dim}
+              >
+                {s}
+              </text>
+            </g>
+          );
+        })}
+      </g>
     </Frame>
   );
 }
 
-/** Charms — piezas de catálogo flotando. */
-function CharmsVisual() {
-  return (
-    <Frame>
-      <defs>
-        <linearGradient id="charm-a" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor={STROKE.orangeLight} stopOpacity="0.9" />
-          <stop offset="100%" stopColor={STROKE.orange} stopOpacity="0.35" />
-        </linearGradient>
-        <linearGradient id="charm-b" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor={STROKE.cyanLight} stopOpacity="0.9" />
-          <stop offset="100%" stopColor={STROKE.cyan} stopOpacity="0.3" />
-        </linearGradient>
-      </defs>
-      {[
-        { x: 74, y: 78, w: 84, h: 108, fill: "url(#charm-b)", d: 0 },
-        { x: 158, y: 58, w: 84, h: 108, fill: "url(#charm-a)", d: 0.6 },
-        { x: 242, y: 92, w: 84, h: 108, fill: "url(#charm-b)", d: 1.2 },
-      ].map((c, i) => (
-        <g key={i}>
-          <rect
-            x={c.x}
-            y={c.y}
-            width={c.w}
-            height={c.h}
-            rx="12"
-            fill={c.fill}
-            stroke="rgba(255,255,255,0.16)"
-          >
-            <animateTransform
-              attributeName="transform"
-              type="translate"
-              values="0 0; 0 -10; 0 0"
-              dur="5s"
-              begin={`${c.d}s`}
-              repeatCount="indefinite"
-            />
-          </rect>
-        </g>
-      ))}
-      <g fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1.2">
-        <circle cx="116" cy="118" r="16" />
-        <circle cx="200" cy="98" r="16" />
-        <circle cx="284" cy="132" r="16" />
-      </g>
-      <rect x="74" y="216" width="252" height="8" rx="4" fill="rgba(255,255,255,0.08)" />
-      <rect x="74" y="216" width="96" height="8" rx="4" fill={STROKE.orange} />
-    </Frame>
-  );
-}
-
-export default function ProjectVisual({ slug }: { slug: string }) {
-  switch (slug) {
-    case "fisio-3d":
-      return <FisioVisual />;
-    case "dispositivos-medicos":
-      return <DeviceVisual />;
-    case "sistema-contable":
-      return <LedgerVisual />;
-    case "charms-ecuador":
-      return <CharmsVisual />;
-    default:
-      return null;
-  }
+export default function ProjectVisual({ kind }: { kind: "device" | "ledger" }) {
+  return kind === "device" ? <DeviceVisual /> : <LedgerVisual />;
 }

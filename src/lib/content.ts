@@ -29,6 +29,7 @@ export const COMPANY = {
 export const NAV: { id: string; label: Localized }[] = [
   { id: "proyectos", label: { es: "Proyectos", en: "Work" } },
   { id: "servicios", label: { es: "Servicios", en: "Services" } },
+  { id: "proceso", label: { es: "Proceso", en: "Process" } },
   { id: "nosotros", label: { es: "Nosotros", en: "About" } },
   { id: "contacto", label: { es: "Contacto", en: "Contact" } },
 ];
@@ -87,109 +88,182 @@ export type Project = {
   slug: string;
   index: string;
   title: Localized;
+  client: Localized;
   category: Localized;
   summary: Localized;
   description: Localized;
+  /** Lo que cambió, en concreto */
+  outcome: Localized;
   tags: string[];
-  /** Acento visual de la tarjeta */
+  /** Cifras reales del proyecto */
+  metrics: { value: string; label: Localized }[];
   accent: "cyan" | "orange" | "navy" | "mixed";
   /** Marca los proyectos donde el 3D es el diferenciador */
   has3D: boolean;
-  /** Enlace externo, opcional */
+  /** Imagen real en /public/proyectos, si existe */
+  image?: string;
+  imageAlt?: Localized;
+  /** Cuando no hay imagen, se dibuja este gráfico técnico */
+  visual?: "device" | "ledger";
   href?: string;
   year: string;
 };
 
 export const PROJECTS: Project[] = [
   {
-    slug: "fisio-3d",
+    slug: "anatris",
     index: "01",
     year: "2026",
-    title: { es: "Fisio 3D", en: "Fisio 3D" },
+    title: { es: "Anatris", en: "Anatris" },
+    client: {
+      es: "Producto propio · Fisioterapia",
+      en: "In-house product · Physiotherapy",
+    },
     category: {
-      es: "Salud · Visualización 3D",
-      en: "Healthcare · 3D visualization",
+      es: "Salud · Atlas 3D",
+      en: "Healthcare · 3D atlas",
     },
     summary: {
-      es: "Plataforma de rehabilitación con anatomía interactiva en 3D.",
-      en: "Rehabilitation platform with interactive 3D anatomy.",
+      es: "Atlas 3D de anatomía y biomecánica para fisioterapia, en el navegador.",
+      en: "A 3D anatomy and biomechanics atlas for physiotherapy, in the browser.",
     },
     description: {
-      es: "Modelo anatómico navegable en el navegador: el terapeuta selecciona la zona, marca el ejercicio y el paciente ve exactamente qué músculo trabaja. Todo corre en tiempo real, sin instalar nada.",
-      en: "A navigable anatomical model right in the browser: the therapist picks the area, assigns the exercise, and the patient sees exactly which muscle is working. Real-time, zero install.",
+      es: "El cuerpo completo cargado como modelo navegable: se explora por región clínica, se inspecciona músculo por músculo y se revisan rangos de movimiento reales. Cada dato clínico va con su fuente citada.",
+      en: "The full body loaded as a navigable model: explore it by clinical region, inspect it muscle by muscle and review real ranges of motion. Every clinical figure carries its citation.",
     },
-    tags: ["Three.js", "WebGL", "React", "UX clínica"],
+    outcome: {
+      es: "En línea y en producción en anatris.app, con recorrido guiado y aviso legal antes de usarse.",
+      en: "Live in production at anatris.app, with a guided tour and a legal disclaimer before use.",
+    },
+    tags: ["React", "Three.js", "WebGL", "Supabase", "PWA"],
+    metrics: [
+      { value: "6", label: { es: "Regiones clínicas", en: "Clinical regions" } },
+      { value: "113", label: { es: "Músculos con ficha", en: "Muscles documented" } },
+      { value: "79", label: { es: "Tests con sens/spec", en: "Tests with sens/spec" } },
+    ],
     accent: "cyan",
     has3D: true,
+    image: "/proyectos/anatris.png",
+    imageAlt: {
+      es: "Pantalla de Anatris mostrando un rango de movimiento de 116 grados",
+      en: "Anatris screen showing a 116-degree range of motion",
+    },
+    href: "https://anatris.app",
   },
   {
     slug: "dispositivos-medicos",
     index: "02",
     year: "2025",
     title: {
-      es: "Soluciones para dispositivos médicos",
-      en: "Medical device solutions",
+      es: "Dispositivo médico",
+      en: "Medical device",
+    },
+    client: {
+      es: "Cliente del sector salud",
+      en: "Healthcare sector client",
     },
     category: {
-      es: "Manufactura · Calidad",
-      en: "Manufacturing · Quality",
+      es: "Diseño y validación de producto",
+      en: "Product design and validation",
     },
     summary: {
-      es: "Ingeniería de proceso y control de calidad para línea de dispositivos médicos.",
-      en: "Process engineering and quality control for a medical device line.",
+      es: "Del concepto al prototipo validado, con la documentación técnica que exige el sector.",
+      en: "From concept to validated prototype, with the technical file the sector demands.",
     },
     description: {
-      es: "Rediseño del flujo de producción y del sistema de control de calidad: validación de proceso, trazabilidad de lote y documentación lista para auditoría regulatoria.",
-      en: "Redesign of the production flow and quality system: process validation, batch traceability and audit-ready regulatory documentation.",
+      es: "Diseño del dispositivo, definición de materiales y tolerancias, prototipado y campaña de pruebas. El expediente técnico se armó en paralelo al desarrollo, no después, para que la validación no fuera un cuello de botella al final.",
+      en: "Device design, material and tolerance definition, prototyping and a test campaign. The technical file was built alongside development, not after, so validation never became a bottleneck at the end.",
     },
-    tags: ["Lean", "Validación", "Trazabilidad", "ISO 13485"],
+    outcome: {
+      es: "Prototipo validado y expediente técnico listo para el proceso regulatorio del cliente.",
+      en: "Validated prototype and a technical file ready for the client's regulatory process.",
+    },
+    tags: ["CAD", "Tolerancias", "Prototipado", "Validación", "ISO 13485"],
+    metrics: [
+      { value: "±0.01", label: { es: "Tolerancia crítica (mm)", en: "Critical tolerance (mm)" } },
+      { value: "3", label: { es: "Iteraciones de prototipo", en: "Prototype iterations" } },
+      { value: "100%", label: { es: "Requisitos trazados", en: "Requirements traced" } },
+    ],
     accent: "navy",
     has3D: false,
+    visual: "device",
   },
   {
-    slug: "sistema-contable",
+    slug: "programa-contable",
     index: "03",
     year: "2025",
     title: {
-      es: "Sistema contable automatizado",
-      en: "Automated accounting system",
+      es: "Programa contable",
+      en: "Accounting system",
+    },
+    client: {
+      es: "Taller de manufactura",
+      en: "Manufacturing workshop",
     },
     category: {
-      es: "Automatización · Finanzas",
-      en: "Automation · Finance",
+      es: "Automatización · Gestión",
+      en: "Automation · Operations",
     },
     summary: {
-      es: "Contabilidad completa sobre Excel, sin licencias ni migraciones.",
-      en: "Full accounting on top of Excel — no licenses, no migration.",
+      es: "Un ERP pequeño montado sobre Excel: inventario, kits, ventas y caja en un solo archivo.",
+      en: "A small ERP built on Excel: inventory, kits, sales and cash in a single file.",
     },
     description: {
-      es: "Libro diario, mayor, balances y reportes generados automáticamente desde una sola captura. Cierra el mes en minutos y sin la fricción de cambiar de sistema.",
-      en: "Journal, ledger, balance sheets and reports generated automatically from a single entry point. Month-end close in minutes, with no system migration.",
+      es: "Once hojas conectadas por macros: clientes, productos, componentes, kits con su despiece, ventas, compras y gastos, anticipos y un tablero que se recalcula solo. El equipo siguió trabajando en la herramienta que ya sabía usar, sin migrar a otro sistema ni pagar licencias nuevas.",
+      en: "Eleven sheets wired together with macros: customers, products, components, kits with their bill of materials, sales, purchases and expenses, advance payments and a dashboard that recalculates itself. The team kept working in the tool they already knew — no migration, no new licenses.",
     },
-    tags: ["Excel", "VBA", "Automatización", "Reportería"],
+    outcome: {
+      es: "El cierre mensual dejó de ser un armado manual: se genera desde los movimientos ya capturados.",
+      en: "Month-end close stopped being manual assembly: it now builds itself from the entries already captured.",
+    },
+    tags: ["Excel", "VBA", "Inventario", "Kits / BOM", "Dashboard"],
+    metrics: [
+      { value: "11", label: { es: "Hojas conectadas", en: "Connected sheets" } },
+      { value: "1", label: { es: "Archivo, cero licencias", en: "File, zero licenses" } },
+      { value: "0", label: { es: "Migraciones de sistema", en: "System migrations" } },
+    ],
     accent: "orange",
     has3D: false,
+    visual: "ledger",
   },
   {
     slug: "charms-ecuador",
     index: "04",
     year: "2026",
     title: { es: "Charms Ecuador", en: "Charms Ecuador" },
+    client: {
+      es: "Taller de regalos en porcelana fría",
+      en: "Cold porcelain gift workshop",
+    },
     category: {
       es: "E-commerce · Marca",
       en: "E-commerce · Brand",
     },
     summary: {
-      es: "Catálogo y cotizador en línea para un taller de regalos personalizados.",
-      en: "Online catalog and quote builder for a custom gift workshop.",
+      es: "De vender por Instagram a tener catálogo propio y cotizador automático.",
+      en: "From selling over Instagram to a proper catalog with an automatic quote builder.",
     },
     description: {
-      es: "Sitio completo con catálogo de productos, configurador de pedidos personalizados y cotización que se envía directo a WhatsApp. Del Instagram a una tienda propia.",
-      en: "Full site with product catalog, custom order configurator and quotes that go straight to WhatsApp. From an Instagram page to their own storefront.",
+      es: "Cada pieza es hecha a mano y a medida, así que el reto no era un carrito: era cotizar. El configurador arma el pedido paso a paso —tipo de pieza, personajes, mascotas, texto— calcula el precio y lo manda listo por WhatsApp al taller.",
+      en: "Every piece is handmade to order, so the challenge was never a cart — it was quoting. The configurator builds the order step by step (piece type, characters, pets, text), prices it, and sends it ready to the workshop over WhatsApp.",
     },
-    tags: ["React", "Tailwind", "WhatsApp API", "Diseño"],
+    outcome: {
+      es: "Sitio construido y listo para publicar; falta cerrar fotos finales y precios con la clienta.",
+      en: "Site built and ready to publish; final photos and pricing still to be signed off with the client.",
+    },
+    tags: ["React", "Vite", "Tailwind", "Cotizador", "WhatsApp"],
+    metrics: [
+      { value: "3D", label: { es: "Renders de producto", en: "Product renders" } },
+      { value: "1", label: { es: "Cotizador paso a paso", en: "Step-by-step quoter" } },
+      { value: "0", label: { es: "Comisiones de plataforma", en: "Platform fees" } },
+    ],
     accent: "mixed",
     has3D: false,
+    image: "/proyectos/charms-cuadro.webp",
+    imageAlt: {
+      es: "Cuadro de porcelana fría con figuras de una familia hecho por Charms",
+      en: "Cold porcelain family portrait handmade by Charms",
+    },
   },
 ];
 
@@ -272,6 +346,66 @@ export const SERVICES: Service[] = [
 ];
 
 /* ------------------------------------------------------------------ */
+/* Proceso                                                             */
+/* ------------------------------------------------------------------ */
+
+export const PROCESS_INTRO = {
+  eyebrow: { es: "Cómo trabajamos", en: "How we work" } satisfies Localized,
+  title: {
+    es: "Cuatro pasos, sin sorpresas",
+    en: "Four steps, no surprises",
+  } satisfies Localized,
+  subtitle: {
+    es: "El alcance y el precio se cierran antes de escribir la primera línea o tocar la primera máquina.",
+    en: "Scope and price are locked before the first line of code or the first machine setup.",
+  } satisfies Localized,
+};
+
+export const PROCESS: {
+  step: string;
+  title: Localized;
+  body: Localized;
+  duration: Localized;
+}[] = [
+  {
+    step: "01",
+    title: { es: "Diagnóstico", en: "Diagnosis" },
+    body: {
+      es: "Vamos al proceso real, no al que dice el manual. Medimos tiempos, contamos reprocesos y anotamos dónde duele.",
+      en: "We go to the real process, not the one in the manual. We time it, count rework and write down where it hurts.",
+    },
+    duration: { es: "1–2 semanas", en: "1–2 weeks" },
+  },
+  {
+    step: "02",
+    title: { es: "Propuesta cerrada", en: "Fixed proposal" },
+    body: {
+      es: "Alcance, entregables, plazo y precio por escrito. Si algo no se puede prometer, lo decimos aquí y no después.",
+      en: "Scope, deliverables, timeline and price in writing. If something can't be promised, we say it here — not later.",
+    },
+    duration: { es: "3–5 días", en: "3–5 days" },
+  },
+  {
+    step: "03",
+    title: { es: "Construcción", en: "Build" },
+    body: {
+      es: "Entregas parciales cada semana para que veas avance real y puedas corregir el rumbo a tiempo.",
+      en: "Weekly partial deliveries so you see real progress and can change course in time.",
+    },
+    duration: { es: "4–10 semanas", en: "4–10 weeks" },
+  },
+  {
+    step: "04",
+    title: { es: "Entrega y acompañamiento", en: "Handover and support" },
+    body: {
+      es: "Capacitamos al equipo, dejamos la documentación y seguimos disponibles mientras el proceso se estabiliza.",
+      en: "We train the team, leave the documentation and stay available while the process settles.",
+    },
+    duration: { es: "30 días", en: "30 days" },
+  },
+];
+
+/* ------------------------------------------------------------------ */
 /* Nosotros                                                            */
 /* ------------------------------------------------------------------ */
 
@@ -339,8 +473,8 @@ export const CONTACT = {
     sendEmail: { es: "Enviar por correo", en: "Send by email" } satisfies Localized,
     sendWhatsapp: { es: "Enviar por WhatsApp", en: "Send on WhatsApp" } satisfies Localized,
     subject: {
-      es: "Nuevo contacto desde bouw.com",
-      en: "New enquiry from bouw.com",
+      es: "Nuevo contacto desde el sitio de BOUW",
+      en: "New enquiry from the BOUW site",
     } satisfies Localized,
   },
 };

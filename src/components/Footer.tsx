@@ -5,48 +5,37 @@ import { useLang } from "@/lib/i18n";
 import LogoMark from "./LogoMark";
 
 export default function Footer() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const year = new Date().getFullYear();
 
   return (
-    <footer className="relative overflow-hidden border-t border-white/[0.06] bg-navy-950">
-      {/* Marquesina con el nombre */}
-      <div className="relative flex overflow-hidden border-b border-white/[0.06] py-8">
-        <div className="flex shrink-0 animate-marquee whitespace-nowrap">
-          {Array.from({ length: 8 }, (_, i) => (
-            <span
-              key={i}
-              className="mx-8 font-display text-5xl font-bold tracking-[0.2em] text-white/[0.06] sm:text-7xl"
-            >
-              BOUW
-            </span>
-          ))}
-          {Array.from({ length: 8 }, (_, i) => (
-            <span
-              key={`b-${i}`}
-              className="mx-8 font-display text-5xl font-bold tracking-[0.2em] text-white/[0.06] sm:text-7xl"
-            >
-              BOUW
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <div className="mx-auto max-w-7xl px-6 py-14 lg:px-10">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+    <footer className="relative border-t border-white/[0.06] bg-navy-950/80 backdrop-blur-xl">
+      <div className="mx-auto max-w-7xl px-6 py-16 lg:px-10">
+        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
           <div className="lg:col-span-2">
             <div className="flex items-center gap-3">
-              <LogoMark className="h-10 w-auto" />
-              <span className="font-display text-xl font-bold tracking-[0.14em] text-ink">
-                BOUW
+              <LogoMark className="h-11 w-auto" />
+              <span className="flex flex-col leading-none">
+                <span className="font-display text-2xl font-bold tracking-[0.14em] text-ink">
+                  BOUW
+                </span>
+                <span className="mt-1.5 font-mono text-[9px] uppercase tracking-[0.24em] text-ink-dim">
+                  {t(COMPANY.tagline)}
+                </span>
               </span>
             </div>
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-dim">
-              {t(COMPANY.tagline)} — {t(FOOTER.builtWith)}
+            <p className="mt-6 max-w-sm leading-relaxed text-ink-dim">
+              {t({
+                es: "Consultoría de procesos, calidad y automatización para equipos que fabrican cosas reales.",
+                en: "Process, quality and automation consulting for teams that build real things.",
+              })}
             </p>
           </div>
 
           <nav className="flex flex-col gap-3">
+            <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.24em] text-ink-dim/60">
+              {lang === "es" ? "Secciones" : "Sections"}
+            </p>
             {NAV.map((n) => (
               <a
                 key={n.id}
@@ -60,6 +49,9 @@ export default function Footer() {
           </nav>
 
           <div className="flex flex-col gap-3 text-sm">
+            <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.24em] text-ink-dim/60">
+              {lang === "es" ? "Contacto" : "Contact"}
+            </p>
             <a
               href={`mailto:${COMPANY.email}`}
               data-cursor="link"
@@ -84,16 +76,17 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col gap-3 border-t border-white/[0.06] pt-6 text-xs text-ink-dim sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-14 flex flex-col gap-3 border-t border-white/[0.06] pt-6 font-mono text-[11px] text-ink-dim sm:flex-row sm:items-center sm:justify-between">
           <p>
-            © {year} {COMPANY.name}. {t(FOOTER.rights)}
+            © {year} {COMPANY.name} · {t(FOOTER.rights)}
           </p>
+          <p className="text-ink-dim/60">{t(FOOTER.builtWith)}</p>
           <a
             href="#top"
             data-cursor="link"
-            className="font-mono uppercase tracking-[0.2em] transition-colors hover:text-cyan-light"
+            className="uppercase tracking-[0.2em] transition-colors hover:text-cyan-light"
           >
-            ↑ Top
+            ↑ {lang === "es" ? "Arriba" : "Top"}
           </a>
         </div>
       </div>

@@ -17,6 +17,9 @@
     "react-dom": "19.2.8",
     "three": "^0.185.1"
   },
+  "overrides": {
+    "three": "^0.185.1"
+  },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",

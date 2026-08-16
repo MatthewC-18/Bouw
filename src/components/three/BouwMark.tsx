@@ -19,23 +19,27 @@ import {
 } from "./logoShapes";
 
 type Props = {
-  /** 0 = arriba del todo, 1 = hero fuera de pantalla */
-  scrollRef: RefObject<number>;
+  /** Etapa continua del scroll: 0 hero … 4 contacto */
+  stageRef: RefObject<number>;
   /** Posición del mouse normalizada a -1..1 */
   pointerRef: RefObject<{ x: number; y: number }>;
   reducedMotion: boolean;
 };
 
+function smoothstep(edge0: number, edge1: number, x: number) {
+  const t = Math.min(Math.max((x - edge0) / (edge1 - edge0), 0), 1);
+  return t * t * (3 - 2 * t);
+}
+
 /**
- * La "B" de BOUW en 3D, construida pieza por pieza.
+ * La "B" de BOUW sólida, construida pieza por pieza.
  *
- * - Las dos flechas (azul arriba, naranja abajo) se desplazan en bucle:
- *   es el ciclo de mejora continua que representa la marca.
- * - El circuito y las esferas pulsan con emisión desfasada.
- * - Todo el grupo sigue al mouse con inercia y se inclina al hacer scroll.
+ * Solo es visible en los extremos del recorrido: entera en el hero, y otra vez
+ * al llegar a contacto. En medio cede el turno a las piezas sueltas
+ * (`AssemblyField`), de modo que la marca parece desarmarse y rearmarse.
  */
 export default function BouwMark({
-  scrollRef,
+  stageRef,
   pointerRef,
   reducedMotion,
 }: Props) {
@@ -46,8 +50,6 @@ export default function BouwMark({
   const tealMat = useRef<THREE.MeshStandardMaterial>(null);
   const orangeMat = useRef<THREE.MeshStandardMaterial>(null);
   const traceMat = useRef<THREE.MeshStandardMaterial>(null);
-
-  /* --------------------------- geometrías --------------------------- */
 
   const geo = useMemo(() => {
     // No centramos cada pieza: las coordenadas del logo ya son absolutas
@@ -69,44 +71,62 @@ export default function BouwMark({
   }, []);
 
   const spheres = useMemo(() => spherePositions(), []);
-
-  /* ---------------------------- animación --------------------------- */
-
   const targetRot = useRef(new THREE.Vector2());
 
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
     const d = Math.min(delta, 0.05);
-    const scroll = scrollRef.current ?? 0;
+    const stage = Math.min(Math.max(stageRef.current ?? 0, 0), 4);
 
-    if (group.current) {
-      // Seguimiento del mouse con inercia
-      const px = reducedMotion ? 0 : (pointerRef.current?.x ?? 0);
-      const py = reducedMotion ? 0 : (pointerRef.current?.y ?? 0);
-      targetRot.current.x += (-py * 0.34 - targetRot.current.x) * d * 4;
-      targetRot.current.y += (px * 0.6 - targetRot.current.y) * d * 4;
+    // Presencia de la marca sólida: entera al inicio, y de vuelta al final.
+    const entering = 1 - smoothstep(0.06, 0.5, stage);
+    const returning = smoothstep(3.45, 3.9, stage);
+    const presence = Math.max(entering, returning);
 
-      const idle = reducedMotion ? 0 : Math.sin(t * 0.45) * 0.09;
+    const g = group.current;
+    if (!g) return;
 
-      group.current.rotation.x = targetRot.current.x + scroll * 0.5;
-      group.current.rotation.y = targetRot.current.y + idle + scroll * 1.1;
-      group.current.position.y =
-        (reducedMotion ? 0 : Math.sin(t * 0.7) * 0.12) - scroll * 2.2;
-
-      const s = 1 - scroll * 0.35;
-      group.current.scale.setScalar(Math.max(s, 0.5));
+    if (presence < 0.002) {
+      g.visible = false;
+      return;
     }
+    g.visible = true;
+
+    // Opacidad y escala acompañan a la presencia: se disgrega, no se encoge.
+    g.traverse((obj) => {
+      const mesh = obj as THREE.Mesh;
+      const mat = mesh.material as THREE.MeshStandardMaterial | undefined;
+      if (mat && "opacity" in mat) {
+        mat.transparent = true;
+        mat.opacity = presence;
+        mat.depthWrite = presence > 0.9;
+      }
+    });
+
+    const px = reducedMotion ? 0 : (pointerRef.current?.x ?? 0);
+    const py = reducedMotion ? 0 : (pointerRef.current?.y ?? 0);
+    targetRot.current.x += (-py * 0.32 - targetRot.current.x) * d * 4;
+    targetRot.current.y += (px * 0.55 - targetRot.current.y) * d * 4;
+
+    const idle = reducedMotion ? 0 : Math.sin(t * 0.45) * 0.09;
+    // Al volver, la marca llega de frente y quieta: cierre limpio.
+    const settle = returning;
+
+    g.rotation.x = targetRot.current.x * (1 - settle * 0.6);
+    g.rotation.y =
+      targetRot.current.y * (1 - settle * 0.6) + idle * (1 - settle);
+    g.position.y = reducedMotion ? 0 : Math.sin(t * 0.7) * 0.12;
+    g.scale.setScalar(0.86 + presence * 0.14);
 
     if (!reducedMotion) {
       // Ciclo de las flechas: entra y sale, desfasadas medio periodo.
       const cycle = (phase: number) => {
-        const raw = (Math.sin(t * 0.9 + phase) + 1) / 2; // 0..1
+        const raw = (Math.sin(t * 0.9 + phase) + 1) / 2;
         return Math.pow(raw, 2) * 0.26;
       };
       if (topArrow.current) topArrow.current.position.x = cycle(0);
       if (bottomArrow.current) bottomArrow.current.position.x = -cycle(Math.PI);
 
-      // Pulso de emisión
       if (tealMat.current)
         tealMat.current.emissiveIntensity = 1.1 + Math.sin(t * 1.6) * 0.55;
       if (orangeMat.current)
@@ -121,14 +141,11 @@ export default function BouwMark({
     }
   });
 
-  /* ------------------------------ render ---------------------------- */
-
   return (
     <group ref={group} dispose={null}>
       <group ref={inner} position={[-0.1, 0, -0.21]}>
-        {/* Astas azules con sus flechas */}
         <group ref={topArrow}>
-          <mesh geometry={geo.topStem} castShadow receiveShadow>
+          <mesh geometry={geo.topStem}>
             <meshStandardMaterial
               color={BRAND.navy}
               metalness={0.92}
@@ -138,7 +155,7 @@ export default function BouwMark({
         </group>
 
         <group ref={bottomArrow}>
-          <mesh geometry={geo.bottomStem} castShadow receiveShadow>
+          <mesh geometry={geo.bottomStem}>
             <meshStandardMaterial
               color={BRAND.navyDeep}
               metalness={0.92}
@@ -147,8 +164,7 @@ export default function BouwMark({
           </mesh>
         </group>
 
-        {/* Panzas de la B */}
-        <mesh geometry={geo.topBowl} castShadow receiveShadow>
+        <mesh geometry={geo.topBowl}>
           <meshStandardMaterial
             color={BRAND.cyan}
             metalness={0.55}
@@ -158,7 +174,7 @@ export default function BouwMark({
           />
         </mesh>
 
-        <mesh geometry={geo.bottomBowl} castShadow receiveShadow>
+        <mesh geometry={geo.bottomBowl}>
           <meshStandardMaterial
             color={BRAND.orange}
             metalness={0.55}
@@ -168,7 +184,6 @@ export default function BouwMark({
           />
         </mesh>
 
-        {/* Circuito: anillos + trazos */}
         <group position={[0, 0, 0.21]}>
           {CIRCUIT_RINGS.map((r, i) => (
             <mesh key={`ring-${i}`} geometry={geo.ring} position={r.position}>
@@ -196,7 +211,6 @@ export default function BouwMark({
           ))}
         </group>
 
-        {/* Esferas */}
         {spheres.map((s) => (
           <mesh key={s.key} geometry={geo.sphere} position={s.position}>
             <meshStandardMaterial

@@ -1,21 +1,13 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import { HERO, STATS } from "@/lib/content";
+import { COMPANY, HERO, STATS } from "@/lib/content";
 import { useLang } from "@/lib/i18n";
-
-// El canvas 3D solo existe en el cliente y se carga después del HTML.
-const HeroScene = dynamic(() => import("./three/HeroScene"), { ssr: false });
 
 export default function Hero() {
   const { t } = useLang();
-  const [mounted, setMounted] = useState(false);
   const [fade, setFade] = useState(0);
 
-  useEffect(() => setMounted(true), []);
-
-  // El 3D se desvanece a medida que el hero sale de pantalla.
   useEffect(() => {
     let raf = 0;
     const onScroll = () => {
@@ -37,24 +29,11 @@ export default function Hero() {
   return (
     <section
       id="top"
-      className="noise relative flex min-h-[100svh] items-center overflow-hidden"
+      className="relative flex min-h-[100svh] items-center overflow-hidden"
     >
-      {/* Capa 3D */}
-      <div
-        className="pointer-events-none fixed inset-0 -z-10"
-        style={{ opacity: 1 - fade * 0.9 }}
-      >
-        {mounted && <HeroScene />}
-      </div>
-
-      {/* Rejilla y halos */}
-      <div className="pointer-events-none absolute inset-0 -z-10 grid-lines opacity-40" />
-      <div className="pointer-events-none absolute -left-40 top-1/4 -z-10 h-[520px] w-[520px] rounded-full bg-cyan-brand/10 blur-[140px]" />
-      <div className="pointer-events-none absolute -right-32 bottom-0 -z-10 h-[460px] w-[460px] rounded-full bg-orange-brand/10 blur-[140px]" />
-
       <div className="mx-auto w-full max-w-7xl px-6 pt-32 pb-24 lg:px-10">
         <div className="max-w-3xl">
-          <p className="mb-6 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 font-mono text-[11px] uppercase tracking-[0.28em] text-cyan-light backdrop-blur-sm">
+          <p className="mb-7 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 font-mono text-[11px] uppercase tracking-[0.28em] text-cyan-light backdrop-blur-sm">
             <span className="relative flex h-1.5 w-1.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-light opacity-75" />
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-cyan-light" />
@@ -62,7 +41,7 @@ export default function Hero() {
             {t(HERO.eyebrow)}
           </p>
 
-          <h1 className="font-display text-[clamp(2.75rem,8vw,6.25rem)] font-bold leading-[0.95] tracking-tight">
+          <h1 className="font-display text-[clamp(2.75rem,8vw,6.5rem)] font-bold leading-[0.94] tracking-tight">
             <span className="block text-ink">{t(HERO.titleTop)}</span>
             <span className="block text-gradient-brand">
               {t(HERO.titleAccent)}
@@ -81,7 +60,6 @@ export default function Hero() {
             >
               <span className="relative z-10">{t(HERO.ctaPrimary)}</span>
               <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-orange-brand to-orange-light transition-transform duration-500 group-hover:translate-x-0" />
-              <span className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center opacity-0" />
             </a>
 
             <a
@@ -107,6 +85,26 @@ export default function Hero() {
             ))}
           </dl>
         </div>
+      </div>
+
+      {/* Coordenadas de las sedes: detalle de plano, no adorno */}
+      <div className="pointer-events-none absolute right-8 top-1/2 hidden -translate-y-1/2 flex-col items-end gap-6 xl:flex">
+        {[
+          { city: "QUITO", coords: "0.1807° S · 78.4678° W" },
+          { city: "MONTERREY", coords: "25.6866° N · 100.3161° W" },
+        ].map((o) => (
+          <div key={o.city} className="text-right">
+            <p className="font-mono text-[10px] uppercase tracking-[0.34em] text-ink-dim">
+              {o.city}
+            </p>
+            <p className="mt-1 font-mono text-[10px] tracking-[0.12em] text-cyan-light/60">
+              {o.coords}
+            </p>
+          </div>
+        ))}
+        <p className="font-mono text-[10px] uppercase tracking-[0.34em] text-ink-dim/60">
+          {COMPANY.yearsExperience}+ {"//"} EST.
+        </p>
       </div>
 
       {/* Indicador de scroll */}

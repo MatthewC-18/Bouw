@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BOUW — sitio web
 
-## Getting Started
+Sitio corporativo de **BOUW · Automation & Digital Solutions** (Quito · Monterrey).
 
-First, run the development server:
+Landing de una sola página con hero 3D, cursor personalizado y bilingüe ES/EN.
+
+## Stack
+
+| Pieza | Qué es |
+| --- | --- |
+| Next.js 16 (App Router) + TypeScript | framework y tipado |
+| Tailwind CSS 4 | estilos, tokens de marca en `globals.css` |
+| React Three Fiber + drei + postprocessing | escena 3D del hero |
+| Sin backend | el formulario abre correo o WhatsApp |
+
+## Correr en local
+
+```bash
+npm install
+```
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre <http://localhost:3000>.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Build de producción
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+```
 
-## Learn More
+## Desplegar en Vercel
 
-To learn more about Next.js, take a look at the following resources:
+1. Sube esta carpeta a un repositorio de GitHub.
+2. En Vercel: **New Project → Import Git Repository**.
+3. Framework preset: **Next.js**. No hace falta configurar nada más.
+4. Deploy. Vercel detecta `next build` automáticamente.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Después de conectar el dominio real, actualiza `SITE_URL` en
+`src/app/layout.tsx` para que los metadatos de OpenGraph apunten ahí.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Dónde editar qué
 
-## Deploy on Vercel
+| Quieres cambiar… | Archivo |
+| --- | --- |
+| Todo el texto, ES y EN | `src/lib/content.ts` |
+| Proyectos (títulos, tags, año, enlaces) | `PROJECTS` en `src/lib/content.ts` |
+| Datos de contacto y sedes | `COMPANY` en `src/lib/content.ts` |
+| Colores de marca y tipografías | `@theme` en `src/app/globals.css` |
+| Geometría de la "B" 3D | `src/components/three/logoShapes.ts` |
+| Animación de la "B" 3D | `src/components/three/BouwMark.tsx` |
+| Luces, partículas y bloom | `src/components/three/HeroScene.tsx` |
+| Cursor personalizado | `src/components/Cursor.tsx` |
+| Gráficos de cada proyecto | `src/components/ProjectVisual.tsx` |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Cursor personalizado
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Cualquier elemento puede cambiar el cursor con atributos:
+
+```html
+<a data-cursor="link">…</a>
+<article data-cursor="view" data-cursor-label="Ver">…</article>
+```
+
+Estados disponibles: `link`, `view`, `text`. El cursor se desactiva solo en
+pantallas táctiles y con `prefers-reduced-motion`.
+
+## Pendientes
+
+- [ ] Reemplazar los gráficos abstractos de `ProjectVisual.tsx` por capturas reales.
+- [ ] Enlace público de cada proyecto (campo `href` en `PROJECTS`).
+- [ ] Imagen OpenGraph (`/public/og.png`, 1200×630).
+- [ ] Dominio propio y `SITE_URL`.

@@ -132,6 +132,15 @@ export type Project = {
   accent: "cyan" | "orange" | "navy" | "mixed";
   /** Marca los proyectos donde el 3D es el diferenciador */
   has3D: boolean;
+  /**
+   * Cómo se presenta el panel de medios.
+   * `screen` captura de interfaz, `photo` foto de producto (va sobre un
+   * paspartú oscuro para que una imagen clara no rompa la paleta),
+   * `drawing` gráfico técnico dibujado en SVG.
+   */
+  mediaKind: "screen" | "photo" | "drawing";
+  /** Texto del chip en la barra del panel */
+  mediaChip: string;
   /** Imagen real en /public/proyectos, si existe */
   image?: string;
   imageAlt?: Localized;
@@ -175,6 +184,8 @@ export const PROJECTS: Project[] = [
     ],
     accent: "cyan",
     has3D: true,
+    mediaKind: "screen",
+    mediaChip: "anatris.app",
     image: "/proyectos/anatris.png",
     imageAlt: {
       es: "Pantalla de Anatris mostrando un rango de movimiento de 116 grados",
@@ -218,6 +229,8 @@ export const PROJECTS: Project[] = [
     ],
     accent: "navy",
     has3D: false,
+    mediaKind: "drawing",
+    mediaChip: "PLANO · REV C · 1:1",
     visual: "device",
   },
   {
@@ -256,6 +269,8 @@ export const PROJECTS: Project[] = [
     ],
     accent: "orange",
     has3D: false,
+    mediaKind: "drawing",
+    mediaChip: "Programa_contable.xlsm",
     visual: "ledger",
   },
   {
@@ -291,6 +306,8 @@ export const PROJECTS: Project[] = [
     ],
     accent: "mixed",
     has3D: false,
+    mediaKind: "photo",
+    mediaChip: "Pieza personalizada · porcelana fría",
     image: "/proyectos/charms-cuadro.webp",
     imageAlt: {
       es: "Cuadro de porcelana fría con figuras de una familia hecho por Charms",

@@ -41,9 +41,37 @@ const ACCENT: Record<
 /* Panel de medios                                                     */
 /* ------------------------------------------------------------------ */
 
+const KIND_LABEL: Record<Project["mediaKind"], string> = {
+  screen: "UI",
+  photo: "FOTO",
+  drawing: "DWG",
+};
+
+/**
+ * Panel de medios.
+ *
+ * Las piezas vienen de mundos distintos: una captura de interfaz oscura, una
+ * foto de producto sobre fondo claro y dos dibujos técnicos. Para que convivan
+ * se les impone el mismo tratamiento:
+ *
+ * 1. Mismo chasis (barra superior con chip, encuadre, pie técnico).
+ * 2. La imagen entra desaturada y bajada de brillo, y recupera su color real
+ *    al pasar el mouse. Así una foto blanca no rompe la paleta, y el hover
+ *    tiene una recompensa.
+ * 3. Las fotos van sobre paspartú oscuro con `contain`; las capturas van a
+ *    sangre con `cover`.
+ */
 function Media({ project }: { project: Project }) {
   const { t, lang } = useLang();
   const accent = ACCENT[project.accent];
+  const isPhoto = project.mediaKind === "photo";
+
+  // Tailwind v4 anima `scale` como propiedad propia, no dentro de `transform`:
+  // si no se nombra aquí, el zoom salta en seco en vez de acompañar al color.
+  const toned =
+    "transition-[filter,scale] duration-[900ms] ease-out " +
+    "grayscale-[0.65] brightness-[0.8] contrast-[1.1] saturate-[0.85] " +
+    "group-hover:grayscale-0 group-hover:brightness-100 group-hover:saturate-100";
 
   return (
     <div
@@ -60,35 +88,81 @@ function Media({ project }: { project: Project }) {
         }}
       />
 
-      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-navy-950">
-        <div className="relative aspect-4/3">
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-navy-950 shadow-[0_30px_90px_-40px_rgba(0,0,0,0.9)]">
+        {/* Barra superior: el mismo chasis para los cuatro */}
+        <div className="flex items-center gap-3 border-b border-white/[0.07] px-4 py-2.5">
+          <span className="flex gap-1.5">
+            <span className={`h-1.5 w-1.5 rounded-[1px] ${accent.dot}`} />
+            <span className="h-1.5 w-1.5 rounded-[1px] bg-white/20" />
+            <span className="h-1.5 w-1.5 rounded-[1px] bg-white/10" />
+          </span>
+          <span className="truncate rounded border border-white/[0.08] bg-white/[0.03] px-2.5 py-0.5 font-mono text-[10px] tracking-wide text-ink-dim">
+            {project.mediaChip}
+          </span>
+          <span className="ml-auto font-mono text-[9px] uppercase tracking-[0.24em] text-ink-dim/60">
+            {KIND_LABEL[project.mediaKind]}
+          </span>
+        </div>
+
+        <div
+          className={`relative aspect-4/3 overflow-hidden ${
+            isPhoto ? "bg-navy-900 p-5 sm:p-8" : ""
+          }`}
+        >
+          {/* Trama de fondo: cose los cuatro paneles al mismo sistema */}
+          <div className="pointer-events-none absolute inset-0 grid-lines opacity-30" />
+
           {project.image ? (
-            <Image
-              src={project.image}
-              alt={project.imageAlt ? t(project.imageAlt) : t(project.title)}
-              fill
-              sizes="(max-width: 1024px) 100vw, 58vw"
-              className="object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.06]"
-            />
+            <div
+              className={`relative h-full w-full overflow-hidden ${
+                isPhoto ? "rounded-lg ring-1 ring-white/10" : ""
+              }`}
+            >
+              <Image
+                src={project.image}
+                alt={project.imageAlt ? t(project.imageAlt) : t(project.title)}
+                fill
+                sizes="(max-width: 1024px) 100vw, 58vw"
+                className={`${isPhoto ? "object-contain" : "object-cover"} ${toned} group-hover:scale-[1.04]`}
+              />
+            </div>
           ) : (
-            <>
-              <div className="absolute inset-0 grid-lines opacity-40" />
-              <div className="absolute inset-0 transition-transform duration-[900ms] ease-out group-hover:scale-[1.05]">
-                <ProjectVisual kind={project.visual ?? "device"} />
-              </div>
-            </>
+            <div className="absolute inset-0 transition-transform duration-[900ms] ease-out group-hover:scale-[1.04]">
+              <ProjectVisual kind={project.visual ?? "device"} />
+            </div>
           )}
 
-          {/* Esquinas de encuadre: se abren al pasar el mouse */}
+          {/* Tinte de marca sobre las fotos: se retira al pasar el mouse.
+              Los dibujos técnicos ya nacen en la paleta, no lo necesitan. */}
+          {project.image && (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 opacity-70 transition-opacity duration-700 group-hover:opacity-0"
+              style={{
+                background:
+                  "linear-gradient(160deg, rgba(4,16,31,0.15) 0%, rgba(4,16,31,0.55) 60%, rgba(11,58,82,0.6) 100%)",
+              }}
+            />
+          )}
+
+          {/* Destello que cruza el panel */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -inset-y-8 -left-1/3 w-1/3 -translate-x-full rotate-12 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-[1100ms] ease-out group-hover:translate-x-[420%]"
+          />
+
+          {/* Esquinas de encuadre */}
           <span className="pointer-events-none absolute left-4 top-4 h-6 w-6 border-l border-t border-white/25 transition-all duration-500 group-hover:left-3 group-hover:top-3 group-hover:h-9 group-hover:w-9 group-hover:border-cyan-light" />
           <span className="pointer-events-none absolute bottom-4 right-4 h-6 w-6 border-b border-r border-white/25 transition-all duration-500 group-hover:bottom-3 group-hover:right-3 group-hover:h-9 group-hover:w-9 group-hover:border-orange-light" />
         </div>
 
         {/* Pie técnico */}
-        <div className="flex items-center gap-4 border-t border-white/[0.07] bg-navy-950 px-5 py-3 font-mono text-[10px] uppercase tracking-[0.24em] text-ink-dim">
+        <div className="flex items-center gap-4 border-t border-white/[0.07] px-5 py-3 font-mono text-[10px] uppercase tracking-[0.24em] text-ink-dim">
           <span className={accent.text}>{project.slug}</span>
           <span className="h-px flex-1 bg-white/10" />
-          <span>{project.image ? "IMG · 01" : "DWG · 01"}</span>
+          <span className="hidden sm:inline">
+            {lang === "es" ? "Pasa el mouse" : "Hover"}
+          </span>
           <span>{project.year}</span>
         </div>
       </div>

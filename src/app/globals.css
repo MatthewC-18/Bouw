@@ -23,13 +23,23 @@
   color-scheme: dark;
 }
 
+/*
+ * El color de fondo vive SOLO en <html>.
+ *
+ * El fondo 3D es un elemento fijo con z-index negativo. En el orden de
+ * pintado de CSS, el fondo de un bloque en flujo (como <body>) se pinta
+ * DESPUÉS de los hijos con z-index negativo — o sea, encima. Si <body>
+ * tuviera color, taparía la escena entera. El de <html> no: ese se propaga
+ * al lienzo del viewport y queda por debajo de todo.
+ */
 html {
   scroll-behavior: smooth;
   background-color: var(--color-navy-950);
+  overflow-x: clip;
 }
 
 body {
-  background-color: var(--color-navy-950);
+  background-color: transparent;
   color: var(--color-ink);
   font-family: var(--font-sans);
   overflow-x: hidden;

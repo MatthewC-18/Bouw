@@ -8,6 +8,7 @@ import Process from "@/components/Process";
 import Projects from "@/components/Projects";
 import SceneBreak from "@/components/SceneBreak";
 import Services from "@/components/Services";
+import SideRails from "@/components/SideRails";
 import { BREAKS } from "@/lib/content";
 
 export default function Home() {
@@ -15,6 +16,7 @@ export default function Home() {
     <>
       <Background />
       <Nav />
+      <SideRails />
       <main className="relative flex-1">
         <Hero />
         {/* Aquí la marca se desarma: la banda deja la escena despejada */}

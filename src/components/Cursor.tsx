@@ -87,16 +87,35 @@ export default function Cursor() {
       targetScale = state === "view" ? 2.6 : state === "text" ? 0.55 : 1.75;
     };
 
+    // Cuando nada se mueve no tocamos el DOM: el rAF se queda en vacio.
+    let lastX = NaN;
+    let lastY = NaN;
+
     const tick = () => {
+      raf = window.requestAnimationFrame(tick);
+
+      const dx = targetX - ringX;
+      const dy = targetY - ringY;
+      const ds = targetScale - scale;
+      const still =
+        Math.abs(dx) < 0.05 &&
+        Math.abs(dy) < 0.05 &&
+        Math.abs(ds) < 0.002 &&
+        targetX === lastX &&
+        targetY === lastY;
+
+      if (still) return;
+
+      lastX = targetX;
+      lastY = targetY;
+
       // Inercia del anillo
-      ringX += (targetX - ringX) * 0.16;
-      ringY += (targetY - ringY) * 0.16;
-      scale += (targetScale - scale) * 0.16;
+      ringX += dx * 0.16;
+      ringY += dy * 0.16;
+      scale += ds * 0.16;
 
       dot.style.transform = `translate3d(${targetX}px, ${targetY}px, 0) translate(-50%, -50%)`;
       ring.style.transform = `translate3d(${ringX}px, ${ringY}px, 0) translate(-50%, -50%) scale(${scale.toFixed(3)})`;
-
-      raf = window.requestAnimationFrame(tick);
     };
 
     raf = window.requestAnimationFrame(tick);
@@ -130,7 +149,6 @@ export default function Cursor() {
           group fixed left-0 top-0 flex h-9 w-9 items-center justify-center
           rounded-full border opacity-0 will-change-transform
           border-cyan-brand/70 bg-cyan-brand/[0.06]
-          backdrop-blur-[1px]
           transition-[background-color,border-color,box-shadow] duration-300
           data-[state=link]:border-cyan-light data-[state=link]:bg-cyan-light/10
           data-[state=view]:border-orange-brand data-[state=view]:bg-orange-brand/15

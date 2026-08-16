@@ -25,7 +25,7 @@ export default function About() {
 
   return (
     <section id="nosotros" className="relative py-28 lg:py-40">
-      <div className="mx-auto max-w-7xl px-6 lg:px-10">
+      <div className="mx-auto max-w-6xl px-6 lg:px-10">
         <div className="grid gap-14 lg:grid-cols-2 lg:gap-20">
           <div>
             <Reveal>
@@ -43,7 +43,7 @@ export default function About() {
             <div className="mt-12 grid gap-4 sm:grid-cols-2">
               {OFFICES.map((o, i) => (
                 <Reveal key={o.city} delay={i * 90}>
-                  <div className="rounded-2xl border border-white/10 bg-navy-900/60 p-6">
+                  <div className="rounded-2xl border border-white/10 bg-navy-900/85 p-6">
                     <div className="flex items-center justify-between">
                       <h3 className="font-display text-lg font-bold text-ink">
                         {o.city}
@@ -67,7 +67,7 @@ export default function About() {
           {/* Valores */}
           <div className="lg:pt-14">
             <Reveal>
-              <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-navy-900/50 p-8 sm:p-10">
+              <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-navy-900/85 p-8 sm:p-10">
                 <LogoMark className="pointer-events-none absolute -right-10 -top-10 h-56 w-auto opacity-[0.07]" />
 
                 <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-orange-light">

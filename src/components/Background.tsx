@@ -30,8 +30,8 @@ export default function Background() {
       {/* Escena */}
       <div className="absolute inset-0">{mounted && <SceneRoot />}</div>
 
-      {/* Viñeta: mantiene el texto legible por encima del 3D */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_25%,rgba(4,16,31,0.55)_100%)]" />
+      {/* Viñeta suave: oscurece los bordes sin apagar la escena */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(4,16,31,0.42)_100%)]" />
       <div className="noise absolute inset-0" />
     </div>
   );

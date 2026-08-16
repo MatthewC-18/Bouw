@@ -81,6 +81,38 @@ export const STATS: { value: string; label: Localized }[] = [
 ];
 
 /* ------------------------------------------------------------------ */
+/* Bandas entre secciones                                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Frases cortas que ocupan las bandas donde la escena 3D queda a la vista.
+ * Deben poder leerse solas: son la postura de la empresa, no relleno.
+ */
+export const BREAKS: { mark: string; quote: Localized }[] = [
+  {
+    mark: "A—01",
+    quote: {
+      es: "No entregamos diagnósticos. Entregamos el proceso corriendo.",
+      en: "We don't deliver diagnoses. We deliver the process, running.",
+    },
+  },
+  {
+    mark: "A—02",
+    quote: {
+      es: "Si no se puede medir, no lo llamamos mejora.",
+      en: "If it can't be measured, we don't call it an improvement.",
+    },
+  },
+  {
+    mark: "A—03",
+    quote: {
+      es: "Dos husos horarios, una sola conversación.",
+      en: "Two time zones, one conversation.",
+    },
+  },
+];
+
+/* ------------------------------------------------------------------ */
 /* Proyectos                                                           */
 /* ------------------------------------------------------------------ */
 

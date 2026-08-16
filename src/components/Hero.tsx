@@ -31,7 +31,7 @@ export default function Hero() {
       id="top"
       className="relative flex min-h-[100svh] items-center overflow-hidden"
     >
-      <div className="mx-auto w-full max-w-7xl px-6 pt-32 pb-24 lg:px-10">
+      <div className="mx-auto w-full max-w-6xl px-6 pt-32 pb-24 lg:px-10">
         <div className="max-w-3xl">
           <p className="mb-7 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 font-mono text-[11px] uppercase tracking-[0.28em] text-cyan-light backdrop-blur-sm">
             <span className="relative flex h-1.5 w-1.5">

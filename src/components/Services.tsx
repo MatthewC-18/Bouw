@@ -38,11 +38,11 @@ export default function Services() {
   return (
     <section
       id="servicios"
-      className="relative border-y border-white/[0.06] bg-navy-900/40 py-28 lg:py-40"
+      className="relative border-y border-white/[0.06] bg-navy-900/55 py-28 lg:py-40"
     >
       <div className="pointer-events-none absolute inset-0 grid-lines opacity-25" />
 
-      <div className="relative mx-auto max-w-7xl px-6 lg:px-10">
+      <div className="relative mx-auto max-w-6xl px-6 lg:px-10">
         <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
           <Reveal className="lg:sticky lg:top-32 lg:self-start">
             <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-orange-light">
@@ -68,7 +68,7 @@ export default function Services() {
           <div className="grid gap-5 sm:grid-cols-2">
             {SERVICES.map((s, i) => (
               <Reveal key={s.id} delay={i * 80}>
-                <div className="group h-full rounded-2xl border border-white/10 bg-navy-950/60 p-7 transition-all duration-500 hover:-translate-y-1 hover:border-cyan-brand/40 hover:bg-navy-950">
+                <div className="group h-full rounded-2xl border border-white/10 bg-navy-950/85 p-7 transition-all duration-500 hover:-translate-y-1 hover:border-cyan-brand/40 hover:bg-navy-950">
                   <span className="flex h-12 w-12 items-center justify-center rounded-xl border border-cyan-brand/30 bg-cyan-brand/10 text-cyan-light transition-colors duration-500 group-hover:border-orange-brand/50 group-hover:bg-orange-brand/10 group-hover:text-orange-light">
                     <svg
                       viewBox="0 0 24 24"

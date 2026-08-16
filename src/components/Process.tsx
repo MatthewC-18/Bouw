@@ -47,7 +47,7 @@ export default function Process() {
 
   return (
     <section id="proceso" className="relative py-28 lg:py-40">
-      <div className="mx-auto max-w-7xl px-6 lg:px-10">
+      <div className="mx-auto max-w-6xl px-6 lg:px-10">
         <Reveal>
           <div className="flex items-center gap-4">
             <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-orange-light">

@@ -40,21 +40,46 @@ const ACCENT: Record<
 function ProjectCard({ project }: { project: Project }) {
   const { t, lang } = useLang();
   const cardRef = useRef<HTMLElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
+  const frame = useRef(0);
+  const pending = useRef({ x: 0, y: 0, w: 1, h: 1 });
   const accent = ACCENT[project.accent];
 
-  // Inclinación 3D siguiendo el mouse (solo transform, sin re-render).
+  /**
+   * Inclinación y halo siguiendo el mouse.
+   *
+   * Todo se resuelve con `transform` y se agrupa en un rAF: mover el mouse no
+   * debe repintar la tarjeta entera, que es lo que hacía que se sintiera lenta.
+   */
   const onMove = (e: React.MouseEvent<HTMLElement>) => {
     const el = cardRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    const px = (e.clientX - r.left) / r.width - 0.5;
-    const py = (e.clientY - r.top) / r.height - 0.5;
-    el.style.transform = `perspective(1600px) rotateX(${(-py * 3).toFixed(2)}deg) rotateY(${(px * 4).toFixed(2)}deg)`;
-    el.style.setProperty("--mx", `${((e.clientX - r.left) / r.width) * 100}%`);
-    el.style.setProperty("--my", `${((e.clientY - r.top) / r.height) * 100}%`);
+    pending.current = {
+      x: e.clientX - r.left,
+      y: e.clientY - r.top,
+      w: r.width,
+      h: r.height,
+    };
+
+    if (frame.current) return;
+    frame.current = window.requestAnimationFrame(() => {
+      frame.current = 0;
+      const { x, y, w, h } = pending.current;
+      const px = x / w - 0.5;
+      const py = y / h - 0.5;
+      el.style.transform = `perspective(1600px) rotateX(${(-py * 2.4).toFixed(2)}deg) rotateY(${(px * 3.2).toFixed(2)}deg)`;
+      if (glowRef.current) {
+        glowRef.current.style.transform = `translate3d(${x - 240}px, ${y - 240}px, 0)`;
+      }
+    });
   };
 
   const onLeave = () => {
+    if (frame.current) {
+      window.cancelAnimationFrame(frame.current);
+      frame.current = 0;
+    }
     const el = cardRef.current;
     if (el) el.style.transform = "perspective(1600px)";
   };
@@ -66,16 +91,17 @@ function ProjectCard({ project }: { project: Project }) {
       onMouseLeave={onLeave}
       className={`
         group relative isolate overflow-hidden rounded-3xl border border-white/10
-        bg-navy-900/75 backdrop-blur-xl
+        bg-navy-900/90
         transition-[border-color,box-shadow] duration-500 ${accent.border}
         hover:shadow-[0_50px_140px_-50px_rgba(34,181,207,0.5)]
       `}
-      style={{ willChange: "transform" }}
     >
+      {/* Halo: se mueve con transform, nunca se repinta */}
       <div
-        className="pointer-events-none absolute inset-0 -z-10 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+        ref={glowRef}
+        className="pointer-events-none absolute left-0 top-0 -z-10 h-[480px] w-[480px] rounded-full opacity-0 transition-opacity duration-500 group-hover:opacity-100"
         style={{
-          background: `radial-gradient(480px circle at var(--mx, 50%) var(--my, 50%), ${accent.glow}, transparent 70%)`,
+          background: `radial-gradient(circle closest-side, ${accent.glow}, transparent)`,
         }}
       />
 
@@ -206,7 +232,7 @@ export default function Projects() {
 
   return (
     <section id="proyectos" className="relative py-28 lg:py-40">
-      <div className="mx-auto max-w-7xl px-6 lg:px-10">
+      <div className="mx-auto max-w-6xl px-6 lg:px-10">
         <Reveal>
           <div className="flex items-center gap-4">
             <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-cyan-light">

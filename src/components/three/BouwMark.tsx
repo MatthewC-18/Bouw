@@ -3,6 +3,7 @@
 import { useMemo, useRef, type RefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { LAST_STAGE } from "./layouts";
 import {
   BRAND,
   CIRCUIT_RINGS,
@@ -19,7 +20,7 @@ import {
 } from "./logoShapes";
 
 type Props = {
-  /** Etapa continua del scroll: 0 hero … 4 contacto */
+  /** Etapa continua del scroll: 0 hero … 5 contacto */
   stageRef: RefObject<number>;
   /** Posición del mouse normalizada a -1..1 */
   pointerRef: RefObject<{ x: number; y: number }>;
@@ -76,11 +77,11 @@ export default function BouwMark({
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
     const d = Math.min(delta, 0.05);
-    const stage = Math.min(Math.max(stageRef.current ?? 0, 0), 4);
+    const stage = Math.min(Math.max(stageRef.current ?? 0, 0), LAST_STAGE);
 
     // Presencia de la marca sólida: entera al inicio, y de vuelta al final.
-    const entering = 1 - smoothstep(0.06, 0.5, stage);
-    const returning = smoothstep(3.45, 3.9, stage);
+    const entering = 1 - smoothstep(0.08, 0.55, stage);
+    const returning = smoothstep(LAST_STAGE - 0.55, LAST_STAGE - 0.08, stage);
     const presence = Math.max(entering, returning);
 
     const g = group.current;

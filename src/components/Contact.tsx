@@ -54,7 +54,7 @@ export default function Contact() {
     >
       <div className="pointer-events-none absolute left-1/2 top-0 h-px w-2/3 -translate-x-1/2 bg-gradient-to-r from-transparent via-cyan-brand/60 to-transparent" />
 
-      <div className="mx-auto max-w-7xl px-6 lg:px-10">
+      <div className="mx-auto max-w-6xl px-6 lg:px-10">
         <div className="grid gap-14 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
           <Reveal>
             <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-cyan-light">
@@ -108,7 +108,7 @@ export default function Contact() {
           <Reveal delay={120}>
             <form
               onSubmit={(e) => e.preventDefault()}
-              className="rounded-3xl border border-white/10 bg-navy-900/60 p-7 backdrop-blur-xl sm:p-10"
+              className="rounded-3xl border border-white/10 bg-navy-900/90 p-7 sm:p-10"
             >
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>

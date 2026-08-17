@@ -12,8 +12,18 @@
   --color-orange-light: #f79b4a;
   --color-ink: #e8eef6;
   --color-ink-dim: #93a7bf;
-  --color-bone: #ece7dd;
-  --color-bone-dim: #d8d1c4;
+  /*
+   * Papel.
+   *
+   * No es hueso ni crema: es un tinte frío sacado del propio navy de la
+   * marca. Un papel cálido con tinta fría y acentos naranjas eran tres
+   * temperaturas peleando; con el papel en la misma familia de color que la
+   * tinta, el pliego cierra solo.
+   */
+  --color-paper: #e2e5e7;
+  --color-paper-deep: #d3d8dc;
+  --color-ink-print: #0d2947;
+  --color-ink-print-dim: #566d84;
 
   --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
@@ -85,15 +95,18 @@ body {
 /*
  * Pliego impreso.
  *
- * No es una tarjeta: es papel a sangre. La tarjeta redondeada con sombra
- * flotando en el centro es exactamente el patrón que se repite en todo lo
- * generado, así que aquí el bloque claro corta la página de lado a lado, sin
- * radio y sin sombra, y la jerarquía la llevan filetes de un píxel y el
- * tamaño de la letra.
+ * No es una tarjeta: es papel a sangre, sin radio ni sombra. Y va en
+ * monocromo — tinta navy en tres intensidades y nada más. El naranja es el
+ * acento de la parte oscura; meterlo también aquí rompía la armonía y era
+ * justo lo que delataba la plantilla.
+ *
+ * La retícula no son filetes horizontales debajo de cada fila, sino columnas
+ * verticales tenues, como el papel de contabilidad: se lee como soporte, no
+ * como separador puesto a mano.
  */
 .sheet {
-  background-color: var(--color-bone);
-  color: #0d2947;
+  background-color: var(--color-paper);
+  color: var(--color-ink-print);
   position: relative;
 }
 
@@ -102,18 +115,35 @@ body {
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 0;
   pointer-events: none;
-  opacity: 0.5;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23p)' opacity='0.055'/%3E%3C/svg%3E");
+  opacity: 0.4;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23p)' opacity='0.05'/%3E%3C/svg%3E");
   mix-blend-mode: multiply;
 }
 
 .sheet .sheet-dim {
-  color: #4c6480;
+  color: var(--color-ink-print-dim);
 }
 
 .sheet-rule {
   background-color: rgba(13, 41, 71, 0.16);
+}
+
+/* Columnas de papel de contabilidad */
+.ledger-columns {
+  background-image: linear-gradient(
+    to right,
+    rgba(13, 41, 71, 0.07) 1px,
+    transparent 1px
+  );
+  background-size: calc(100% / 6) 100%;
+}
+
+/* Chip de tinta plena: el único "acento" del pliego */
+.ink-chip {
+  background-color: var(--color-ink-print);
+  color: var(--color-paper);
 }
 
 /* Marcas de corte: las de una plancha de imprenta */
@@ -122,29 +152,7 @@ body {
   width: 18px;
   height: 18px;
   border-color: currentColor;
-  opacity: 0.45;
-}
-
-/*
- * Trama de taller: puntos finísimos, no cuadrícula.
- * La retícula de líneas es el sello visual de las landings generadas; un
- * punteado denso lee como papel técnico y no como plantilla.
- */
-.blueprint-dots {
-  background-image: radial-gradient(
-    rgba(120, 170, 210, 0.16) 0.5px,
-    transparent 0.5px
-  );
-  background-size: 26px 26px;
-}
-
-.noise::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.035;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.35;
 }
 
 /* ---- Reveal on scroll ---- */

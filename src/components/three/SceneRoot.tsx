@@ -8,7 +8,6 @@ import * as THREE from "three";
 import AssemblyField from "./AssemblyField";
 import BouwMark from "./BouwMark";
 import Dragon from "./Dragon";
-import { sceneStage } from "@/lib/sceneStage";
 import { LAST_STAGE } from "./layouts";
 import { BRAND } from "./logoShapes";
 
@@ -124,7 +123,6 @@ function ParticleField({ count }: { count: number }) {
 /* ------------------------------------------------------------------ */
 
 export default function SceneRoot() {
-  // Se comparte con la interfaz (el indicador de figura) sin re-render.
   const stageRef = useRef(0);
   const pointerRef = useRef({ x: 0, y: 0 });
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -188,7 +186,6 @@ export default function SceneRoot() {
 
       const set = (value: number) => {
         stageRef.current = value;
-        sceneStage.current = value;
       };
 
       if (y <= rests[0].end) return set(0);

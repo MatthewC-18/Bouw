@@ -24,6 +24,22 @@ const up = new THREE.Vector3(0, 1, 0);
 const GAP = 0.0072;
 /** Segmento donde nacen las alas: el hombro. */
 const SHOULDER = 4;
+/** Segmento donde nacen las patas traseras: la cadera. */
+const HIP = 11;
+
+/**
+ * Varillas del ala.
+ *
+ * Los dedos que tensan la membrana. Sin ellos el ala es un trozo de tela;
+ * con ellos se lee como ala de dragón. Cada entrada es la punta del dedo en
+ * el plano del perfil: de ahí se saca largo y ángulo.
+ */
+const WING_BONES: [number, number][] = [
+  [3.6, 1.15],
+  [2.45, -0.5],
+  [1.85, -0.42],
+  [1.2, -0.62],
+];
 
 /**
  * Ala membranosa.
@@ -69,6 +85,86 @@ function tailFinGeometry(): THREE.ExtrudeGeometry {
   });
 }
 
+type DragonGeo = {
+  wing: THREE.ExtrudeGeometry;
+  bone: THREE.CylinderGeometry;
+  thigh: THREE.ConeGeometry;
+  shin: THREE.ConeGeometry;
+  claw: THREE.ConeGeometry;
+};
+
+/** Membrana del ala con sus varillas, en el plano del perfil. */
+function Wing({ geo }: { geo: DragonGeo }) {
+  return (
+    <group rotation={[0, Math.PI / 2, 0]}>
+      <mesh geometry={geo.wing}>
+        <meshStandardMaterial
+          color="#123a63"
+          metalness={0.3}
+          roughness={0.6}
+          side={THREE.DoubleSide}
+          transparent
+          opacity={0.82}
+          emissive={BRAND.cyan}
+          emissiveIntensity={0.14}
+        />
+      </mesh>
+
+      {WING_BONES.map(([x, y], i) => {
+        const length = Math.hypot(x, y);
+        // El cilindro nace en Y: se gira para que apunte a la punta del dedo
+        const angle = Math.atan2(y, x) - Math.PI / 2;
+        return (
+          <mesh
+            key={i}
+            geometry={geo.bone}
+            position={[x / 2, y / 2, 0.04]}
+            rotation={[0, 0, angle]}
+            scale={[1, length, 1]}
+          >
+            <meshStandardMaterial
+              color={BRAND.navyDeep}
+              metalness={0.85}
+              roughness={0.35}
+            />
+          </mesh>
+        );
+      })}
+    </group>
+  );
+}
+
+/** Pata trasera: muslo, caña y garra. */
+function Leg({ geo }: { geo: DragonGeo }) {
+  return (
+    <group>
+      <mesh geometry={geo.thigh} position={[0, -0.28, 0]} rotation={[0.35, 0, 0.2]}>
+        <meshStandardMaterial
+          color={BRAND.navy}
+          metalness={0.9}
+          roughness={0.3}
+        />
+      </mesh>
+      <mesh geometry={geo.shin} position={[0.07, -0.66, -0.1]} rotation={[-0.5, 0, 0.1]}>
+        <meshStandardMaterial
+          color={BRAND.navyDeep}
+          metalness={0.9}
+          roughness={0.3}
+        />
+      </mesh>
+      <mesh geometry={geo.claw} position={[0.1, -0.92, 0.06]} rotation={[1.1, 0, 0]}>
+        <meshStandardMaterial
+          color={BRAND.orange}
+          metalness={0.6}
+          roughness={0.3}
+          emissive={BRAND.orangeLight}
+          emissiveIntensity={0.4}
+        />
+      </mesh>
+    </group>
+  );
+}
+
 /**
  * El dragón.
  *
@@ -93,6 +189,9 @@ export default function Dragon({
   const shoulder = useRef<THREE.Group>(null);
   const wingL = useRef<THREE.Group>(null);
   const wingR = useRef<THREE.Group>(null);
+  const hip = useRef<THREE.Group>(null);
+  const legL = useRef<THREE.Group>(null);
+  const legR = useRef<THREE.Group>(null);
   const tail = useRef<THREE.Group>(null);
   const travelled = useRef(0);
 
@@ -129,6 +228,10 @@ export default function Dragon({
       eye: new THREE.SphereGeometry(0.085, 12, 12),
       wing: wingGeometry(),
       tailFin: tailFinGeometry(),
+      bone: new THREE.CylinderGeometry(0.028, 0.014, 1, 5),
+      thigh: new THREE.ConeGeometry(0.17, 0.62, 6),
+      shin: new THREE.ConeGeometry(0.1, 0.6, 5),
+      claw: new THREE.ConeGeometry(0.055, 0.26, 4),
     }),
     [],
   );
@@ -235,9 +338,15 @@ export default function Dragon({
     b.instanceMatrix.needsUpdate = true;
     c.instanceMatrix.needsUpdate = true;
 
+    // Alabeo: la criatura se peralta al girar, no va plana
+    const bank = reducedMotion ? 0 : Math.sin(t * 1.5) * 0.34;
+
     // Cabeza al frente de la cadena
     if (head.current) {
       placeOnPath(head.current, travelled.current + GAP * 1.2, waveAt(0));
+      head.current.rotateZ(bank * 0.6);
+      // Cabecea despacio, como oteando
+      head.current.rotateX(reducedMotion ? 0 : Math.sin(t * 0.7) * 0.07);
     }
 
     // Mandíbula: abre y cierra despacio, como respirando
@@ -252,6 +361,18 @@ export default function Dragon({
         travelled.current - SHOULDER * GAP,
         waveAt(SHOULDER),
       );
+      shoulder.current.rotateZ(bank);
+    }
+
+    // Patas traseras: recogidas en vuelo, con un balanceo mínimo
+    if (hip.current) {
+      placeOnPath(hip.current, travelled.current - HIP * GAP, waveAt(HIP));
+      hip.current.rotateZ(bank * 0.8);
+    }
+    if (!reducedMotion) {
+      const tuck = Math.sin(t * 0.75) * 0.14;
+      if (legL.current) legL.current.rotation.x = 0.55 + tuck;
+      if (legR.current) legR.current.rotation.x = 0.55 - tuck;
     }
     if (!reducedMotion) {
       // Aleteo lento de planeo: baja rápido, sube despacio
@@ -316,6 +437,7 @@ export default function Dragon({
 
       {/* Cabeza */}
       <group ref={head}>
+        <group scale={1.45}>
         <mesh geometry={geo.skull} scale={[0.95, 0.8, 1.15]}>
           <meshStandardMaterial
             color={BRAND.navy}
@@ -383,38 +505,27 @@ export default function Dragon({
             <meshBasicMaterial color={BRAND.orangeLight} toneMapped={false} />
           </mesh>
         ))}
+        </group>
       </group>
 
       {/* Alas, ancladas al hombro */}
       <group ref={shoulder}>
         <group ref={wingL} position={[0.18, 0.12, 0]}>
-          <mesh geometry={geo.wing} rotation={[0, Math.PI / 2, 0]}>
-            <meshStandardMaterial
-              color="#123a63"
-              metalness={0.35}
-              roughness={0.55}
-              side={THREE.DoubleSide}
-              transparent
-              opacity={0.88}
-              emissive={BRAND.cyan}
-              emissiveIntensity={0.16}
-            />
-          </mesh>
+          <Wing geo={geo} />
         </group>
 
         <group ref={wingR} position={[-0.18, 0.12, 0]} scale={[-1, 1, 1]}>
-          <mesh geometry={geo.wing} rotation={[0, Math.PI / 2, 0]}>
-            <meshStandardMaterial
-              color="#123a63"
-              metalness={0.35}
-              roughness={0.55}
-              side={THREE.DoubleSide}
-              transparent
-              opacity={0.88}
-              emissive={BRAND.cyan}
-              emissiveIntensity={0.16}
-            />
-          </mesh>
+          <Wing geo={geo} />
+        </group>
+      </group>
+
+      {/* Patas traseras, ancladas a la cadera */}
+      <group ref={hip}>
+        <group ref={legL} position={[0.2, -0.1, 0]}>
+          <Leg geo={geo} />
+        </group>
+        <group ref={legR} position={[-0.2, -0.1, 0]} scale={[-1, 1, 1]}>
+          <Leg geo={geo} />
         </group>
       </group>
 

@@ -73,9 +73,13 @@ export default function AssemblyField({
     const stage = Math.min(Math.max(stageRef.current ?? 0, 0), LAST_STAGE);
 
     // Las piezas solo se ven cuando la B sólida no está: son complementarias.
-    const shown =
+    // En el tramo medio bajan de tamaño: ahí son fondo, y la única silueta
+    // con lectura tiene que ser el dragón.
+    const visible =
       smoothstep(0.08, 0.55, stage) *
       (1 - smoothstep(LAST_STAGE - 0.55, LAST_STAGE - 0.08, stage));
+    const atEdge = Math.min(Math.min(stage, LAST_STAGE - stage), 1);
+    const shown = visible * (1 - atEdge * 0.45);
 
     if (shown < 0.002) {
       m.visible = false;

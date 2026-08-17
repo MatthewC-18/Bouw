@@ -22,21 +22,21 @@ export default function PaperWindow() {
         {/* Filos del troquel */}
         <span
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[#0d2947]/25"
+          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[#0d2947]/30"
         />
         <span
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-[#0d2947]/25"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-[#0d2947]/30"
         />
 
         {/* Sombra interior del papel sobre el hueco */}
         <span
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-[rgba(236,231,221,0.55)] to-transparent"
+          className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-[rgba(226,229,231,0.6)] to-transparent"
         />
         <span
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[rgba(236,231,221,0.55)] to-transparent"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[rgba(226,229,231,0.6)] to-transparent"
         />
 
         <p className="pointer-events-none select-none font-mono text-[10px] uppercase tracking-[0.34em] text-ink-dim">

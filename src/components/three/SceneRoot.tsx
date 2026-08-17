@@ -7,18 +7,35 @@ import { Bloom, EffectComposer } from "@react-three/postprocessing";
 import * as THREE from "three";
 import AssemblyField from "./AssemblyField";
 import BouwMark from "./BouwMark";
+import { sceneStage } from "@/lib/sceneStage";
 import { LAST_STAGE } from "./layouts";
 import { BRAND } from "./logoShapes";
 
-/** Secciones que marcan cada etapa del ensamblaje, en orden. */
-const STAGE_SECTIONS = [
-  "top",
-  "proyectos",
-  "servicios",
-  "proceso",
-  "nosotros",
-  "contacto",
-] as const;
+/**
+ * Anclas de cada etapa, en orden.
+ *
+ * Los proyectos no cuentan como una sola: cada tarjeta es su propia etapa,
+ * y por eso la escena dibuja una figura distinta para cada proyecto mientras
+ * pasa por delante. Se resuelven contra el DOM porque los proyectos salen de
+ * `content.ts` y no tienen id propio.
+ */
+function stageAnchors(): HTMLElement[] {
+  const byId = (id: string) => document.getElementById(id);
+  const rows = Array.from(
+    document.querySelectorAll<HTMLElement>("#proyectos article"),
+  );
+
+  const list = [
+    byId("top"),
+    ...rows,
+    byId("servicios"),
+    byId("proceso"),
+    byId("nosotros"),
+    byId("contacto"),
+  ];
+
+  return list.filter((el): el is HTMLElement => Boolean(el));
+}
 
 /**
  * Fracción de cada sección que se considera "reposo".
@@ -106,6 +123,7 @@ function ParticleField({ count }: { count: number }) {
 /* ------------------------------------------------------------------ */
 
 export default function SceneRoot() {
+  // Se comparte con la interfaz (el indicador de figura) sin re-render.
   const stageRef = useRef(0);
   const pointerRef = useRef({ x: 0, y: 0 });
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -150,40 +168,38 @@ export default function SceneRoot() {
     const compute = () => {
       raf = 0;
       const vh = window.innerHeight || 1;
+      const anchors = stageAnchors();
+      // Si el DOM todavía no tiene todas las anclas, no movemos nada.
+      if (anchors.length !== LAST_STAGE + 1) return;
+
       const rests: { start: number; end: number }[] = [];
-      for (const id of STAGE_SECTIONS) {
-        const el = document.getElementById(id);
-        if (!el) return;
+      for (const el of anchors) {
         const r = el.getBoundingClientRect();
         const top = r.top + window.scrollY;
         // El margen se acota en píxeles: sin esto, una sección muy alta
-        // (proyectos) se comería la transición entera y el morph pasaría
-        // detrás de las tarjetas en vez de en la banda libre.
+        // se comería la transición entera y el morph pasaría detrás del
+        // contenido en vez de en el hueco libre.
         const margin = Math.min(r.height * REST_MARGIN, vh * 0.45);
         rests.push({ start: top + margin, end: top + r.height - margin });
       }
 
       const y = window.scrollY + window.innerHeight / 2;
 
-      if (y <= rests[0].end) {
-        stageRef.current = 0;
-        return;
-      }
+      const set = (value: number) => {
+        stageRef.current = value;
+        sceneStage.current = value;
+      };
+
+      if (y <= rests[0].end) return set(0);
+
       const last = rests.length - 1;
-      if (y >= rests[last].start) {
-        stageRef.current = last;
-        return;
-      }
+      if (y >= rests[last].start) return set(last);
 
       for (let i = 0; i < last; i++) {
-        if (y >= rests[i].start && y <= rests[i].end) {
-          stageRef.current = i;
-          return;
-        }
+        if (y >= rests[i].start && y <= rests[i].end) return set(i);
         if (y > rests[i].end && y < rests[i + 1].start) {
           const span = rests[i + 1].start - rests[i].end;
-          stageRef.current = i + (y - rests[i].end) / Math.max(span, 1);
-          return;
+          return set(i + (y - rests[i].end) / Math.max(span, 1));
         }
       }
     };

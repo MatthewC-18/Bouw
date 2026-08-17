@@ -9,24 +9,22 @@ import {
 /**
  * Sistema de ensamblaje.
  *
- * La marca se descompone en N piezas. Cada "layout" es una disposición
- * distinta de esas mismas piezas; el scroll interpola entre layouts, así que
- * la figura literalmente se desarma y se vuelve a armar mientras bajas.
+ * La marca se descompone en N piezas y esas mismas piezas se reorganizan
+ * mientras bajas. Cada figura tiene que significar algo: durante proyectos
+ * la escena dibuja de qué trata cada uno.
  *
- * Regla de composición: en las secciones con contenido, las piezas se apartan
- * a los flancos para que no queden tapadas por las tarjetas. El morph ocurre
- * en las bandas intermedias, donde la pantalla está libre.
- *
- * Layout 0  B           → hero
- * Layout 1  Columnas    → proyectos (dos bancos ordenados a los lados)
- * Layout 2  Engranaje   → servicios (aro grande que enmarca el contenido)
- * Layout 3  Cadena      → proceso (cuatro nodos en fila, arriba)
- * Layout 4  Dos núcleos → nosotros (Quito y Monterrey, unidos por un arco)
- * Layout 5  B           → contacto (vuelve a armarse)
+ *  0  B            → hero
+ *  1  Columna      → Anatris (eje vertebral)
+ *  2  Contorno     → dispositivo médico (carcasa acotada)
+ *  3  Barras       → programa contable (el tablero)
+ *  4  Corazón      → Charms (regalo personalizado)
+ *  5  Engranaje    → servicios (mecanismo en marcha)
+ *  6  Cadena       → proceso (cuatro nodos en fila)
+ *  7  Dos núcleos  → nosotros (Quito y Monterrey)
+ *  8  B            → contacto (vuelve a armarse)
  */
 
-/** Última etapa del recorrido; la marca sólida vuelve a aparecer aquí. */
-export const LAST_STAGE = 5;
+export const LAST_STAGE = 8;
 
 export type Layout = Float32Array; // [x,y,z] * count
 
@@ -135,26 +133,115 @@ function sampleMark(count: number, rand: () => number) {
 }
 
 /**
- * Columnas: dos bancos ordenados a izquierda y derecha.
- * El centro queda libre porque ahí van las tarjetas de proyecto.
+ * Columna: piezas apiladas alrededor de un eje curvo.
+ * Es la figura de Anatris — cuerpo, eje, movimiento.
  */
-function columnsLayout(count: number, rand: () => number): Layout {
+function spineLayout(count: number, rand: () => number): Layout {
   const out = new Float32Array(count * 3);
-  const perSide = Math.ceil(count / 2);
-  const rows = Math.ceil(perSide / 3);
+  const levels = 26;
+  const perLevel = Math.ceil(count / levels);
 
   for (let i = 0; i < count; i++) {
-    const right = i % 2 === 0;
-    const n = Math.floor(i / 2);
-    const col = n % 3;
-    const row = Math.floor(n / 3);
+    const level = Math.floor(i / perLevel);
+    const t = level / (levels - 1);
+    const y = (t - 0.5) * 8.6;
+    // Curvatura sagital: la columna no es recta
+    const axisX = Math.sin(t * Math.PI * 1.35) * 1.5;
+    const axisZ = Math.cos(t * Math.PI * 0.9) * 0.8 - 1;
 
-    const baseX = right ? 6.0 : -6.0;
-    const dir = right ? 1 : -1;
+    const around = (i % perLevel) / perLevel;
+    const ring = 0.55 + (1 - Math.abs(t - 0.5) * 2) * 0.55;
+    const a = around * Math.PI * 2 + t * 2.2;
 
-    out[i * 3] = baseX + dir * col * 1.25 + (rand() - 0.5) * 0.3;
-    out[i * 3 + 1] = (row / Math.max(rows - 1, 1) - 0.5) * 11 + (rand() - 0.5) * 0.35;
-    out[i * 3 + 2] = -1 - rand() * 3;
+    out[i * 3] = axisX + Math.cos(a) * ring + (rand() - 0.5) * 0.18;
+    out[i * 3 + 1] = y + (rand() - 0.5) * 0.2;
+    out[i * 3 + 2] = axisZ + Math.sin(a) * ring;
+  }
+  return out;
+}
+
+/**
+ * Contorno de carcasa con sus cotas: la figura del dispositivo médico.
+ * Perímetro redondeado + dos líneas de cota separadas del cuerpo.
+ */
+function outlineLayout(count: number, rand: () => number): Layout {
+  const out = new Float32Array(count * 3);
+  const w = 4.6;
+  const h = 2.8;
+  const r = 1.0;
+  const bodyCount = Math.floor(count * 0.74);
+
+  // Perímetro de rectángulo redondeado, recorrido por ángulo (superelipse)
+  for (let i = 0; i < bodyCount; i++) {
+    const a = (i / bodyCount) * Math.PI * 2;
+    const ca = Math.cos(a);
+    const sa = Math.sin(a);
+    const n = 4.5; // exponente: cuanto más alto, más recta la caja
+    const k = Math.pow(
+      Math.pow(Math.abs(ca), n) + Math.pow(Math.abs(sa), n),
+      -1 / n,
+    );
+    out[i * 3] = ca * k * (w + r) + (rand() - 0.5) * 0.16;
+    out[i * 3 + 1] = sa * k * (h + r) + (rand() - 0.5) * 0.16;
+    out[i * 3 + 2] = -1 + (rand() - 0.5) * 0.7;
+  }
+
+  // Cotas: dos reglas paralelas al cuerpo
+  for (let i = bodyCount; i < count; i++) {
+    const j = i - bodyCount;
+    const top = j % 2 === 0;
+    const t = j / (count - bodyCount);
+    if (top) {
+      out[i * 3] = (t * 2 - 1) * (w + r);
+      out[i * 3 + 1] = h + r + 1.5;
+    } else {
+      out[i * 3] = w + r + 1.6;
+      out[i * 3 + 1] = (t * 2 - 1) * (h + r);
+    }
+    out[i * 3 + 2] = -1 + (rand() - 0.5) * 0.4;
+  }
+  return out;
+}
+
+/** Barras: el tablero del programa contable, en volumen. */
+function barsLayout(count: number, rand: () => number): Layout {
+  const out = new Float32Array(count * 3);
+  const heights = [2.2, 3.6, 2.8, 5.2, 4.2, 6.4, 5.0, 3.2];
+  const bars = heights.length;
+  const perBar = Math.ceil(count / bars);
+  const base = -3.4;
+
+  for (let i = 0; i < count; i++) {
+    const b = Math.min(Math.floor(i / perBar), bars - 1);
+    const k = (i % perBar) / perBar;
+    const x = (b - (bars - 1) / 2) * 1.85;
+
+    out[i * 3] = x + (rand() - 0.5) * 0.75;
+    out[i * 3 + 1] = base + k * heights[b] + (rand() - 0.5) * 0.18;
+    out[i * 3 + 2] = -1 + (rand() - 0.5) * 0.75;
+  }
+  return out;
+}
+
+/** Corazón: la figura de Charms, regalos hechos a mano. */
+function heartLayout(count: number, rand: () => number): Layout {
+  const out = new Float32Array(count * 3);
+  const scale = 0.34;
+
+  for (let i = 0; i < count; i++) {
+    const t = rand() * Math.PI * 2;
+    // Radio con sesgo hacia el borde: el contorno se lee mejor que el relleno
+    const fill = 0.55 + Math.pow(rand(), 0.4) * 0.45;
+    const x = 16 * Math.pow(Math.sin(t), 3);
+    const y =
+      13 * Math.cos(t) -
+      5 * Math.cos(2 * t) -
+      2 * Math.cos(3 * t) -
+      Math.cos(4 * t);
+
+    out[i * 3] = x * scale * fill + (rand() - 0.5) * 0.2;
+    out[i * 3 + 1] = y * scale * fill - 0.4 + (rand() - 0.5) * 0.2;
+    out[i * 3 + 2] = -1 + (rand() - 0.5) * 1.4;
   }
   return out;
 }
@@ -264,7 +351,10 @@ export function buildAssembly(count: number, seed = 7): AssemblyData {
     count,
     layouts: [
       mark.positions,
-      columnsLayout(count, rand),
+      spineLayout(count, rand),
+      outlineLayout(count, rand),
+      barsLayout(count, rand),
+      heartLayout(count, rand),
       gearLayout(count, rand),
       chainLayout(count, rand),
       dualLayout(count, rand),

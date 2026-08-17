@@ -33,13 +33,15 @@ export default function Hero() {
     >
       <div className="mx-auto w-full max-w-6xl px-6 pt-32 pb-24 lg:px-10">
         <div className="max-w-3xl">
-          <p className="mb-7 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 font-mono text-[11px] uppercase tracking-[0.28em] text-cyan-light backdrop-blur-sm">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-light opacity-75" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-cyan-light" />
+          <div className="mb-8 flex items-center gap-4">
+            <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-cyan-light">
+              {t(HERO.eyebrow)}
             </span>
-            {t(HERO.eyebrow)}
-          </p>
+            <span className="h-px w-16 bg-gradient-to-r from-cyan-brand to-transparent" />
+            <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-ink-dim">
+              EST. {COMPANY.yearsExperience}+
+            </span>
+          </div>
 
           <h1 className="font-display text-[clamp(2.75rem,8vw,6.5rem)] font-bold leading-[0.94] tracking-tight">
             <span className="block text-ink">{t(HERO.titleTop)}</span>

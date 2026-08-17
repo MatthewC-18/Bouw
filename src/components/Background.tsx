@@ -25,7 +25,7 @@ export default function Background() {
       <div className="absolute left-1/4 bottom-0 h-[420px] w-[420px] rounded-full bg-navy-700/20 blur-[150px]" />
 
       {/* Rejilla técnica */}
-      <div className="absolute inset-0 grid-lines opacity-[0.55]" />
+      <div className="absolute inset-0 blueprint-dots opacity-[0.55]" />
 
       {/* Escena */}
       <div className="absolute inset-0">{mounted && <SceneRoot />}</div>

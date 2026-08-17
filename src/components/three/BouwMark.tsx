@@ -20,7 +20,7 @@ import {
 } from "./logoShapes";
 
 type Props = {
-  /** Etapa continua del scroll: 0 hero … 5 contacto */
+  /** Etapa continua del scroll: 0 hero … 8 contacto */
   stageRef: RefObject<number>;
   /** Posición del mouse normalizada a -1..1 */
   pointerRef: RefObject<{ x: number; y: number }>;
@@ -32,12 +32,31 @@ function smoothstep(edge0: number, edge1: number, x: number) {
   return t * t * (3 - 2 * t);
 }
 
+/** Salida suave: entra rápido y frena, como una pieza que encaja. */
+function easeOutQuint(x: number) {
+  return 1 - Math.pow(1 - x, 5);
+}
+
 /**
- * La "B" de BOUW sólida, construida pieza por pieza.
+ * Cada pieza de la marca entra desde su propia dirección.
+ * El desfase hace que se monten una tras otra, no todas de golpe.
+ */
+const PIECE_ENTRY: { offset: [number, number, number]; delay: number }[] = [
+  { offset: [-4.5, 1.2, -2], delay: 0 }, // asta superior
+  { offset: [-4.5, -1.2, -2], delay: 0.08 }, // asta inferior
+  { offset: [3.5, 3.2, 2.5], delay: 0.18 }, // panza superior
+  { offset: [3.5, -3.2, 2.5], delay: 0.26 }, // panza inferior
+];
+
+const PULSE_COUNT = 3;
+
+/**
+ * La "B" de BOUW sólida.
  *
- * Solo es visible en los extremos del recorrido: entera en el hero, y otra vez
- * al llegar a contacto. En medio cede el turno a las piezas sueltas
- * (`AssemblyField`), de modo que la marca parece desarmarse y rearmarse.
+ * Se monta pieza por pieza al entrar, respira con el mouse, y por sus trazos
+ * corren pulsos de luz. Solo aparece en los extremos del recorrido: entera en
+ * el hero y otra vez al llegar a contacto. En medio cede el turno a las piezas
+ * sueltas (`AssemblyField`).
  */
 export default function BouwMark({
   stageRef,
@@ -46,11 +65,13 @@ export default function BouwMark({
 }: Props) {
   const group = useRef<THREE.Group>(null);
   const inner = useRef<THREE.Group>(null);
-  const topArrow = useRef<THREE.Group>(null);
-  const bottomArrow = useRef<THREE.Group>(null);
+  const pieces = useRef<(THREE.Group | null)[]>([]);
+  const pulses = useRef<(THREE.Mesh | null)[]>([]);
   const tealMat = useRef<THREE.MeshStandardMaterial>(null);
   const orangeMat = useRef<THREE.MeshStandardMaterial>(null);
   const traceMat = useRef<THREE.MeshStandardMaterial>(null);
+
+  const curves = useMemo(() => circuitCurves(), []);
 
   const geo = useMemo(() => {
     // No centramos cada pieza: las coordenadas del logo ya son absolutas
@@ -64,15 +85,18 @@ export default function BouwMark({
       topBowl: build(topBowlShape()),
       bottomBowl: build(bottomBowlShape()),
       ring: new THREE.TorusGeometry(RING_RADIUS, TRACE_RADIUS, 16, 48),
-      traces: circuitCurves().map(
+      traces: curves.map(
         (c) => new THREE.TubeGeometry(c, 48, TRACE_RADIUS, 12, false),
       ),
       sphere: new THREE.SphereGeometry(SPHERE_RADIUS, 48, 48),
+      pulse: new THREE.SphereGeometry(TRACE_RADIUS * 2.1, 16, 16),
     };
-  }, []);
+  }, [curves]);
 
   const spheres = useMemo(() => spherePositions(), []);
   const targetRot = useRef(new THREE.Vector2());
+  const intro = useRef(0);
+  const pulsePoint = useRef(new THREE.Vector3());
 
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
@@ -93,6 +117,12 @@ export default function BouwMark({
     }
     g.visible = true;
 
+    // Montaje inicial: avanza una sola vez, la primera vez que se ve.
+    if (intro.current < 1) {
+      intro.current = Math.min(intro.current + d / 1.5, 1);
+    }
+    const assembled = reducedMotion ? 1 : intro.current;
+
     // Opacidad y escala acompañan a la presencia: se disgrega, no se encoge.
     g.traverse((obj) => {
       const mesh = obj as THREE.Mesh;
@@ -102,6 +132,33 @@ export default function BouwMark({
         mat.opacity = presence;
         mat.depthWrite = presence > 0.9;
       }
+    });
+
+    // Cada pieza llega desde su dirección y encaja
+    PIECE_ENTRY.forEach((entry, i) => {
+      const piece = pieces.current[i];
+      if (!piece) return;
+      const local = Math.min(
+        Math.max((assembled - entry.delay) / (1 - entry.delay), 0),
+        1,
+      );
+      const e = easeOutQuint(local);
+      const away = 1 - e;
+
+      // Las astas además laten con el ciclo de las flechas una vez montadas
+      const cycle =
+        reducedMotion || i > 1
+          ? 0
+          : Math.pow((Math.sin(t * 0.9 + i * Math.PI) + 1) / 2, 2) * 0.26;
+      const dir = i === 1 ? -1 : 1;
+
+      piece.position.set(
+        entry.offset[0] * away + cycle * dir,
+        entry.offset[1] * away,
+        entry.offset[2] * away,
+      );
+      piece.rotation.z = away * (i % 2 === 0 ? 0.5 : -0.5);
+      piece.scale.setScalar(0.85 + e * 0.15);
     });
 
     const px = reducedMotion ? 0 : (pointerRef.current?.x ?? 0);
@@ -115,18 +172,26 @@ export default function BouwMark({
 
     g.rotation.x = targetRot.current.x * (1 - settle * 0.6);
     g.rotation.y =
-      targetRot.current.y * (1 - settle * 0.6) + idle * (1 - settle);
+      targetRot.current.y * (1 - settle * 0.6) +
+      idle * (1 - settle) +
+      (1 - assembled) * 0.6;
     g.position.y = reducedMotion ? 0 : Math.sin(t * 0.7) * 0.12;
     g.scale.setScalar(0.86 + presence * 0.14);
 
+    // Pulsos recorriendo los trazos del circuito
     if (!reducedMotion) {
-      // Ciclo de las flechas: entra y sale, desfasadas medio periodo.
-      const cycle = (phase: number) => {
-        const raw = (Math.sin(t * 0.9 + phase) + 1) / 2;
-        return Math.pow(raw, 2) * 0.26;
-      };
-      if (topArrow.current) topArrow.current.position.x = cycle(0);
-      if (bottomArrow.current) bottomArrow.current.position.x = -cycle(Math.PI);
+      for (let i = 0; i < pulses.current.length; i++) {
+        const mesh = pulses.current[i];
+        if (!mesh) continue;
+        const curve = curves[i % curves.length];
+        const lap = Math.floor(i / curves.length);
+        const u = (t * 0.28 + lap * 0.45 + i * 0.11) % 1;
+        curve.getPointAt(u, pulsePoint.current);
+        mesh.position.copy(pulsePoint.current);
+        // Se apaga en los extremos del trazo: parece entrar y salir
+        const fade = Math.sin(u * Math.PI);
+        mesh.scale.setScalar((0.5 + fade) * assembled);
+      }
 
       if (tealMat.current)
         tealMat.current.emissiveIntensity = 1.1 + Math.sin(t * 1.6) * 0.55;
@@ -145,46 +210,77 @@ export default function BouwMark({
   return (
     <group ref={group} dispose={null}>
       <group ref={inner} position={[-0.1, 0, -0.21]}>
-        <group ref={topArrow}>
+        {/* Asta superior */}
+        <group
+          ref={(el) => {
+            pieces.current[0] = el;
+          }}
+        >
           <mesh geometry={geo.topStem}>
             <meshStandardMaterial
               color={BRAND.navy}
-              metalness={0.92}
-              roughness={0.24}
+              metalness={0.94}
+              roughness={0.22}
+              envMapIntensity={1.6}
             />
           </mesh>
         </group>
 
-        <group ref={bottomArrow}>
+        {/* Asta inferior */}
+        <group
+          ref={(el) => {
+            pieces.current[1] = el;
+          }}
+        >
           <mesh geometry={geo.bottomStem}>
             <meshStandardMaterial
               color={BRAND.navyDeep}
-              metalness={0.92}
-              roughness={0.24}
+              metalness={0.94}
+              roughness={0.22}
+              envMapIntensity={1.6}
             />
           </mesh>
         </group>
 
-        <mesh geometry={geo.topBowl}>
-          <meshStandardMaterial
-            color={BRAND.cyan}
-            metalness={0.55}
-            roughness={0.22}
-            emissive={BRAND.cyan}
-            emissiveIntensity={0.18}
-          />
-        </mesh>
+        {/* Panza superior: laca sobre color, como pieza inyectada */}
+        <group
+          ref={(el) => {
+            pieces.current[2] = el;
+          }}
+        >
+          <mesh geometry={geo.topBowl}>
+            <meshPhysicalMaterial
+              color={BRAND.cyan}
+              metalness={0.45}
+              roughness={0.24}
+              clearcoat={1}
+              clearcoatRoughness={0.12}
+              emissive={BRAND.cyan}
+              emissiveIntensity={0.2}
+            />
+          </mesh>
+        </group>
 
-        <mesh geometry={geo.bottomBowl}>
-          <meshStandardMaterial
-            color={BRAND.orange}
-            metalness={0.55}
-            roughness={0.22}
-            emissive={BRAND.orange}
-            emissiveIntensity={0.18}
-          />
-        </mesh>
+        {/* Panza inferior */}
+        <group
+          ref={(el) => {
+            pieces.current[3] = el;
+          }}
+        >
+          <mesh geometry={geo.bottomBowl}>
+            <meshPhysicalMaterial
+              color={BRAND.orange}
+              metalness={0.45}
+              roughness={0.24}
+              clearcoat={1}
+              clearcoatRoughness={0.12}
+              emissive={BRAND.orange}
+              emissiveIntensity={0.2}
+            />
+          </mesh>
+        </group>
 
+        {/* Circuito: anillos, trazos y pulsos */}
         <group position={[0, 0, 0.21]}>
           {CIRCUIT_RINGS.map((r, i) => (
             <mesh key={`ring-${i}`} geometry={geo.ring} position={r.position}>
@@ -210,8 +306,25 @@ export default function BouwMark({
               />
             </mesh>
           ))}
+
+          {/* Señal viajando por el circuito */}
+          {Array.from({ length: PULSE_COUNT * curves.length }, (_, i) => (
+            <mesh
+              key={`pulse-${i}`}
+              geometry={geo.pulse}
+              ref={(el) => {
+                pulses.current[i] = el;
+              }}
+            >
+              <meshBasicMaterial
+                color={i % 2 === 0 ? BRAND.cyanLight : BRAND.orangeLight}
+                toneMapped={false}
+              />
+            </mesh>
+          ))}
         </group>
 
+        {/* Esferas */}
         {spheres.map((s) => (
           <mesh key={s.key} geometry={geo.sphere} position={s.position}>
             <meshStandardMaterial

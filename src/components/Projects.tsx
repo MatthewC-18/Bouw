@@ -110,7 +110,7 @@ function Media({ project }: { project: Project }) {
           }`}
         >
           {/* Trama de fondo: cose los cuatro paneles al mismo sistema */}
-          <div className="pointer-events-none absolute inset-0 grid-lines opacity-30" />
+          <div className="pointer-events-none absolute inset-0 blueprint-dots opacity-30" />
 
           {project.image ? (
             <div

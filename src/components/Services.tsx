@@ -40,7 +40,7 @@ export default function Services() {
       id="servicios"
       className="relative border-y border-white/[0.06] bg-navy-900/55 py-28 lg:py-40"
     >
-      <div className="pointer-events-none absolute inset-0 grid-lines opacity-25" />
+      <div className="pointer-events-none absolute inset-0 blueprint-dots opacity-25" />
 
       <div className="relative mx-auto max-w-6xl px-6 lg:px-10">
         <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">

@@ -4,6 +4,7 @@ import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 import Hero from "@/components/Hero";
 import Nav from "@/components/Nav";
+import PaperWindow from "@/components/PaperWindow";
 import Process from "@/components/Process";
 import Projects from "@/components/Projects";
 import SceneBreak from "@/components/SceneBreak";
@@ -30,7 +31,9 @@ export default function Home() {
           quote={BREAKS[1].quote}
           align="right"
         />
+        {/* Dossier impreso: pliego, troquel con la escena viva, pliego */}
         <Process />
+        <PaperWindow />
         <About />
         {/* Y aquí vuelve a armarse, justo antes de contacto */}
         <SceneBreak mark={BREAKS[2].mark} quote={BREAKS[2].quote} />

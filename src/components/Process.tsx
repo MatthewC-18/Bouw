@@ -3,18 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 import { PROCESS, PROCESS_INTRO } from "@/lib/content";
 import { useLang } from "@/lib/i18n";
-import Reveal from "./Reveal";
 
 /**
- * Proceso, sobre hoja clara.
+ * Proceso — primer pliego del dossier impreso.
  *
- * Es la sección que rompe el todo-oscuro: un pliego color hueso flotando
- * sobre la escena, como una hoja técnica puesta encima de la mesa. Los cuatro
- * pasos se encienden conforme el scroll los alcanza y la línea que los une se
- * dibuja detrás.
+ * Papel a sangre, no tarjeta: corta la página de lado a lado, sin radio ni
+ * sombra. La jerarquía la llevan los filetes de un píxel, los numerales
+ * colgados en el margen y el tamaño de la letra. Los cuatro pasos son una
+ * tabla, no cuatro cajas.
  */
 export default function Process() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const trackRef = useRef<HTMLOListElement>(null);
   const [progress, setProgress] = useState(0);
 
@@ -27,8 +26,7 @@ export default function Process() {
       raf = 0;
       const r = el.getBoundingClientRect();
       const vh = window.innerHeight;
-      // 0 cuando la lista entra por abajo, 1 cuando su final cruza el centro.
-      const p = (vh * 0.75 - r.top) / Math.max(r.height * 0.85, 1);
+      const p = (vh * 0.72 - r.top) / Math.max(r.height * 0.8, 1);
       setProgress(Math.min(Math.max(p, 0), 1));
     };
 
@@ -46,98 +44,109 @@ export default function Process() {
     };
   }, []);
 
-  const reached = (i: number) => progress >= (i + 0.35) / PROCESS.length;
+  const reached = (i: number) => progress >= (i + 0.3) / PROCESS.length;
 
   return (
-    <section id="proceso" className="relative py-20 lg:py-28">
-      <div className="mx-auto max-w-6xl px-6 lg:px-10">
-        <Reveal>
-          <div className="sheet relative overflow-hidden rounded-[2rem] px-7 py-14 shadow-[0_60px_120px_-60px_rgba(0,0,0,0.85)] sm:px-12 lg:px-16 lg:py-20">
-            {/* Margen de pliego: dos filos como los de una hoja perforada */}
-            <span
-              aria-hidden
-              className="sheet-rule absolute inset-y-0 left-8 hidden w-px lg:block"
-            />
-            <span
-              aria-hidden
-              className="absolute right-8 top-8 hidden font-mono text-[10px] uppercase tracking-[0.28em] text-[#0d2947]/35 lg:block"
-            >
-              BOUW · P—04
-            </span>
+    <section id="proceso" className="sheet relative">
+      {/* Marcas de corte de la plancha */}
+      <span className="crop-mark left-5 top-5 border-l border-t" aria-hidden />
+      <span className="crop-mark right-5 top-5 border-r border-t" aria-hidden />
 
-            <div className="relative">
-              <div className="flex items-center gap-4">
-                <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-orange-brand">
-                  {t(PROCESS_INTRO.eyebrow)}
+      {/* Cabecera de pliego */}
+      <div className="sheet-rule h-px w-full" />
+      <div className="mx-auto flex max-w-[1560px] items-center justify-between px-6 py-4 font-mono text-[10px] uppercase tracking-[0.3em] text-[#0d2947]/50 lg:px-16">
+        <span>BOUW · Dossier</span>
+        <span className="hidden sm:inline">
+          {lang === "es" ? "Pliego 04 — Método" : "Sheet 04 — Method"}
+        </span>
+        <span>ES · EN</span>
+      </div>
+      <div className="sheet-rule h-px w-full" />
+
+      <div className="mx-auto max-w-[1560px] px-6 py-20 lg:px-16 lg:py-28">
+        {/* Titular con numeral colgado en el margen */}
+        <div className="grid gap-8 lg:grid-cols-12">
+          <div className="lg:col-span-2">
+            <span className="font-display text-[clamp(3rem,7vw,6rem)] font-bold leading-none text-[#0d2947]/15">
+              04
+            </span>
+          </div>
+
+          <div className="lg:col-span-7">
+            <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-orange-brand">
+              {t(PROCESS_INTRO.eyebrow)}
+            </p>
+            <h2 className="mt-5 font-display text-[clamp(2rem,5vw,4rem)] font-bold leading-[0.98]">
+              {t(PROCESS_INTRO.title)}
+            </h2>
+          </div>
+
+          <div className="lg:col-span-3">
+            <p className="sheet-dim border-l border-[#0d2947]/20 pl-5 text-sm leading-relaxed">
+              {t(PROCESS_INTRO.subtitle)}
+            </p>
+          </div>
+        </div>
+
+        {/* Los pasos como tabla: filetes, no cajas */}
+        <ol ref={trackRef} className="mt-20 lg:mt-28">
+          <div className="sheet-rule h-px w-full" />
+
+          {PROCESS.map((step, i) => (
+            <li
+              key={step.step}
+              className="group/step relative grid gap-4 border-b border-[#0d2947]/16 py-8 lg:grid-cols-12 lg:gap-8 lg:py-10"
+            >
+              {/* Barra de avance que recorre la fila alcanzada */}
+              <span
+                aria-hidden
+                className={`absolute left-0 top-0 h-px origin-left bg-orange-brand transition-transform duration-700 ease-out ${
+                  reached(i) ? "scale-x-100" : "scale-x-0"
+                }`}
+                style={{ width: "100%" }}
+              />
+
+              <div className="flex items-baseline gap-4 lg:col-span-2">
+                <span
+                  className={`font-mono text-xs transition-colors duration-500 ${
+                    reached(i) ? "text-orange-brand" : "text-[#0d2947]/35"
+                  }`}
+                >
+                  {step.step}
                 </span>
-                <span className="sheet-rule h-px flex-1" />
+                <span
+                  className={`h-1.5 w-1.5 rounded-full transition-colors duration-500 ${
+                    reached(i) ? "bg-orange-brand" : "bg-[#0d2947]/20"
+                  }`}
+                />
               </div>
 
-              <h2 className="mt-8 max-w-2xl font-display text-[clamp(2rem,5vw,3.75rem)] font-bold leading-[1.02]">
-                {t(PROCESS_INTRO.title)}
-              </h2>
-              <p className="sheet-dim mt-6 max-w-xl text-lg leading-relaxed">
-                {t(PROCESS_INTRO.subtitle)}
+              <h3
+                className={`font-display text-2xl font-bold leading-tight transition-opacity duration-700 lg:col-span-3 lg:text-[1.75rem] ${
+                  reached(i) ? "opacity-100" : "opacity-40"
+                }`}
+              >
+                {t(step.title)}
+              </h3>
+
+              <p
+                className={`sheet-dim text-sm leading-relaxed transition-opacity duration-700 lg:col-span-5 ${
+                  reached(i) ? "opacity-100" : "opacity-40"
+                }`}
+              >
+                {t(step.body)}
               </p>
 
-              <ol
-                ref={trackRef}
-                className="relative mt-14 grid gap-10 lg:mt-20 lg:grid-cols-4 lg:gap-8"
+              <p
+                className={`font-mono text-[11px] uppercase tracking-[0.18em] transition-colors duration-500 lg:col-span-2 lg:text-right ${
+                  reached(i) ? "text-orange-brand" : "text-[#0d2947]/35"
+                }`}
               >
-                {/* Riel: vertical en móvil, horizontal en escritorio */}
-                <span
-                  aria-hidden
-                  className="sheet-rule absolute left-[19px] bottom-2 top-2 w-px lg:left-0 lg:right-0 lg:bottom-auto lg:top-[19px] lg:h-px lg:w-auto"
-                />
-                <span
-                  aria-hidden
-                  className="absolute left-[19px] top-2 w-px bg-orange-brand transition-[height] duration-300 ease-out lg:hidden"
-                  style={{
-                    height: `calc(${progress * 100}% - 1rem)`,
-                    maxHeight: "calc(100% - 1rem)",
-                  }}
-                />
-                <span
-                  aria-hidden
-                  className="absolute left-0 top-[19px] hidden h-px bg-orange-brand transition-[width] duration-300 ease-out lg:block"
-                  style={{ width: `${progress * 100}%` }}
-                />
-
-                {PROCESS.map((step, i) => (
-                  <li key={step.step} className="relative pl-14 lg:pl-0">
-                    <span
-                      className={`absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-full border font-mono text-xs transition-all duration-500 lg:relative lg:mb-8 ${
-                        reached(i)
-                          ? "border-orange-brand bg-orange-brand text-[#fdf8f1]"
-                          : "border-[#0d2947]/20 bg-transparent text-[#0d2947]/50"
-                      }`}
-                    >
-                      {step.step}
-                    </span>
-
-                    <div
-                      className={`transition-all duration-700 ${
-                        reached(i)
-                          ? "translate-y-0 opacity-100"
-                          : "translate-y-3 opacity-45"
-                      }`}
-                    >
-                      <h3 className="font-display text-xl font-bold">
-                        {t(step.title)}
-                      </h3>
-                      <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.18em] text-orange-brand">
-                        {t(step.duration)}
-                      </p>
-                      <p className="sheet-dim mt-4 text-sm leading-relaxed">
-                        {t(step.body)}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          </div>
-        </Reveal>
+                {t(step.duration)}
+              </p>
+            </li>
+          ))}
+        </ol>
       </div>
     </section>
   );

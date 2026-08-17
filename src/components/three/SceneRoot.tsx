@@ -265,7 +265,8 @@ export default function SceneRoot() {
         stageRef={stageRef}
         pointerRef={pointerRef}
         reducedMotion={reducedMotion}
-        segments={small ? 34 : 56}
+        rings={small ? 30 : 46}
+        radials={small ? 8 : 12}
       />
       <ParticleField count={small ? 120 : 260} />
 

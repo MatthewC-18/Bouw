@@ -12,9 +12,12 @@
   --color-orange-light: #f79b4a;
   --color-ink: #e8eef6;
   --color-ink-dim: #93a7bf;
+  --color-bone: #ece7dd;
+  --color-bone-dim: #d8d1c4;
 
-  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -61,16 +64,36 @@ body {
 }
 
 /* ---- Utilidades ---- */
-.text-gradient-brand {
-  background: linear-gradient(
-    100deg,
-    var(--color-cyan-light) 0%,
-    var(--color-cyan-brand) 42%,
-    var(--color-orange-brand) 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+/*
+ * Acento de titular.
+ *
+ * Antes esto era un degradado cian→naranja sobre el texto: el recurso más
+ * repetido de las landings generadas. Ahora es color plano naranja —el
+ * acento escaso de la marca— con una regla fina debajo. El cian queda
+ * reservado para la escena 3D, que es donde tiene que llamar la atención.
+ */
+.text-accent {
+  color: var(--color-orange-brand);
+}
+
+.font-display {
+  /* Archivo en su corte expandido: los titulares se plantan como rótulo */
+  font-stretch: 115%;
+  letter-spacing: -0.02em;
+}
+
+/* Hoja técnica: los bloques claros que rompen el todo-oscuro */
+.sheet {
+  background-color: var(--color-bone);
+  color: #0d2947;
+}
+
+.sheet .sheet-dim {
+  color: #4c6480;
+}
+
+.sheet-rule {
+  background-color: rgba(13, 41, 71, 0.14);
 }
 
 /*

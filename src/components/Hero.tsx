@@ -45,7 +45,7 @@ export default function Hero() {
 
           <h1 className="font-display text-[clamp(2.75rem,8vw,6.5rem)] font-bold leading-[0.94] tracking-tight">
             <span className="block text-ink">{t(HERO.titleTop)}</span>
-            <span className="block text-gradient-brand">
+            <span className="block text-accent">
               {t(HERO.titleAccent)}
             </span>
           </h1>
@@ -77,7 +77,7 @@ export default function Hero() {
           <dl className="mt-16 grid max-w-2xl grid-cols-2 gap-x-8 gap-y-8 sm:grid-cols-4">
             {STATS.map((s) => (
               <div key={s.value} className="border-l border-white/10 pl-4">
-                <dt className="font-display text-3xl font-bold text-gradient-brand">
+                <dt className="font-display text-3xl font-bold text-ink">
                   {s.value}
                 </dt>
                 <dd className="mt-1 text-xs leading-snug text-ink-dim">

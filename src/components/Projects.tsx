@@ -323,12 +323,12 @@ export default function Projects() {
                 {lang === "es" ? (
                   <>
                     Lo que hemos{" "}
-                    <span className="text-gradient-brand">construido</span>
+                    <span className="text-accent">construido</span>
                   </>
                 ) : (
                   <>
                     What we have{" "}
-                    <span className="text-gradient-brand">built</span>
+                    <span className="text-accent">built</span>
                   </>
                 )}
               </h2>

@@ -1,19 +1,35 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Archivo, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import Cursor from "@/components/Cursor";
 import { LanguageProvider } from "@/lib/i18n";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+/**
+ * Tipografía.
+ *
+ * Archivo con el eje de ancho abierto: los titulares van en su corte
+ * expandido, que se planta como rótulo industrial. IBM Plex Sans y Mono
+ * completan el sistema — Plex nació en IBM como tipografía de ingeniería,
+ * así que dice lo mismo que dice la empresa.
+ */
+const archivo = Archivo({
+  variable: "--font-archivo",
   subsets: ["latin"],
+  axes: ["wdth"],
   display: "swap",
 });
 
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
+const plexSans = IBM_Plex_Sans({
+  variable: "--font-plex-sans",
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+});
+
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
+  subsets: ["latin"],
+  weight: ["400", "500"],
   display: "swap",
 });
 
@@ -68,7 +84,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="es"
-      className={`${inter.variable} ${spaceGrotesk.variable} h-full antialiased`}
+      className={`${archivo.variable} ${plexSans.variable} ${plexMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col">

@@ -58,7 +58,7 @@ export default function SceneHud() {
       aria-hidden
       className="pointer-events-none fixed bottom-6 left-6 z-40 hidden select-none md:block xl:left-20"
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 rounded-full bg-navy-950/85 px-4 py-2">
         <span
           className={`h-1.5 w-1.5 rounded-full transition-colors duration-300 ${
             morphing ? "bg-orange-brand" : "bg-cyan-light"
@@ -76,7 +76,7 @@ export default function SceneHud() {
         </span>
       </div>
 
-      <span className="mt-2 block h-px w-44 overflow-hidden bg-white/10">
+      <span className="ml-4 mt-2 block h-px w-40 overflow-hidden bg-white/10">
         <span
           ref={barRef}
           className="block h-px w-full origin-left scale-x-0 bg-gradient-to-r from-cyan-brand to-orange-brand"

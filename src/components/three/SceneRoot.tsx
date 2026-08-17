@@ -7,6 +7,7 @@ import { Bloom, EffectComposer } from "@react-three/postprocessing";
 import * as THREE from "three";
 import AssemblyField from "./AssemblyField";
 import BouwMark from "./BouwMark";
+import Dragon from "./Dragon";
 import { sceneStage } from "@/lib/sceneStage";
 import { LAST_STAGE } from "./layouts";
 import { BRAND } from "./logoShapes";
@@ -262,6 +263,12 @@ export default function SceneRoot() {
         pointerRef={pointerRef}
         count={pieceCount}
         reducedMotion={reducedMotion}
+      />
+      <Dragon
+        stageRef={stageRef}
+        pointerRef={pointerRef}
+        reducedMotion={reducedMotion}
+        segments={small ? 34 : 56}
       />
       <ParticleField count={small ? 120 : 260} />
 

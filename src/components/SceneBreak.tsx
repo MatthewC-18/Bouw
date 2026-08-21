@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import type { Localized } from "@/lib/content";
 import { useLang } from "@/lib/i18n";
+import { onLayoutChange, onScrollFrame, tickNow } from "@/lib/scrollTicker";
 
 type Props = {
   /** Índice técnico que aparece junto a la frase */
@@ -21,38 +22,76 @@ type Props = {
 export default function SceneBreak({ mark, quote, align = "left" }: Props) {
   const { t } = useLang();
   const ref = useRef<HTMLDivElement>(null);
-  const [progress, setProgress] = useState(0);
+  const figureRef = useRef<HTMLElement>(null);
+  const ruleRef = useRef<HTMLSpanElement>(null);
 
+  /*
+   * Se anima escribiendo estilos, no con estado.
+   *
+   * Hay tres bandas en la página y cada una hacía `setState` en cada
+   * fotograma de scroll: tres renders de React por fotograma para mover una
+   * opacidad y un ancho. Escribirlos directamente cuesta lo mismo que la
+   * asignación y no despierta al reconciliador.
+   */
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
 
-    let raf = 0;
-    const compute = () => {
-      raf = 0;
+    /*
+     * La banda se mide aparte del scroll.
+     *
+     * `getBoundingClientRect` obliga al navegador a rehacer el layout de
+     * forma sincrona. Hay tres bandas en la pagina y cada una escribia
+     * estilos justo antes de que la siguiente pidiera su rectangulo: leer,
+     * escribir, leer, escribir, sesenta veces por segundo y con el lienzo 3D
+     * peleando por el mismo hilo. Eso es exactamente lo que se siente como
+     * que la pagina va pesada al bajar.
+     *
+     * Ahora la posicion se mide cuando cambia el layout y durante el scroll
+     * solo se lee `scrollY`, que no cuesta nada.
+     */
+    let top = 0;
+    let height = 0;
+
+    const measure = () => {
       const r = el.getBoundingClientRect();
+      top = r.top + window.scrollY;
+      height = r.height;
+    };
+
+    const compute = () => {
       const vh = window.innerHeight || 1;
       // 0 al entrar por abajo, 1 al salir por arriba
-      const p = 1 - (r.top + r.height / 2) / vh;
-      setProgress(Math.min(Math.max(p, 0), 1));
+      const p = Math.min(
+        Math.max(1 - (top - window.scrollY + height / 2) / vh, 0),
+        1,
+      );
+      // Se revela cerca del centro de la pantalla y se retira al salir
+      const near = Math.sin(p * Math.PI);
+
+      const fig = figureRef.current;
+      if (fig) {
+        fig.style.opacity = String(0.25 + near * 0.75);
+        fig.style.transform = `translateY(${(1 - near) * 20}px)`;
+      }
+      const rule = ruleRef.current;
+      if (rule) rule.style.width = `${24 + near * 56}px`;
     };
 
-    const onScroll = () => {
-      if (!raf) raf = window.requestAnimationFrame(compute);
+    const remeasure = () => {
+      measure();
+      compute();
     };
 
-    compute();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll, { passive: true });
+    remeasure();
+    const offScroll = onScrollFrame(compute);
+    const offLayout = onLayoutChange(remeasure);
+    tickNow();
     return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      if (raf) window.cancelAnimationFrame(raf);
+      offScroll();
+      offLayout();
     };
   }, []);
-
-  // Se revela cerca del centro de la pantalla y se retira al salir
-  const near = Math.sin(Math.min(Math.max(progress, 0), 1) * Math.PI);
 
   return (
     <div
@@ -62,12 +101,9 @@ export default function SceneBreak({ mark, quote, align = "left" }: Props) {
     >
       <div className="mx-auto flex w-full max-w-6xl px-6 lg:px-10">
         <figure
+          ref={figureRef}
           className={`max-w-sm ${align === "right" ? "ml-auto text-right" : ""}`}
-          style={{
-            opacity: 0.25 + near * 0.75,
-            transform: `translateY(${(1 - near) * 20}px)`,
-            transition: "opacity 120ms linear",
-          }}
+          style={{ opacity: 0.25, transition: "opacity 120ms linear" }}
         >
           <div
             className={`flex items-center gap-3 ${align === "right" ? "justify-end" : ""}`}
@@ -76,8 +112,9 @@ export default function SceneBreak({ mark, quote, align = "left" }: Props) {
               {mark}
             </span>
             <span
+              ref={ruleRef}
               className="h-px bg-gradient-to-r from-cyan-brand to-transparent transition-[width] duration-500"
-              style={{ width: `${24 + near * 56}px` }}
+              style={{ width: "24px" }}
             />
           </div>
 

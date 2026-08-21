@@ -24,6 +24,22 @@ import {
 
 export const LAST_STAGE = 8;
 
+/**
+ * Cuánto está viajando la escena en esta etapa.
+ *
+ * La etapa es entera mientras el centro de la pantalla está dentro de una
+ * sección, y fraccionaria solo en el hueco entre dos. Así que la parte
+ * decimal es, literalmente, "estoy entre secciones": 0 leyendo, 1 en mitad
+ * del salto.
+ *
+ * De aquí sale el ritmo de toda la escena. Quieto para leer, en marcha en
+ * las bandas.
+ */
+export function travelAt(stage: number): number {
+  const gap = stage - Math.floor(stage);
+  return Math.sin(THREE.MathUtils.clamp(gap, 0, 1) * Math.PI);
+}
+
 export type Layout = Float32Array; // [x,y,z] * count
 
 /** Índice de color por pieza: 0 navy, 1 navy oscuro, 2 cian, 3 naranja */

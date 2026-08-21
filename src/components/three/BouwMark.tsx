@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useRef, type RefObject } from "react";
+import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { useFrame } from "@react-three/fiber";
+import { markScreen } from "@/lib/dragonScreen";
 import * as THREE from "three";
 import { LAST_STAGE } from "./layouts";
+import { applyPlanFade, applyPlanSplit } from "./planSplitMaterial";
 import {
   BRAND,
   CIRCUIT_RINGS,
@@ -50,6 +52,33 @@ const PIECE_ENTRY: { offset: [number, number, number]; delay: number }[] = [
 
 const PULSE_COUNT = 3;
 
+/** Media altura de la B en unidades de mundo, para el velo. Ver el bucle. */
+const MARK_HALF = 1.6;
+
+/**
+ * Calco de aristas de una pieza de la letra.
+ *
+ * Un pelo más grande que la pieza: sin eso la línea se pelea con la
+ * superficie por el mismo píxel de profundidad y aparece a parches. Es el
+ * mismo margen que lleva el calco del dragón.
+ *
+ * La opacidad la escribe el bucle, y el lado en el que existe lo decide el
+ * divisor desde el shader.
+ */
+function PieceEdges({ geometry }: { geometry: THREE.BufferGeometry }) {
+  return (
+    <lineSegments geometry={geometry} scale={1.003} renderOrder={2}>
+      <lineBasicMaterial
+        color={BRAND.cyanLight}
+        transparent
+        opacity={0}
+        depthWrite={false}
+        toneMapped={false}
+      />
+    </lineSegments>
+  );
+}
+
 /**
  * La "B" de BOUW sólida.
  *
@@ -71,6 +100,8 @@ export default function BouwMark({
   const orangeMat = useRef<THREE.MeshStandardMaterial>(null);
   const traceMat = useRef<THREE.MeshStandardMaterial>(null);
 
+  const markCenter = useMemo(() => new THREE.Vector3(), []);
+  const markEdge = useMemo(() => new THREE.Vector3(), []);
   const curves = useMemo(() => circuitCurves(), []);
 
   const geo = useMemo(() => {
@@ -79,11 +110,36 @@ export default function BouwMark({
     const build = (shape: THREE.Shape) =>
       new THREE.ExtrudeGeometry(shape, EXTRUDE_SETTINGS);
 
-    return {
+    const pieces = {
       topStem: build(topStemShape()),
       bottomStem: build(bottomStemShape()),
       topBowl: build(topBowlShape()),
       bottomBowl: build(bottomBowlShape()),
+    };
+
+    /*
+     * Calco de aristas de la letra.
+     *
+     * Del lado del plano la pieza se pinta en tinta plana oscura, y una
+     * silueta oscura sobre fondo oscuro no es un dibujo: es un agujero. Lo
+     * que la convierte en plano son las líneas — el contorno del bisel, el
+     * canto de la extrusión, el hueco de la panza. `EdgesGeometry` los saca
+     * de la propia geometría, así que si mañana cambia la letra el calco la
+     * sigue solo.
+     */
+    // 25° deja fuera los escalones del bisel (22.5° entre segmento y
+    // segmento) y se queda solo con los quiebres reales de la letra
+    const trace = (g: THREE.ExtrudeGeometry) => new THREE.EdgesGeometry(g, 25);
+    const edges = {
+      topStem: trace(pieces.topStem),
+      bottomStem: trace(pieces.bottomStem),
+      topBowl: trace(pieces.topBowl),
+      bottomBowl: trace(pieces.bottomBowl),
+    };
+
+    return {
+      ...pieces,
+      edges,
       ring: new THREE.TorusGeometry(RING_RADIUS, TRACE_RADIUS, 16, 48),
       traces: curves.map(
         (c) => new THREE.TubeGeometry(c, 48, TRACE_RADIUS, 12, false),
@@ -97,6 +153,36 @@ export default function BouwMark({
   const targetRot = useRef(new THREE.Vector2());
   const intro = useRef(0);
   const pulsePoint = useRef(new THREE.Vector3());
+
+  /*
+   * La marca obedece al divisor de la portada.
+   *
+   * El titular dice "Del diseño a la realidad" y el visitante puede arrastrar
+   * esa frontera con el ratón. Que el dragón la respetara y la letra de la
+   * empresa no era el peor de los mundos posibles: dejaba una pieza de metal
+   * pulido flotando dentro del lado que acabas de declarar "todavía plano".
+   *
+   * Se parchea después del montaje porque los materiales los crea R3F al
+   * pintar el JSX; aquí ya existen. Cada tipo recibe lo suyo: las piezas
+   * sólidas se vuelven dibujo, el calco de aristas solo existe del lado del
+   * plano y los pulsos de luz solo del lado de la materia — en un plano no
+   * hay señal corriendo, hay una línea.
+   */
+  useEffect(() => {
+    const g = group.current;
+    if (!g) return;
+    g.traverse((obj) => {
+      const mat = (obj as THREE.Mesh).material as THREE.Material | undefined;
+      if (!mat || Array.isArray(mat)) return;
+      if ((mat as THREE.LineBasicMaterial).isLineBasicMaterial) {
+        applyPlanFade(mat, "plan");
+      } else if ((mat as THREE.MeshBasicMaterial).isMeshBasicMaterial) {
+        applyPlanFade(mat, "real");
+      } else {
+        applyPlanSplit(mat);
+      }
+    });
+  }, []);
 
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
@@ -127,11 +213,17 @@ export default function BouwMark({
     g.traverse((obj) => {
       const mesh = obj as THREE.Mesh;
       const mat = mesh.material as THREE.MeshStandardMaterial | undefined;
-      if (mat && "opacity" in mat) {
-        mat.transparent = true;
-        mat.opacity = presence;
-        mat.depthWrite = presence > 0.9;
+      if (!mat || !("opacity" in mat)) return;
+      mat.transparent = true;
+      // El calco va a media tinta y nunca escribe profundidad: es una línea
+      // dibujada encima de la pieza, no otra superficie compitiendo con ella
+      if ((mat as unknown as THREE.LineBasicMaterial).isLineBasicMaterial) {
+        mat.opacity = presence * 0.9;
+        mat.depthWrite = false;
+        return;
       }
+      mat.opacity = presence;
+      mat.depthWrite = presence > 0.9;
     });
 
     // Cada pieza llega desde su dirección y encaja
@@ -205,6 +297,29 @@ export default function BouwMark({
     if (inner.current) {
       inner.current.rotation.z = reducedMotion ? 0 : Math.sin(t * 0.3) * 0.02;
     }
+
+    /* ---- Dónde ha quedado en pantalla ---- */
+    /*
+     * Para el velo que protege la lectura. La marca es, en la portada y en
+     * contacto, lo más grande y lo más brillante que hay detrás del texto, así
+     * que tiene tanto derecho como el dragón a que el velo suba cuando pasa
+     * por detrás de un párrafo. Ver `VeilHeat`.
+     *
+     * El radio es aproximado —media altura de la B por su escala— y no hace
+     * falta que sea otra cosa: lo que se decide con esto es la opacidad de un
+     * velo, no una colisión.
+     */
+    g.updateMatrixWorld();
+    markCenter.setFromMatrixPosition(g.matrixWorld);
+    markEdge.copy(markCenter);
+    markEdge.y += MARK_HALF * g.scale.y;
+    markCenter.project(state.camera);
+    markEdge.project(state.camera);
+
+    markScreen.x = markCenter.x * 0.5 + 0.5;
+    markScreen.y = -markCenter.y * 0.5 + 0.5;
+    markScreen.r = Math.max(Math.abs(markEdge.y - markCenter.y) * 0.5, 0.02);
+    markScreen.live = presence;
   });
 
   return (
@@ -224,6 +339,7 @@ export default function BouwMark({
               envMapIntensity={1.6}
             />
           </mesh>
+          <PieceEdges geometry={geo.edges.topStem} />
         </group>
 
         {/* Asta inferior */}
@@ -240,6 +356,7 @@ export default function BouwMark({
               envMapIntensity={1.6}
             />
           </mesh>
+          <PieceEdges geometry={geo.edges.bottomStem} />
         </group>
 
         {/* Panza superior: laca sobre color, como pieza inyectada */}
@@ -259,6 +376,7 @@ export default function BouwMark({
               emissiveIntensity={0.2}
             />
           </mesh>
+          <PieceEdges geometry={geo.edges.topBowl} />
         </group>
 
         {/* Panza inferior */}
@@ -278,6 +396,7 @@ export default function BouwMark({
               emissiveIntensity={0.2}
             />
           </mesh>
+          <PieceEdges geometry={geo.edges.bottomBowl} />
         </group>
 
         {/* Circuito: anillos, trazos y pulsos */}

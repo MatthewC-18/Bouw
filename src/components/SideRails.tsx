@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NAV } from "@/lib/content";
 import { useLang } from "@/lib/i18n";
+import { onLayoutChange, onScrollFrame, tickNow } from "@/lib/scrollTicker";
 
 const SECTIONS = [
   { id: "top", label: { es: "Inicio", en: "Home" } },
@@ -19,40 +20,67 @@ const SECTIONS = [
  */
 export default function SideRails() {
   const { t, lang } = useLang();
-  const [progress, setProgress] = useState(0);
   const [index, setIndex] = useState(0);
+  const barRef = useRef<HTMLSpanElement>(null);
+  const dotRef = useRef<HTMLSpanElement>(null);
+  const pctRef = useRef<HTMLSpanElement>(null);
 
+  /*
+   * El avance se escribe a mano; el índice sí es estado, pero solo cambia
+   * cuando cambia de verdad.
+   *
+   * Iba todo por estado en cada fotograma: un render por fotograma para mover
+   * una barra, y encima una vuelta al DOM midiendo las seis secciones. Los
+   * topes se miden una vez y se recalculan cuando cambia el layout.
+   */
   useEffect(() => {
-    let raf = 0;
+    let tops: number[] = [];
+    let last = -1;
+
+    // `scrollHeight` tambien se cachea: leerlo obliga al navegador a rehacer
+    // el layout, y aqui se leia una vez por fotograma de scroll
+    let maxScroll = 0;
+
+    const measure = () => {
+      tops = SECTIONS.map((s) => {
+        const el = document.getElementById(s.id);
+        return el ? el.getBoundingClientRect().top + window.scrollY : Infinity;
+      });
+      maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    };
 
     const compute = () => {
-      raf = 0;
-      const doc = document.documentElement;
-      const max = doc.scrollHeight - window.innerHeight;
-      setProgress(max > 0 ? Math.min(Math.max(window.scrollY / max, 0), 1) : 0);
+      const progress =
+        maxScroll > 0
+          ? Math.min(Math.max(window.scrollY / maxScroll, 0), 1)
+          : 0;
+
+      const pct = progress * 100;
+      if (barRef.current) barRef.current.style.height = `${pct}%`;
+      if (dotRef.current) dotRef.current.style.top = `calc(${pct}% - 3.5px)`;
+      if (pctRef.current) pctRef.current.textContent = `${Math.round(pct)}%`;
 
       const mid = window.scrollY + window.innerHeight * 0.4;
       let current = 0;
-      SECTIONS.forEach((s, i) => {
-        const el = document.getElementById(s.id);
-        if (!el) return;
-        const top = el.getBoundingClientRect().top + window.scrollY;
-        if (mid >= top) current = i;
-      });
-      setIndex(current);
+      for (let i = 0; i < tops.length; i++) if (mid >= tops[i]) current = i;
+      if (current !== last) {
+        last = current;
+        setIndex(current);
+      }
     };
 
-    const onScroll = () => {
-      if (!raf) raf = window.requestAnimationFrame(compute);
+    const remeasure = () => {
+      measure();
+      compute();
     };
 
-    compute();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll, { passive: true });
+    remeasure();
+    const offScroll = onScrollFrame(compute);
+    const offLayout = onLayoutChange(remeasure);
+    tickNow();
     return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      if (raf) window.cancelAnimationFrame(raf);
+      offScroll();
+      offLayout();
     };
   }, []);
 
@@ -90,12 +118,14 @@ export default function SideRails() {
 
         <span className="relative h-40 w-px bg-white/12">
           <span
+            ref={barRef}
             className="absolute inset-x-0 top-0 origin-top bg-gradient-to-b from-cyan-brand to-orange-brand transition-[height] duration-150 ease-out"
-            style={{ height: `${progress * 100}%` }}
+            style={{ height: "0%" }}
           />
           <span
+            ref={dotRef}
             className="absolute -left-[3px] h-[7px] w-[7px] rounded-full bg-cyan-light shadow-[0_0_12px_rgba(79,214,232,0.9)] transition-[top] duration-150 ease-out"
-            style={{ top: `calc(${progress * 100}% - 3.5px)` }}
+            style={{ top: "calc(0% - 3.5px)" }}
           />
         </span>
 
@@ -104,10 +134,11 @@ export default function SideRails() {
         </span>
 
         <span
+          ref={pctRef}
           className="mt-4 whitespace-nowrap font-mono text-[10px] tracking-[0.28em] text-ink-dim/60"
           style={{ writingMode: "vertical-rl" }}
         >
-          {Math.round(progress * 100)}%
+          0%
         </span>
       </div>
     </>

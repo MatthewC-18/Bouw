@@ -1,21 +1,50 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import LogoMark from "./LogoMark";
+import { getBrief, getBriefServer, subscribeBrief } from "@/lib/brief";
 import { COMPANY, NAV } from "@/lib/content";
 import { useLang } from "@/lib/i18n";
+import { onScrollFrame, tickNow } from "@/lib/scrollTicker";
+
+/**
+ * Lo que el visitante lleva encima, dicho en la barra.
+ *
+ * Las dos herramientas de la página producen un dato suyo: cuántas frases se
+ * ha reconocido y cuántas horas al año le cuesta lo que hace a mano. Una barra
+ * de navegación normal enseña cinco enlaces iguales, los mismos para todo el
+ * mundo y los mismos toda la visita.
+ *
+ * Esta enseña sus dos números. Marca cuatro síntomas y "Diagnóstico" pasa a
+ * llevar un 4; haz la cuenta y "La cuenta" pasa a decir 48 h. No es un
+ * indicador de progreso ni una insignia: es su respuesta, que ahora le sigue
+ * por la página y le espera en el formulario ya escrita.
+ *
+ * Aparece solo cuando hay algo que enseñar. Un contador a cero es ruido.
+ */
+function useBrief() {
+  return useSyncExternalStore(subscribeBrief, getBrief, getBriefServer);
+}
+
+/** Redondeo corto para la barra: 48 h, 1.2 k h. Nunca más de cinco caracteres. */
+function shortHours(hours: number) {
+  if (hours >= 1000) return `${(hours / 1000).toFixed(1)}k h`;
+  return `${Math.round(hours)} h`;
+}
 
 export default function Nav() {
   const { lang, toggle, t } = useLang();
+  const brief = useBrief();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<string>("");
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    // `setScrolled` con el mismo booleano no re-renderiza, así que basta con
+    // colgarse del latido común
+    const off = onScrollFrame(() => setScrolled(window.scrollY > 24));
+    tickNow();
+    return off;
   }, []);
 
   // Resalta la sección visible
@@ -67,25 +96,43 @@ export default function Nav() {
 
         {/* Desktop */}
         <div className="hidden items-center gap-1 md:flex">
-          {NAV.map((item) => (
-            <a
-              key={item.id}
-              href={`#${item.id}`}
-              data-cursor="link"
-              className={`relative rounded-full px-4 py-2 text-sm transition-colors ${
-                active === item.id
-                  ? "text-ink"
-                  : "text-ink-dim hover:text-ink"
-              }`}
-            >
-              {t(item.label)}
-              <span
-                className={`absolute inset-x-4 -bottom-px h-px origin-left bg-gradient-to-r from-cyan-brand to-orange-brand transition-transform duration-500 ${
-                  active === item.id ? "scale-x-100" : "scale-x-0"
+          {NAV.map((item) => {
+            /*
+              El dato del visitante, si lo hay. Va pegado al enlace de la
+              herramienta que lo produjo, no en un sitio aparte: lo que dice es
+              "esto que marcaste sigue aquí", y para eso tiene que estar donde
+              lo marcó.
+            */
+            const mark =
+              item.id === "servicios" && brief.symptoms.length > 0
+                ? String(brief.symptoms.length)
+                : item.id === "proceso" && brief.count
+                  ? shortHours(brief.count.hours)
+                  : null;
+
+            return (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                data-cursor="link"
+                className={`relative flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-sm transition-colors ${
+                  active === item.id ? "text-ink" : "text-ink-dim hover:text-ink"
                 }`}
-              />
-            </a>
-          ))}
+              >
+                {t(item.label)}
+                {mark && (
+                  <span className="whitespace-nowrap rounded-full border border-cyan-brand/45 bg-cyan-brand/10 px-1.5 py-0.5 font-mono text-[10px] leading-none tracking-wider text-cyan-light">
+                    {mark}
+                  </span>
+                )}
+                <span
+                  className={`absolute inset-x-3.5 -bottom-px h-px origin-left bg-cyan-brand transition-transform duration-500 ${
+                    active === item.id ? "scale-x-100" : "scale-x-0"
+                  }`}
+                />
+              </a>
+            );
+          })}
 
           <button
             type="button"
@@ -100,7 +147,7 @@ export default function Nav() {
           <a
             href="#contacto"
             data-cursor="link"
-            className="ml-3 rounded-full bg-gradient-to-r from-cyan-brand to-cyan-light px-5 py-2 text-sm font-semibold text-navy-950 transition-transform duration-300 hover:scale-[1.04]"
+            className="ml-3 bg-cyan-brand px-5 py-2 text-sm font-semibold text-navy-950 transition-colors duration-300 hover:bg-cyan-light"
           >
             {lang === "es" ? "Hablemos" : "Let's talk"}
           </a>

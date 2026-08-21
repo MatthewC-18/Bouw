@@ -1,37 +1,71 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { COMPANY, HERO, STATS } from "@/lib/content";
+import { useEffect, useRef } from "react";
+import { COMPANY, HERO } from "@/lib/content";
 import { useLang } from "@/lib/i18n";
+import { onLayoutChange, onScrollFrame, tickNow } from "@/lib/scrollTicker";
+import OfficeStatus from "./OfficeStatus";
+import PlanSplit from "./PlanSplit";
 
 export default function Hero() {
   const { t } = useLang();
-  const [fade, setFade] = useState(0);
+  const hintRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
 
+  /*
+   * El indicador se apaga escribiendo su opacidad a mano, no por estado.
+   *
+   * Iba con `useState` en el bucle de scroll: un render de React por
+   * fotograma para mover un solo número de un solo estilo. Con la escena 3D
+   * en el mismo hilo eso se nota. Un `ref` y una escritura directa hacen lo
+   * mismo sin pasar por el reconciliador.
+   */
   useEffect(() => {
-    let raf = 0;
-    const onScroll = () => {
-      if (raf) return;
-      raf = window.requestAnimationFrame(() => {
-        raf = 0;
-        const h = window.innerHeight || 1;
-        setFade(Math.min(Math.max(window.scrollY / h, 0), 1));
-      });
+    const off = onScrollFrame(() => {
+      const el = hintRef.current;
+      if (!el) return;
+      const h = window.innerHeight || 1;
+      const fade = Math.min(Math.max(window.scrollY / h, 0), 1);
+      el.style.opacity = String(Math.max(1 - fade * 2, 0));
+    });
+    tickNow();
+    return off;
+  }, []);
+
+  /*
+   * Dónde empieza el titular, para que el corte del divisor caiga en el mismo
+   * sitio sobre las letras que sobre el dragón.
+   *
+   * `PlanSplit` publica el corte en píxeles de ventana porque el shader lo
+   * quiere así, pero el recorte del titular se mide contra la caja del h1. La
+   * resta necesita el borde izquierdo del h1, y eso es un `getBoundingClientRect`
+   * — que fuerza layout, así que se hace cuando cambia el layout y no por
+   * fotograma.
+   */
+  useEffect(() => {
+    const measure = () => {
+      const el = titleRef.current;
+      if (!el) return;
+      el.style.setProperty(
+        "--split-origin",
+        `${el.getBoundingClientRect().left.toFixed(1)}px`,
+      );
     };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (raf) window.cancelAnimationFrame(raf);
-    };
+    measure();
+    const off = onLayoutChange(measure);
+    tickNow();
+    return off;
   }, []);
 
   return (
     <section
       id="top"
-      className="relative flex min-h-[100svh] items-center overflow-hidden"
+      className="hero-veil relative flex min-h-[100svh] items-center overflow-hidden"
     >
-      <div className="mx-auto w-full max-w-6xl px-6 pt-32 pb-24 lg:px-10">
+      {/* El titular dice "Del diseño a la realidad". Esto lo deja tocarlo. */}
+      <PlanSplit />
+
+      <div className="relative z-10 mx-auto w-full max-w-6xl px-6 pt-32 pb-24 lg:px-10">
         <div className="max-w-3xl">
           <div className="mb-8 flex items-center gap-4">
             <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-cyan-light">
@@ -43,49 +77,68 @@ export default function Hero() {
             </span>
           </div>
 
-          <h1 className="font-display text-[clamp(2.75rem,8vw,6.5rem)] font-bold leading-[0.94] tracking-tight">
+          {/*
+            El titular, dos veces.
+
+            Debajo, terminado. Encima, la misma frase dibujada a línea y
+            recortada a la izquierda del divisor plano / realidad. Arrastrar
+            el corte por encima de las letras convierte "Del diseño a la
+            realidad" en literalmente eso: diseño de un lado, realidad del
+            otro. Ver `.split-title` en `globals.css` y el comentario de
+            cabecera de `PlanSplit`.
+
+            La copia de arriba va oculta a los lectores de pantalla: es el
+            mismo texto y anunciado dos veces sería un titular tartamudo.
+          */}
+          <h1
+            ref={titleRef}
+            className="split-title font-display text-[clamp(2.75rem,8vw,6.5rem)] font-bold leading-[0.94] tracking-tight"
+          >
             <span className="block text-ink">{t(HERO.titleTop)}</span>
             <span className="block text-accent">
               {t(HERO.titleAccent)}
             </span>
+
+            <span aria-hidden className="split-title-plan">
+              <span className="block">{t(HERO.titleTop)}</span>
+              <span className="block">{t(HERO.titleAccent)}</span>
+            </span>
           </h1>
 
-          <p className="mt-8 max-w-xl text-lg leading-relaxed text-ink-dim">
+          <p className="mt-8 max-w-xl text-xl leading-relaxed text-ink-soft">
             {t(HERO.subtitle)}
           </p>
 
-          <div className="mt-10 flex flex-wrap items-center gap-4">
+          {/*
+            Una acción, no dos.
+
+            Eran dos píldoras del mismo tamaño, la primera con degradado cián
+            y un barrido naranja al pasar el ratón. El degradado ya se había
+            quitado del titular y de la barra por ser lo que más delata una
+            plantilla, y aquí seguía intacto en el elemento más visible de la
+            página. Ahora es tinta plana, y lo segundo es un enlace de texto
+            que lleva a la calculadora — no compite, ofrece otra cosa.
+          */}
+          <div className="mt-10 flex flex-wrap items-center gap-x-7 gap-y-4">
             <a
               href="#proyectos"
               data-cursor="link"
-              className="group relative overflow-hidden rounded-full bg-gradient-to-r from-cyan-brand to-cyan-light px-8 py-4 text-sm font-semibold text-navy-950 transition-transform duration-300 hover:scale-[1.03]"
+              className="bg-cyan-brand px-8 py-4 text-sm font-semibold text-navy-950 transition-colors duration-300 hover:bg-cyan-light"
             >
-              <span className="relative z-10">{t(HERO.ctaPrimary)}</span>
-              <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-orange-brand to-orange-light transition-transform duration-500 group-hover:translate-x-0" />
+              {t(HERO.ctaPrimary)}
             </a>
 
             <a
-              href="#contacto"
+              href="#proceso"
               data-cursor="link"
-              className="rounded-full border border-white/15 px-8 py-4 text-sm font-semibold text-ink transition-colors duration-300 hover:border-cyan-brand hover:text-cyan-light"
+              className="border-b border-white/25 pb-0.5 text-sm text-ink-soft transition-colors duration-300 hover:border-cyan-light hover:text-cyan-light"
             >
               {t(HERO.ctaSecondary)}
             </a>
           </div>
 
-          {/* Métricas */}
-          <dl className="mt-16 grid max-w-2xl grid-cols-2 gap-x-8 gap-y-8 sm:grid-cols-4">
-            {STATS.map((s) => (
-              <div key={s.value} className="border-l border-white/10 pl-4">
-                <dt className="font-display text-3xl font-bold text-ink">
-                  {s.value}
-                </dt>
-                <dd className="mt-1 text-xs leading-snug text-ink-dim">
-                  {t(s.label)}
-                </dd>
-              </div>
-            ))}
-          </dl>
+          {/* Estado de las dos sedes, en lugar de la fila de cifras */}
+          <OfficeStatus />
         </div>
       </div>
 
@@ -111,8 +164,8 @@ export default function Hero() {
 
       {/* Indicador de scroll */}
       <div
+        ref={hintRef}
         className="pointer-events-none absolute bottom-8 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-3 md:flex"
-        style={{ opacity: 1 - fade * 2 }}
       >
         <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-ink-dim">
           {t(HERO.scrollHint)}

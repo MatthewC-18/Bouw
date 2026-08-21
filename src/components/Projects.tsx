@@ -64,14 +64,20 @@ const KIND_LABEL: Record<Project["mediaKind"], string> = {
 function Media({ project }: { project: Project }) {
   const { t, lang } = useLang();
   const accent = ACCENT[project.accent];
-  const isPhoto = project.mediaKind === "photo";
+  // Fotos y capturas van enmarcadas sobre paspartú y completas. La captura de
+  // Anatris es 1200×630: recortada a 4:3 con `cover` perdía un tercio del
+  // ancho y no se entendía qué se estaba mirando.
+  const isFramed = project.mediaKind !== "drawing";
 
   // Tailwind v4 anima `scale` como propiedad propia, no dentro de `transform`:
   // si no se nombra aquí, el zoom salta en seco en vez de acompañar al color.
+  // El tratamiento en reposo era tan fuerte (gris al 65 %, brillo al 80 %) que
+  // no se distinguía qué había en cada panel hasta pasar el mouse. Ahora solo
+  // se unifica la temperatura; el hover sigue devolviendo el color entero.
   const toned =
     "transition-[filter,scale] duration-[900ms] ease-out " +
-    "grayscale-[0.65] brightness-[0.8] contrast-[1.1] saturate-[0.85] " +
-    "group-hover:grayscale-0 group-hover:brightness-100 group-hover:saturate-100";
+    "grayscale-[0.16] brightness-[0.98] contrast-[1.04] saturate-[0.95] " +
+    "group-hover:grayscale-0 group-hover:brightness-105 group-hover:saturate-110";
 
   return (
     <div
@@ -106,16 +112,16 @@ function Media({ project }: { project: Project }) {
 
         <div
           className={`relative aspect-4/3 overflow-hidden ${
-            isPhoto ? "bg-navy-900 p-5 sm:p-8" : ""
+            isFramed ? "bg-navy-900 p-4 sm:p-6" : ""
           }`}
         >
           {/* Trama de fondo: cose los cuatro paneles al mismo sistema */}
-          <div className="pointer-events-none absolute inset-0 blueprint-dots opacity-30" />
+          <div className="pointer-events-none absolute inset-0 blueprint-dots opacity-20" />
 
           {project.image ? (
             <div
               className={`relative h-full w-full overflow-hidden ${
-                isPhoto ? "rounded-lg ring-1 ring-white/10" : ""
+                isFramed ? "rounded-lg ring-1 ring-white/10" : ""
               }`}
             >
               <Image
@@ -123,7 +129,7 @@ function Media({ project }: { project: Project }) {
                 alt={project.imageAlt ? t(project.imageAlt) : t(project.title)}
                 fill
                 sizes="(max-width: 1024px) 100vw, 58vw"
-                className={`${isPhoto ? "object-contain" : "object-cover"} ${toned} group-hover:scale-[1.04]`}
+                className={`${isFramed ? "object-contain" : "object-cover"} ${toned} group-hover:scale-[1.03]`}
               />
             </div>
           ) : (
@@ -137,19 +143,23 @@ function Media({ project }: { project: Project }) {
           {project.image && (
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-0 opacity-70 transition-opacity duration-700 group-hover:opacity-0"
+              className="pointer-events-none absolute inset-0 opacity-45 transition-opacity duration-700 group-hover:opacity-0"
               style={{
                 background:
-                  "linear-gradient(160deg, rgba(4,16,31,0.15) 0%, rgba(4,16,31,0.55) 60%, rgba(11,58,82,0.6) 100%)",
+                  "linear-gradient(165deg, rgba(4,16,31,0) 0%, rgba(4,16,31,0.28) 55%, rgba(11,58,82,0.42) 100%)",
               }}
             />
           )}
 
-          {/* Destello que cruza el panel */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -inset-y-8 -left-1/3 w-1/3 -translate-x-full rotate-12 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-[1100ms] ease-out group-hover:translate-x-[420%]"
-          />
+          {/*
+            Aquí cruzaba un destello blanco en diagonal al pasar el ratón.
+
+            Es el "brillo de tarjeta": la banda clara que barre el panel, del
+            mismo repertorio que las píldoras con degradado y las tarjetas que
+            se levantan un píxel. No informa de nada y compite con lo único
+            que importa del panel, que es la imagen del trabajo. Las esquinas
+            de encuadre, que sí dicen "esto es una toma", se quedan.
+          */}
 
           {/* Esquinas de encuadre */}
           <span className="pointer-events-none absolute left-4 top-4 h-6 w-6 border-l border-t border-white/25 transition-all duration-500 group-hover:left-3 group-hover:top-3 group-hover:h-9 group-hover:w-9 group-hover:border-cyan-light" />
@@ -240,7 +250,7 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
             {t(project.summary)}
           </p>
 
-          <p className="mt-4 leading-relaxed text-ink-dim">
+          <p className="mt-4 text-[17px] leading-relaxed text-ink-soft">
             {t(project.description)}
           </p>
 
@@ -259,7 +269,7 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
                 <dt className="font-display text-[1.75rem] font-bold leading-none text-ink transition-colors duration-500 group-hover:text-cyan-light">
                   {m.value}
                 </dt>
-                <dd className="mt-2 text-[11px] leading-snug text-ink-dim">
+                <dd className="mt-2 text-[12px] leading-snug text-ink-dim">
                   {t(m.label)}
                 </dd>
               </div>
@@ -311,8 +321,19 @@ export default function Projects() {
   const { t, lang } = useLang();
 
   return (
-    <section id="proyectos" className="relative py-28 lg:py-40">
-      <div className="mx-auto max-w-[1560px] px-6 lg:px-16">
+    /*
+      Con velo. No lo tenía, y era el peor sitio para no tenerlo: las fichas
+      de proyecto son el bloque de texto más largo de la página y el dragón
+      pasa por delante de ellas a media construcción. Ahora el velo sube solo
+      donde el bicho o la marca cruzan un párrafo — ver `VeilHeat`.
+    */
+    <section id="proyectos" className="veil relative py-28 lg:py-40">
+      {/*
+        `relative` no es decorativo: el velo de la sección es un `::before`
+        posicionado, y un hijo sin posicionar se pinta por debajo de él. Sin
+        esto el velo se pone delante del texto en vez de detrás.
+      */}
+      <div className="relative mx-auto max-w-[1560px] px-6 lg:px-16">
         <Reveal>
           <div className="flex items-end justify-between gap-8 border-b border-white/[0.08] pb-8">
             <div>

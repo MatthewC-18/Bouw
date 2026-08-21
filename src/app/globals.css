@@ -10,20 +10,42 @@
   --color-cyan-light: #4fd6e8;
   --color-orange-brand: #e87722;
   --color-orange-light: #f79b4a;
+  /*
+   * Tres niveles de tinta, no dos.
+   *
+   * Medido sobre el navy base: `ink` da 16.4:1 y `ink-dim` 7.75:1. Los dos
+   * pasan de sobra lo exigible, así que el problema nunca fue el contraste
+   * sobre el papel — era que entre uno y otro no había nada, y el párrafo de
+   * entrada de la portada, que es el texto más importante del sitio, estaba
+   * en el nivel más apagado. Encima de una escena 3D en movimiento, eso se
+   * pierde.
+   *
+   * `ink-soft` (12.7:1) es el nivel de la prosa que hay que leer. `ink-dim`
+   * baja a ser lo que de verdad es secundario: rótulos, pies, metadatos.
+   *
+   * Y no se sube a blanco puro a propósito: sobre fondo oscuro el #fff
+   * produce halo y el texto pequeño se emborrona. Un blanco frío al 91 % de
+   * luminosidad se lee mejor que el blanco.
+   */
   --color-ink: #e8eef6;
+  --color-ink-soft: #c6d4e4;
   --color-ink-dim: #93a7bf;
   /*
-   * Papel.
+   * Plano técnico.
    *
-   * No es hueso ni crema: es un tinte frío sacado del propio navy de la
-   * marca. Un papel cálido con tinta fría y acentos naranjas eran tres
-   * temperaturas peleando; con el papel en la misma familia de color que la
-   * tinta, el pliego cierra solo.
+   * Los dos pliegos del dossier iban impresos en papel blanco a sangre. En
+   * mitad de un sitio oscuro eso hacía dos cosas malas: cortaba la página en
+   * seco y, sobre todo, tapaba la escena 3D durante un tercio largo del
+   * scroll — el dragón desaparecía justo donde el visitante ya está enganchado.
+   *
+   * El pliego sigue siendo un pliego (cabecera numerada, marcas de corte,
+   * retícula, tinta plana), pero ahora está impreso en plano: fondo navy
+   * translúcido, linework cián, tinta clara. Es el material que le toca a una
+   * empresa de ingeniería y deja pasar la escena por detrás.
    */
-  --color-paper: #e2e5e7;
-  --color-paper-deep: #d3d8dc;
-  --color-ink-print: #0d2947;
-  --color-ink-print-dim: #566d84;
+  --color-plan-ink: #dfe9f4;
+  --color-plan-dim: #8fa8c4;
+  --color-plan-line: #4fd6e8;
 
   --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
@@ -93,57 +115,370 @@ body {
 }
 
 /*
- * Pliego impreso.
+ * Titular partido por el divisor plano / realidad.
  *
- * No es una tarjeta: es papel a sangre, sin radio ni sombra. Y va en
- * monocromo — tinta navy en tres intensidades y nada más. El naranja es el
- * acento de la parte oscura; meterlo también aquí rompía la armonía y era
- * justo lo que delataba la plantilla.
+ * El titular dice "Del diseño a la realidad" y el divisor de la portada parte
+ * al dragón en esas dos mitades. Esto lleva el mismo corte a la frase: a su
+ * izquierda las letras están dibujadas a línea, como las entrega un plano, y
+ * a su derecha impresas en tinta. La frase demuestra lo que dice mientras se
+ * la lee, que es más de lo que consigue cualquier adjetivo dentro de ella.
  *
- * La retícula no son filetes horizontales debajo de cada fila, sino columnas
- * verticales tenues, como el papel de contabilidad: se lee como soporte, no
- * como separador puesto a mano.
+ * Son dos copias superpuestas del mismo texto —la de abajo terminada, la de
+ * arriba a línea— y lo que se mueve es el recorte de la de arriba. Nada de
+ * esto pasa por React: `PlanSplit` escribe `--split-x` (dónde está el corte,
+ * en píxeles de ventana) y `--split-amt` (cuánto se está usando ahora mismo)
+ * una vez por fotograma, y el resto es CSS.
+ *
+ * `--split-origin` lo escribe `Hero` con el borde izquierdo del propio h1: el
+ * corte se mide contra la ventana y el recorte contra la caja del elemento,
+ * así que hay que restar uno del otro.
  */
-.sheet {
-  background-color: var(--color-paper);
-  color: var(--color-ink-print);
+.split-title {
   position: relative;
 }
 
-/* Grano de papel: apenas perceptible, pero quita el plano digital */
+.split-title-plan {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+  /*
+   * Letra hueca: el filo dibujado y el relleno casi apagado. Es lo que
+   * distingue un texto dibujado de un texto en otro color — un plano no
+   * cambia de tinta, cambia de estar relleno a no estarlo.
+   *
+   * El relleno no es transparente del todo sino navy al 86 %: tapa la tinta
+   * de la copia terminada que hay debajo, que es lo que hace que la letra se
+   * lea hueca, pero deja pasar algo del fondo. Opaco del todo, en la parte
+   * derecha del titular —donde el velo se abre y se ve la escena— las letras
+   * se leerían como bloques oscuros recortados contra el dragón.
+   */
+  color: rgba(4, 16, 31, 0.86);
+  -webkit-text-stroke: 1.5px var(--color-cyan-light);
+  /*
+   * El realce solo aparece cuando hay un gesto detrás. En reposo vale 0 y el
+   * titular se lee limpio: un titular permanentemente medio dibujado no es un
+   * efecto, es un defecto.
+   */
+  opacity: var(--split-amt, 0);
+  clip-path: inset(
+    0 calc(100% - (var(--split-x, 0px) - var(--split-origin, 0px))) 0 0
+  );
+  /*
+   * El recorte cambia todos los fotogramas mientras el corte sigue al ratón.
+   * Sin el aviso, el navegador repinta el titular entero cada vez.
+   */
+  will-change: clip-path, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Sin pasada ni seguimiento el corte no se mueve solo: el realce sobra */
+  .split-title-plan {
+    display: none;
+  }
+}
+
+/*
+ * Retícula técnica.
+ *
+ * La pedían el fondo, Proyectos y Servicios —tres capas con `blueprint-dots`—
+ * pero la clase no estaba escrita en ninguna hoja: el sitio llevaba encima
+ * tres divs vacíos y el fondo salía liso. Es papel milimetrado: punto en cada
+ * cruce fino y línea cada cinco.
+ */
+.blueprint-dots {
+  background-image:
+    linear-gradient(rgba(79, 214, 232, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79, 214, 232, 0.055) 1px, transparent 1px),
+    radial-gradient(rgba(79, 214, 232, 0.16) 1px, transparent 1px);
+  background-size:
+    120px 120px,
+    120px 120px,
+    24px 24px;
+}
+
+/*
+ * Grano de película sobre toda la escena.
+ *
+ * Misma historia que la retícula: `Background` la aplicaba y no existía. Sin
+ * ella el degradado de los halos hace bandas visibles en pantallas de 8 bits.
+ */
+.noise {
+  pointer-events: none;
+  opacity: 0.05;
+  /*
+   * Sin `mix-blend-mode`, y no es un descuido.
+   *
+   * Esta capa va por encima del canvas WebGL. Un modo de fusion obliga al
+   * navegador a leer el fondo sobre el que mezcla, y ese fondo es una capa
+   * compuesta por GPU: en varias combinaciones de Chrome y driver el canvas
+   * se queda en negro entero. Un grano al 5 % ya rompe el bandeado; no vale
+   * la pena arriesgar la escena por el matiz que anade fusionarlo.
+   */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/*
+ * Pliego del dossier.
+ *
+ * No es una tarjeta: es plano a sangre, sin radio ni sombra. Y va en
+ * monocromo — tinta clara sobre navy y linework cián, nada más. El naranja es
+ * el acento de las secciones oscuras; meterlo también aquí rompía la armonía
+ * y era justo lo que delataba la plantilla.
+ *
+ * La retícula no son filetes debajo de cada fila, sino la pauta del propio
+ * plano: se lee como soporte, no como separador puesto a mano.
+ */
+.sheet {
+  position: relative;
+  color: var(--color-plan-ink);
+  /*
+   * Contexto de apilado propio: encierra el `mix-blend-mode: screen` del
+   * grano de abajo dentro del pliego. Sin esto mezclaria contra el fondo de
+   * la pagina —canvas WebGL incluido— con el mismo riesgo de apagarlo.
+   */
+  isolation: isolate;
+  /*
+   * El pliego ya no lleva fondo propio: lo pone `::before`, que es el velo.
+   * Ver abajo.
+   */
+}
+
+/*
+ * Velo local.
+ *
+ * El pliego iba pintado a sangre al 82 %: un rectángulo opaco de borde a
+ * borde y de arriba abajo. Eso resolvía la legibilidad por la vía de tapar,
+ * y de Proyectos hacia abajo dejaba al dragón reducido a una mancha — se leía
+ * como un accidente, no como una decisión.
+ *
+ * El velo va donde está el texto y se retira donde no lo hay. Dos ejes:
+ *
+ *   Vertical  — la cabecera y el pie del pliego no llevan texto corrido, así
+ *               que ahí se abre. Funciona a cualquier ancho.
+ *   Horizontal— la caja de texto tope a 1600 px; lo que sobre de ventana a
+ *               cada lado se descubre entero. Y por debajo de esa medida
+ *               queda un mínimo del 3.5 %, que es menos que el acolchado del
+ *               contenedor: se abre una rendija sin tocar ni una letra.
+ *               Sin ese mínimo, a 1280 px el velo salía macizo de borde a
+ *               borde y tapaba al dragón entero en Proceso y en Nosotros —
+ *               medido con el panel: caía al 47 % del ancho, o sea justo
+ *               detrás de la parte más densa.
+ *
+ * La máscara va en el pseudo-elemento y no en `.sheet` a propósito: una
+ * máscara sobre el elemento se aplica también a su contenido, y lo que
+ * queríamos difuminar es el fondo, no las letras.
+ */
 .sheet::before {
   content: "";
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.4;
+  /*
+   * El pliego también respira, pero menos.
+   *
+   * `VeilHeat` lo mueve entre 0.5 y 1; aquí eso se remapea a 0.8 … 1. El
+   * pliego no es solo un velo: es papel, y un papel que se vuelve translúcido
+   * cuando el bicho anda lejos deja de leerse como papel. Lo que se gana es
+   * que la escena asome un poco más entre pliego y pliego, no que el pliego
+   * desaparezca.
+   */
+  opacity: calc(0.6 + 0.4 * var(--veil-heat, 1));
+  background-image: linear-gradient(
+    180deg,
+    rgba(7, 26, 47, 0.26) 0%,
+    rgba(7, 26, 47, 0.8) 11%,
+    rgba(7, 26, 47, 0.8) 89%,
+    rgba(7, 26, 47, 0.26) 100%
+  );
+  --veil-edge: max(3.5%, calc((100% - 1600px) / 2));
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 var(--veil-edge),
+    #000 calc(100% - var(--veil-edge)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 var(--veil-edge),
+    #000 calc(100% - var(--veil-edge)),
+    transparent 100%
+  );
+}
+
+/* Trama de la impresión: rompe el plano digital sin ensuciar */
+.sheet::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.35;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23p)' opacity='0.05'/%3E%3C/svg%3E");
-  mix-blend-mode: multiply;
+  /* Sobre fondo oscuro `multiply` no hacía nada: el grano no llegaba a verse */
+  mix-blend-mode: screen;
+}
+
+/*
+ * Velo de la portada.
+ *
+ * Era la única sección sin nada entre el texto y la escena: el dragón y la
+ * marca pasan justo por detrás del titular y del párrafo de entrada. De ahí
+ * la queja de que el texto "se confunde con lo de atrás" — no le faltaba
+ * contraste contra el fondo, le faltaba fondo.
+ *
+ * Va anclado a la izquierda y se desvanece antes de la mitad, que es por
+ * donde vuela el bicho: se gana lectura sin tapar la escena.
+ */
+.hero-veil::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  /* Sube y baja con el dragón: ver `VeilHeat`. Sin escena, 1 y a lo suyo. */
+  opacity: var(--veil-heat, 1);
+  /*
+   * Los topes salen de dónde acaba el texto, no a ojo: el párrafo de entrada
+   * llega al 63 % del ancho y la fila de métricas al 73 %. Antes se apagaba
+   * en el 66 % y las dos últimas métricas caían sobre la parte más brillante
+   * de la marca. Ahora aguanta hasta pasado el texto y se abre justo antes
+   * del 72-78 %, que es por donde vuela el dragón en la portada.
+   */
+  background-image: linear-gradient(
+    100deg,
+    rgba(4, 16, 31, 0.94) 0%,
+    rgba(4, 16, 31, 0.88) 45%,
+    rgba(4, 16, 31, 0.58) 63%,
+    rgba(4, 16, 31, 0.2) 77%,
+    transparent 88%
+  );
+}
+
+/*
+ * Y en ventana estrecha, el mismo velo pero de arriba abajo.
+ *
+ * El degradado de arriba está compuesto para una pantalla ancha: el texto
+ * ocupa la mitad izquierda y el velo se abre a partir del 63 % para dejar ver
+ * al dragón. En un móvil el texto ocupa el ancho entero, así que ese mismo
+ * degradado deja el tercio derecho de CADA LÍNEA sin nada detrás — y ahí es
+ * justo donde pasa la marca en naranja a plena luz. Se ve en cuanto se abre
+ * la portada en un teléfono: la última palabra de cada renglón compite con un
+ * reflejo.
+ *
+ * Debajo de 900 px el velo pasa a ser vertical: tapa el bloque de texto
+ * entero y se abre por abajo, que es donde no hay nada escrito.
+ */
+@media (max-width: 899px) {
+  .hero-veil::before {
+    background-image: linear-gradient(
+      185deg,
+      rgba(4, 16, 31, 0.9) 0%,
+      rgba(4, 16, 31, 0.86) 55%,
+      rgba(4, 16, 31, 0.62) 78%,
+      rgba(4, 16, 31, 0.3) 100%
+    );
+  }
+}
+
+/*
+ * El mismo velo para las secciones oscuras, que no son pliego.
+ *
+ * Servicios llevaba un lavado navy al 55 % de borde a borde por encima de la
+ * escena. Aquí la caja útil es más estrecha —1152 px— así que se descubre
+ * mucho más margen, y el lavado sube algo de densidad para compensar que ya
+ * no cubre todo.
+ */
+.veil {
+  position: relative;
+  isolation: isolate;
+}
+
+.veil::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  /* Sube y baja con el dragón: ver `VeilHeat`. Sin escena, 1 y a lo suyo. */
+  opacity: var(--veil-heat, 1);
+  /*
+   * El pico sube de 0.70 a 0.86, y no es hacer el velo más pesado: es lo
+   * contrario.
+   *
+   * Con el velo fijo, 0.70 era a la vez el máximo y el mínimo, y tenía que
+   * valer para el peor caso — la marca de tres dimensiones armándose en
+   * naranja y cián justo detrás del correo y del formulario de contacto. No
+   * valía: ahí el titular se lavaba.
+   *
+   * Ahora `VeilHeat` mueve esto entre el 50 y el 100 %, así que el número de
+   * aquí solo describe el peor caso. Con el bicho encima del párrafo se
+   * protege bastante más que antes (0.86), y con la escena despejada se abre
+   * bastante más también (0.43 contra los 0.70 fijos de siempre). Sube en los
+   * dos sentidos a la vez porque han dejado de ser el mismo número.
+   *
+   * La rampa de entrada baja del 13 % al 5 % por el mismo motivo. En una
+   * sección alta el 13 % son casi doscientos píxeles, y el titular de contacto
+   * cae justo dentro de ellos: el velo llegaba a la mitad de su valor
+   * precisamente donde estaba la frase más grande. El borde suave sigue
+   * estando —hace falta para no cortar en seco contra la sección de al lado—,
+   * solo que ahora dura lo que dura un margen y no lo que dura un titular.
+   */
+  background-image: linear-gradient(
+    180deg,
+    rgba(11, 32, 56, 0.2) 0%,
+    rgba(11, 32, 56, 0.86) 5%,
+    rgba(11, 32, 56, 0.86) 95%,
+    rgba(11, 32, 56, 0.2) 100%
+  );
+  --veil-edge: max(4.5%, calc((100% - 1180px) / 2));
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 var(--veil-edge),
+    #000 calc(100% - var(--veil-edge)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 var(--veil-edge),
+    #000 calc(100% - var(--veil-edge)),
+    transparent 100%
+  );
 }
 
 .sheet .sheet-dim {
-  color: var(--color-ink-print-dim);
+  color: var(--color-plan-dim);
 }
 
 .sheet-rule {
-  background-color: rgba(13, 41, 71, 0.16);
+  background-color: rgba(79, 214, 232, 0.2);
 }
 
-/* Columnas de papel de contabilidad */
+/*
+ * Retícula del plano.
+ *
+ * Las columnas verticales del papel de contabilidad se quedan —son las que
+ * ordenan la caja— y se les suma un pautado horizontal muy tenue: eso es lo
+ * que lo vuelve un plano y no un fondo con rayas.
+ */
 .ledger-columns {
-  background-image: linear-gradient(
-    to right,
-    rgba(13, 41, 71, 0.07) 1px,
-    transparent 1px
-  );
-  background-size: calc(100% / 6) 100%;
+  background-image:
+    linear-gradient(to right, rgba(79, 214, 232, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(79, 214, 232, 0.045) 1px, transparent 1px);
+  background-size:
+    calc(100% / 6) 100%,
+    100% 96px;
 }
 
 /* Chip de tinta plena: el único "acento" del pliego */
 .ink-chip {
-  background-color: var(--color-ink-print);
-  color: var(--color-paper);
+  background-color: var(--color-cyan-brand);
+  color: var(--color-navy-950);
 }
 
 /* Marcas de corte: las de una plancha de imprenta */
@@ -152,7 +487,7 @@ body {
   width: 18px;
   height: 18px;
   border-color: currentColor;
-  opacity: 0.35;
+  opacity: 0.4;
 }
 
 /* ---- Reveal on scroll ---- */
@@ -212,10 +547,21 @@ body {
 ::-webkit-scrollbar-track {
   background: var(--color-navy-950);
 }
+/*
+ * Tinta plana, no degradado.
+ *
+ * Iba en degradado cian→naranja, que es de los detalles que más delatan una
+ * plantilla: gasta los dos colores de marca en el elemento que menos importa
+ * de la pantalla. El acento se reserva para donde decide algo.
+ */
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(var(--color-cyan-brand), var(--color-orange-brand));
+  background: rgba(79, 214, 232, 0.28);
   border-radius: 99px;
   border: 3px solid var(--color-navy-950);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(79, 214, 232, 0.45);
 }
 
 ::selection {

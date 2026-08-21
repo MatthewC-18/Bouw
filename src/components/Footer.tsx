@@ -24,7 +24,7 @@ export default function Footer() {
                 </span>
               </span>
             </div>
-            <p className="mt-6 max-w-sm leading-relaxed text-ink-dim">
+            <p className="mt-6 max-w-sm text-[15px] leading-relaxed text-ink-soft">
               {t({
                 es: "Consultoría de procesos, calidad y automatización para equipos que fabrican cosas reales.",
                 en: "Process, quality and automation consulting for teams that build real things.",

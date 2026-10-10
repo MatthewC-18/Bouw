@@ -658,6 +658,14 @@ function Lightbox({
   );
 }
 
+/** Dónde cae cada foto de la galería: la primera alta, la última ancha. */
+const BENTO = [
+  "sm:row-span-2 lg:row-span-2 min-h-[28rem]",
+  "",
+  "",
+  "sm:col-span-2 lg:col-span-2",
+];
+
 function Gallery({ c }: { c: Case }) {
   const { t, lang } = useLang();
   const [open, setOpen] = useState<number | null>(null);
@@ -683,40 +691,42 @@ function Gallery({ c }: { c: Case }) {
             </div>
             <p className="max-w-xs text-sm leading-relaxed text-ink-dim">
               {lang === "es"
-                ? "Fotos de piso, sin montaje. Toca cualquiera para verla entera."
-                : "Floor photos, unstaged. Tap any of them to see it whole."}
+                ? "Fotos tomadas en planta. Toca cualquiera para verla entera."
+                : "Photos taken on the floor. Tap any of them to see it whole."}
             </p>
           </div>
         </Reveal>
 
-        <div className="mt-14 columns-1 gap-5 sm:columns-2 lg:columns-3">
+        {/*
+          Rejilla fija y no columnas sueltas: con cinco fotos de alturas
+          distintas, una columna acababa mucho antes que las otras y la
+          sección se leía a medio llenar. La línea va en grande a la
+          izquierda, que es la toma que pone al visitante en la planta.
+        */}
+        <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:h-[46rem] lg:grid-cols-3 lg:grid-rows-2">
           {photos.map((p, i) => (
-            <Reveal key={p.src} delay={(i % 3) * 80} className="mb-5 break-inside-avoid">
-              <figure>
-                <button
-                  type="button"
-                  onClick={() => setOpen(i)}
-                  data-cursor="view"
-                  data-cursor-label={lang === "es" ? "Ver" : "View"}
-                  className="group relative block w-full overflow-hidden rounded-xl ring-1 ring-white/10"
-                >
-                  <Image
-                    src={p.src}
-                    alt={t(p.alt)}
-                    width={p.width}
-                    height={p.height}
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    className="h-auto w-full transition-[scale,filter] duration-[900ms] ease-out saturate-[0.92] group-hover:scale-[1.03] group-hover:saturate-110"
-                  />
-                  <span className="pointer-events-none absolute left-3 top-3 rounded bg-[rgba(4,16,31,0.6)] px-1.5 py-0.5 font-mono text-[10px] tracking-[0.24em] text-[#e8eef6]">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                </button>
-                <figcaption className="mt-3 flex gap-3 text-[13px] leading-snug text-ink-dim">
-                  <span className="mt-[7px] h-px w-4 shrink-0 bg-cyan-brand/60" />
+            <Reveal key={p.src} delay={(i % 3) * 80} className={`${BENTO[i] ?? ""} min-h-[18rem]`}>
+              <button
+                type="button"
+                onClick={() => setOpen(i)}
+                aria-label={t(p.caption)}
+                className="group relative block h-full min-h-[18rem] w-full overflow-hidden rounded-xl ring-1 ring-white/10"
+              >
+                <Image
+                  src={p.src}
+                  alt={t(p.alt)}
+                  fill
+                  sizes={i === photos.length - 1 ? "(max-width: 1024px) 100vw, 60vw" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"}
+                  style={p.position ? { objectPosition: p.position } : undefined}
+                  className="object-cover transition-[scale] duration-[1200ms] ease-out group-hover:scale-[1.04]"
+                />
+                <span className="pointer-events-none absolute left-3 top-3 rounded bg-[rgba(4,16,31,0.6)] px-1.5 py-0.5 font-mono text-[10px] tracking-[0.24em] text-[#e8eef6]">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgba(4,16,31,0.85)] to-transparent px-4 pb-3.5 pt-12 text-left text-[13px] leading-snug text-[#e8eef6]">
                   {t(p.caption)}
-                </figcaption>
-              </figure>
+                </span>
+              </button>
             </Reveal>
           ))}
         </div>

@@ -390,7 +390,7 @@ export const PROJECTS: Project[] = [
     visual: "line",
     video: {
       src: "/proyectos/mejora/planta.mp4",
-      poster: "/proyectos/mejora/linea-extrusion.webp",
+      poster: "/proyectos/mejora/planta-poster.webp",
     },
     tiles: [
       {
@@ -402,10 +402,10 @@ export const PROJECTS: Project[] = [
         label: { es: "Medición", en: "Measure" },
       },
       {
-        src: "/proyectos/mejora/perfil-seccion.webp",
+        src: "/proyectos/mejora/perfil-estudio.webp",
         alt: {
-          es: "Perfil extruido negro sostenido en la mano para revisar su sección",
-          en: "Black extruded profile held in hand to check its section",
+          es: "Perfil negro sobre fondo azul marino con retícula técnica",
+          en: "Black profile on a navy background with a technical grid",
         },
         label: { es: "Producto", en: "Product" },
       },
@@ -581,6 +581,8 @@ export type CasePhoto = {
   src: string;
   width: number;
   height: number;
+  /** Encuadre dentro de la rejilla (`object-position`), si el centro no sirve. */
+  position?: string;
   alt: Localized;
   caption: Localized;
 };
@@ -637,8 +639,8 @@ export type CaseStudy = {
 const PHOTOS = {
   linea: {
     src: "/proyectos/mejora/linea-extrusion.webp",
-    width: 480,
-    height: 800,
+    width: 1080,
+    height: 1800,
     alt: {
       es: "Línea de producción con tolvas azules y tableros de control en planta",
       en: "Production line with blue hoppers and control panels on the floor",
@@ -647,8 +649,9 @@ const PHOTOS = {
   },
   termometro: {
     src: "/proyectos/mejora/termometro.webp",
-    width: 958,
-    height: 1159,
+    width: 1400,
+    height: 1692,
+    position: "50% 80%",
     alt: {
       es: "Pirómetro Fluke apuntando al agua de la tina de enfriamiento",
       en: "Fluke infrared thermometer aimed at the cooling tank water",
@@ -658,23 +661,26 @@ const PHOTOS = {
       en: "Cooling water temperature, taken at the line",
     },
   },
-  superficie: {
-    src: "/proyectos/mejora/perfil-superficie.webp",
-    width: 1044,
-    height: 320,
+  /*
+   * La foto del perfil en la mano, recortado y puesto sobre fondo de estudio.
+   * Es la misma pieza, sin el escritorio ni la mano: lo que se mira es el
+   * producto.
+   */
+  estudio: {
+    src: "/proyectos/mejora/perfil-estudio.webp",
+    width: 2000,
+    height: 1500,
+    position: "50% 100%",
     alt: {
-      es: "Superficie de un perfil negro vista de cerca",
-      en: "Close-up of the surface of a black profile",
+      es: "Perfil negro sobre fondo azul marino con retícula técnica",
+      en: "Black profile on a navy background with a technical grid",
     },
-    caption: {
-      es: "Inspección de la superficie del perfil",
-      en: "Inspecting the profile surface",
-    },
+    caption: { es: "El producto que sale de la línea", en: "What the line makes" },
   },
   seccion: {
     src: "/proyectos/mejora/perfil-seccion.webp",
-    width: 958,
-    height: 849,
+    width: 1400,
+    height: 1239,
     alt: {
       es: "Perfil sostenido en la mano, con la sección visible en el extremo",
       en: "Profile held in hand, with its section visible at the end",
@@ -684,20 +690,10 @@ const PHOTOS = {
       en: "Checking the profile geometry",
     },
   },
-  mano: {
-    src: "/proyectos/mejora/perfil-mano.webp",
-    width: 958,
-    height: 1129,
-    alt: {
-      es: "Perfil negro apoyado sobre la palma de la mano",
-      en: "Black profile resting on an open palm",
-    },
-    caption: { es: "El producto que sale de la línea", en: "What the line makes" },
-  },
   palet: {
     src: "/proyectos/mejora/producto-paletizado.webp",
-    width: 480,
-    height: 784,
+    width: 1080,
+    height: 1764,
     alt: {
       es: "Producto terminado apilado y emplayado sobre un palé en planta",
       en: "Finished goods stacked and stretch-wrapped on a pallet",
@@ -748,7 +744,7 @@ export const CASES: CaseStudy[] = [
     ],
     film: {
       src: "/proyectos/mejora/planta.mp4",
-      poster: "/proyectos/mejora/linea-extrusion.webp",
+      poster: "/proyectos/mejora/planta-poster.webp",
       chip: "planta.mp4",
       caption: {
         es: "Recorrido por la planta: la línea y el producto terminado.",
@@ -909,14 +905,7 @@ export const CASES: CaseStudy[] = [
         photo: PHOTOS.palet.src,
       },
     ],
-    gallery: [
-      PHOTOS.linea,
-      PHOTOS.termometro,
-      PHOTOS.mano,
-      PHOTOS.superficie,
-      PHOTOS.seccion,
-      PHOTOS.palet,
-    ],
+    gallery: [PHOTOS.linea, PHOTOS.termometro, PHOTOS.seccion, PHOTOS.estudio],
     office: {
       eyebrow: { es: "Del piso a la oficina", en: "From the floor to the office" },
       title: {

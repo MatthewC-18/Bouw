@@ -73,6 +73,12 @@ Sin audio a propósito: los videos arrancan solos y mudos, y solo mientras
 se ven. Los rótulos que van encima de una foto o un video llevan sombra
 oscura en los dos modos: sobre una imagen, el crema del modo claro la lava.
 
+Las fotos y el video de `Mejora continua` vienen de un teléfono y están
+restaurados con Real-ESRGAN (modelo abierto, corrido en local): las fotos con
+`realesrgan-x4plus` y el video, solo en sus tramos estables, con
+`realesr-animevideov3`. `perfil-estudio.webp` es la foto del perfil en la mano
+con el perfil recortado (IS-Net) y puesto sobre fondo de estudio.
+
 El video de `Programa contable` es una réplica animada de las hojas del
 archivo, grabada cuadro a cuadro, con datos de demostración: los RUC, los
 nombres de clientes y la marca del cliente no aparecen.

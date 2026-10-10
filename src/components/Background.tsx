@@ -11,7 +11,7 @@ const SceneRoot = dynamic(() => import("./three/SceneRoot"), { ssr: false });
  * hero, para que las piezas de la marca puedan seguir ensamblándose sección
  * tras sección mientras el contenido pasa por encima.
  */
-export default function Background() {
+export default function Background({ scene = true }: { scene?: boolean }) {
   const [mounted, setMounted] = useState(false);
   /*
    * Contador de montajes.
@@ -117,7 +117,11 @@ export default function Background() {
       className="pointer-events-none fixed inset-0"
       style={{ zIndex: 30 }}
     >
-      {mounted && <SceneRoot key={attempt} />}
+      {/*
+        Las páginas de caso no llevan escena: sus perchas y anclas no existen
+        ahí, y el recorrido se quedaría clavado en la portada.
+      */}
+      {scene && mounted && <SceneRoot key={attempt} />}
     </div>
 
     {/*

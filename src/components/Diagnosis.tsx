@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { DIAGNOSIS, FIELDS, SYMPTOMS, type FieldId } from "@/lib/content";
 import { setBrief } from "@/lib/brief";
@@ -211,6 +212,15 @@ export default function Diagnosis() {
                           <p className="mt-1.5 text-[14px] leading-relaxed text-ink-dim">
                             {t(f.delivers)}
                           </p>
+                          {f.caseHref && (
+                            <Link
+                              href={f.caseHref}
+                              className="mt-2 inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-orange-light transition-colors hover:text-orange-brand"
+                            >
+                              {lang === "es" ? "Ver un caso real" : "See a real case"}
+                              <span aria-hidden>→</span>
+                            </Link>
+                          )}
                         </li>
                       ))}
                     </ul>

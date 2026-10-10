@@ -4,7 +4,8 @@ import { COMPANY, FOOTER, NAV } from "@/lib/content";
 import { useLang } from "@/lib/i18n";
 import LogoMark from "./LogoMark";
 
-export default function Footer() {
+/** `home`: prefijo de los anclas, igual que en `Nav`. */
+export default function Footer({ home = "" }: { home?: string }) {
   const { t, lang } = useLang();
   const year = new Date().getFullYear();
 
@@ -34,7 +35,7 @@ export default function Footer() {
             {NAV.map((n) => (
               <a
                 key={n.id}
-                href={`#${n.id}`}
+                href={`${home}#${n.id}`}
                 data-cursor="link"
                 className="text-sm text-ink-dim transition-colors hover:text-cyan-light"
               >

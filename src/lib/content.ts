@@ -8,6 +8,17 @@ export type Lang = "es" | "en";
 
 export type Localized = Record<Lang, string>;
 
+/**
+ * Un archivo que puede cambiar con el idioma.
+ *
+ * Los videos con rótulos dentro de la imagen salen en dos versiones; los que
+ * no, en una sola. El componente no tiene que saber cuál es cuál.
+ */
+export type Asset = string | Localized;
+
+export const pickAsset = (a: Asset, lang: Lang) =>
+  typeof a === "string" ? a : a[lang];
+
 export const COMPANY = {
   name: "BOUW",
   tagline: {
@@ -241,9 +252,10 @@ export type Project = {
    * Cómo se presenta el panel de medios.
    * `screen` captura de interfaz, `photo` foto de producto (va sobre un
    * paspartú oscuro para que una imagen clara no rompa la paleta),
-   * `drawing` gráfico técnico dibujado en SVG.
+   * `drawing` gráfico técnico dibujado en SVG, `floor` material de planta:
+   * el video vertical tal como se grabó y dos fotos al lado.
    */
-  mediaKind: "screen" | "photo" | "drawing";
+  mediaKind: "screen" | "photo" | "drawing" | "floor";
   /** Texto del chip en la barra del panel */
   mediaChip: string;
   /** Imagen real en /public/proyectos, si existe */
@@ -257,6 +269,17 @@ export type Project = {
    * (ver `LiveSystem`). Solo los que se pueden usar de verdad.
    */
   live?: { url: string; label: string; hint?: Localized };
+  /**
+   * Video en bucle, mudo. Gana a `image` si están los dos: la imagen queda de
+   * póster mientras carga y para quien pide menos movimiento.
+   */
+  video?: { src: Asset; poster: Asset };
+  /** Las fotos que acompañan al video en el panel `floor`. */
+  tiles?: { src: string; alt: Localized; label: Localized }[];
+  /** Si el proyecto tiene caso completo, la ruta (y el ancla) donde vive. */
+  caseHref?: string;
+  /** Rótulo del botón cuando el caso no es suyo sino uno que lo contiene. */
+  caseLabel?: Localized;
   year: string;
 };
 
@@ -358,9 +381,36 @@ export const PROJECTS: Project[] = [
     ],
     accent: "mixed",
     has3D: false,
-    mediaKind: "drawing",
-    mediaChip: "VSM · ACTUAL → FUTURO",
+    /*
+     * El dibujo del VSM pasa a la página del caso, en la fase de medir. Aquí
+     * va la planta de verdad: el recorrido grabado y dos fotos del trabajo.
+     */
+    mediaKind: "floor",
+    mediaChip: "planta · 2 turnos",
     visual: "line",
+    video: {
+      src: "/proyectos/mejora/planta.mp4",
+      poster: "/proyectos/mejora/linea-extrusion.webp",
+    },
+    tiles: [
+      {
+        src: "/proyectos/mejora/termometro.webp",
+        alt: {
+          es: "Pirómetro midiendo la temperatura del agua en la tina de enfriamiento",
+          en: "Infrared thermometer reading the cooling tank water temperature",
+        },
+        label: { es: "Medición", en: "Measure" },
+      },
+      {
+        src: "/proyectos/mejora/perfil-seccion.webp",
+        alt: {
+          es: "Perfil extruido negro sostenido en la mano para revisar su sección",
+          en: "Black extruded profile held in hand to check its section",
+        },
+        label: { es: "Producto", en: "Product" },
+      },
+    ],
+    caseHref: "/proyectos/mejora-continua",
   },
   {
     slug: "programa-contable",
@@ -398,9 +448,29 @@ export const PROJECTS: Project[] = [
     ],
     accent: "orange",
     has3D: false,
-    mediaKind: "drawing",
+    /*
+     * El archivo funcionando: un recorrido grabado cuadro a cuadro sobre una
+     * réplica de sus hojas, con datos de demostración. Los números, nombres y
+     * RUC del cliente se quedan con el cliente.
+     */
+    mediaKind: "screen",
     mediaChip: "Programa_contable.xlsm",
     visual: "ledger",
+    video: {
+      src: {
+        es: "/proyectos/contable/excel-es.mp4",
+        en: "/proyectos/contable/excel-en.mp4",
+      },
+      poster: {
+        es: "/proyectos/contable/excel-es-poster.webp",
+        en: "/proyectos/contable/excel-en-poster.webp",
+      },
+    },
+    caseHref: "/proyectos/mejora-continua#oficina",
+    caseLabel: {
+      es: "Verlo dentro del caso de mejora continua",
+      en: "See it inside the continuous improvement case",
+    },
   },
   {
     slug: "charms",
@@ -494,6 +564,407 @@ export const PROJECTS: Project[] = [
   },
 ];
 /* ------------------------------------------------------------------ */
+/* Casos completos                                                     */
+/* ------------------------------------------------------------------ */
+
+/*
+ * La ficha de la lista cuenta un proyecto en diez segundos. El caso es para
+ * quien quiere comprobarlo: la planta grabada, qué se midió, qué se cambió,
+ * cuánto cambió y quién lo sostiene. Va ordenado por DMAIC porque así se
+ * trabajó, y cada fase lleva lo que se hizo y la imagen que lo muestra.
+ *
+ * Las cifras son las del proyecto y ninguna más. Donde el gráfico necesita
+ * una escala se usa un índice con el antes en 100, y se dice que es un índice.
+ */
+
+export type CasePhoto = {
+  src: string;
+  width: number;
+  height: number;
+  alt: Localized;
+  caption: Localized;
+};
+
+export type CaseStudy = {
+  slug: string;
+  meta: { title: Localized; description: Localized };
+  eyebrow: Localized;
+  title: { lead: Localized; accent: Localized };
+  lede: Localized;
+  facts: { label: Localized; value: Localized }[];
+  film: { src: string; poster: string; chip: string; caption: Localized };
+  /** El caso en un párrafo. Lo que va entre `**` sale resaltado. */
+  summary: { title: Localized; body: Localized };
+  results: {
+    value: number;
+    sign: "−" | "";
+    unit: string;
+    label: Localized;
+    detail: Localized;
+    /** Barra de índice, antes = 100. Solo para las que son una reducción. */
+    index?: boolean;
+  }[];
+  wastes: { name: Localized; body: Localized; tag: Localized }[];
+  dmaic: {
+    key: string;
+    name: Localized;
+    body: Localized;
+    tools: Localized[];
+    photo?: string;
+    /** Un dibujo técnico de `ProjectVisual` en vez de foto. */
+    drawing?: "line";
+    /** Para la fase sin imagen: la ficha de lo que se acordó. */
+    card?: { title: Localized; rows: [Localized, Localized][]; foot: Localized };
+  }[];
+  gallery: CasePhoto[];
+  office: {
+    eyebrow: Localized;
+    title: Localized;
+    body: Localized;
+    points: Localized[];
+    note: Localized;
+    video: { src: Asset; poster: Asset };
+    cta: Localized;
+  };
+  close: {
+    title: Localized;
+    body: Localized;
+    primary: Localized;
+    secondary: Localized;
+  };
+};
+
+const PHOTOS = {
+  linea: {
+    src: "/proyectos/mejora/linea-extrusion.webp",
+    width: 480,
+    height: 800,
+    alt: {
+      es: "Línea de producción con tolvas azules y tableros de control en planta",
+      en: "Production line with blue hoppers and control panels on the floor",
+    },
+    caption: { es: "La línea, en operación", en: "The line, running" },
+  },
+  termometro: {
+    src: "/proyectos/mejora/termometro.webp",
+    width: 958,
+    height: 1159,
+    alt: {
+      es: "Pirómetro Fluke apuntando al agua de la tina de enfriamiento",
+      en: "Fluke infrared thermometer aimed at the cooling tank water",
+    },
+    caption: {
+      es: "Temperatura del agua de enfriamiento, tomada en la línea",
+      en: "Cooling water temperature, taken at the line",
+    },
+  },
+  superficie: {
+    src: "/proyectos/mejora/perfil-superficie.webp",
+    width: 1044,
+    height: 320,
+    alt: {
+      es: "Superficie de un perfil negro vista de cerca",
+      en: "Close-up of the surface of a black profile",
+    },
+    caption: {
+      es: "Inspección de la superficie del perfil",
+      en: "Inspecting the profile surface",
+    },
+  },
+  seccion: {
+    src: "/proyectos/mejora/perfil-seccion.webp",
+    width: 958,
+    height: 849,
+    alt: {
+      es: "Perfil sostenido en la mano, con la sección visible en el extremo",
+      en: "Profile held in hand, with its section visible at the end",
+    },
+    caption: {
+      es: "Revisión de la geometría del perfil",
+      en: "Checking the profile geometry",
+    },
+  },
+  mano: {
+    src: "/proyectos/mejora/perfil-mano.webp",
+    width: 958,
+    height: 1129,
+    alt: {
+      es: "Perfil negro apoyado sobre la palma de la mano",
+      en: "Black profile resting on an open palm",
+    },
+    caption: { es: "El producto que sale de la línea", en: "What the line makes" },
+  },
+  palet: {
+    src: "/proyectos/mejora/producto-paletizado.webp",
+    width: 480,
+    height: 784,
+    alt: {
+      es: "Producto terminado apilado y emplayado sobre un palé en planta",
+      en: "Finished goods stacked and stretch-wrapped on a pallet",
+    },
+    caption: {
+      es: "Producto terminado al final de la línea",
+      en: "Finished goods at the end of the line",
+    },
+  },
+} satisfies Record<string, CasePhoto>;
+
+export const CASES: CaseStudy[] = [
+  {
+    slug: "mejora-continua",
+    meta: {
+      title: {
+        es: "Mejora continua en planta con Lean Six Sigma",
+        en: "Continuous improvement on the floor with Lean Six Sigma",
+      },
+      description: {
+        es: "Caso de mejora continua en una línea de producción de dos turnos: VSM, 5S y procedimientos estándar. 15 % menos tiempo de preparación y 20 % menos reprocesos.",
+        en: "Continuous improvement case on a two-shift production line: VSM, 5S and standard procedures. 15% less setup time and 20% less rework.",
+      },
+    },
+    eyebrow: {
+      es: "Caso · Mejora continua · Lean Six Sigma",
+      en: "Case · Continuous improvement · Lean Six Sigma",
+    },
+    title: {
+      lead: { es: "Menos espera, menos reproceso,", en: "Less waiting, less rework," },
+      accent: { es: "mejor producto.", en: "a better product." },
+    },
+    lede: {
+      es: "Trabajamos con producción y calidad en el piso de una línea de dos turnos. El objetivo era que la línea perdiera menos tiempo en preparar y fabricara menos piezas dos veces, para que el producto saliera bien a la primera.",
+      en: "We worked with production and quality on the floor of a two-shift line. The goal was for the line to lose less time on setup and make fewer parts twice, so the product comes out right the first time.",
+    },
+    facts: [
+      { label: { es: "Turnos", en: "Shifts" }, value: { es: "2", en: "2" } },
+      {
+        label: { es: "Con quién", en: "With" },
+        value: { es: "Producción y Calidad", en: "Production and Quality" },
+      },
+      { label: { es: "Método", en: "Method" }, value: { es: "DMAIC", en: "DMAIC" } },
+      {
+        label: { es: "Capacitados", en: "Trained" },
+        value: { es: "4 operadores", en: "4 operators" },
+      },
+    ],
+    film: {
+      src: "/proyectos/mejora/planta.mp4",
+      poster: "/proyectos/mejora/linea-extrusion.webp",
+      chip: "planta.mp4",
+      caption: {
+        es: "Recorrido por la planta: la línea y el producto terminado.",
+        en: "Walking the plant: the line and the finished goods.",
+      },
+    },
+    summary: {
+      title: { es: "El caso en un párrafo", en: "The case in one paragraph" },
+      body: {
+        es: "Coordinamos con producción y calidad iniciativas de **mejora continua en piso**, en **dos turnos**. Mapeamos el estado actual con **Value Stream Mapping (VSM)**, estandarizamos procedimientos y reorganizamos las estaciones de trabajo con **5S**. Así logramos **15 % menos tiempo de preparación** y **20 % menos reprocesos**. Dimos seguimiento a los **KPI**, documentamos desviaciones, impulsamos **acciones correctivas** y capacitamos a **cuatro operadores** para que los cambios se adoptaran y se sostuvieran.",
+        en: "Together with production and quality we ran **continuous improvement on the floor**, across **two shifts**. We mapped the current state with **Value Stream Mapping (VSM)**, standardized procedures and reorganized workstations with **5S**. That brought **15% less setup time** and **20% less rework**. We tracked **KPIs**, documented deviations, drove **corrective actions** and trained **four operators** so the changes were adopted and kept.",
+      },
+    },
+    results: [
+      {
+        value: 15,
+        sign: "−",
+        unit: "%",
+        label: { es: "Tiempo de preparación", en: "Setup time" },
+        detail: {
+          es: "Menos minutos desde que la línea para hasta que vuelve a sacar pieza buena, con un procedimiento estándar y la estación ordenada.",
+          en: "Fewer minutes from the moment the line stops until it makes good parts again, with a standard procedure and an orderly station.",
+        },
+        index: true,
+      },
+      {
+        value: 20,
+        sign: "−",
+        unit: "%",
+        label: { es: "Reprocesos", en: "Rework" },
+        detail: {
+          es: "Menos piezas fabricadas dos veces. Cada desviación quedó documentada con su acción correctiva.",
+          en: "Fewer parts made twice. Every deviation was documented along with its corrective action.",
+        },
+        index: true,
+      },
+      {
+        value: 4,
+        sign: "",
+        unit: "",
+        label: { es: "Operadores capacitados", en: "Operators trained" },
+        detail: {
+          es: "Los cambios los sostienen las personas que operan la línea, en los dos turnos.",
+          en: "The changes are kept up by the people who run the line, on both shifts.",
+        },
+      },
+    ],
+    wastes: [
+      {
+        name: { es: "Espera", en: "Waiting" },
+        body: {
+          es: "Cada minuto de preparación es un minuto sin producir. Lo reducen un procedimiento que todos siguen igual y una estación donde nada se busca.",
+          en: "Every minute of setup is a minute without production. A procedure everyone follows the same way and a station where nothing has to be searched for bring it down.",
+        },
+        tag: { es: "−15 % preparación", en: "−15% setup" },
+      },
+      {
+        name: { es: "Defectos", en: "Defects" },
+        body: {
+          es: "Una pieza fuera de especificación se paga dos veces: al hacerla y al rehacerla. Cada desviación se documenta hasta encontrar el paso que la deja pasar.",
+          en: "An out of spec part is paid for twice: once to make it and once to remake it. Each deviation is documented until the step that lets it through is found.",
+        },
+        tag: { es: "−20 % reproceso", en: "−20% rework" },
+      },
+      {
+        name: { es: "Movimiento", en: "Motion" },
+        body: {
+          es: "Lo que no tiene un lugar fijo hay que buscarlo, y buscar no agrega valor. Con 5S cada herramienta tiene su lugar en la estación, el mismo en los dos turnos.",
+          en: "Anything without a fixed place has to be searched for, and searching adds no value. With 5S every tool has its place at the station, the same on both shifts.",
+        },
+        tag: { es: "5S", en: "5S" },
+      },
+    ],
+    dmaic: [
+      {
+        key: "D",
+        name: { es: "Definir", en: "Define" },
+        body: {
+          es: "Con producción y calidad acordamos qué se iba a mejorar y cómo se iba a medir: tiempo de preparación y reproceso, con el mismo criterio en los dos turnos.",
+          en: "With production and quality we agreed on what to improve and how to measure it: setup time and rework, with the same criteria on both shifts.",
+        },
+        tools: [
+          { es: "Alcance con producción y calidad", en: "Scope with production and quality" },
+          { es: "KPI de línea", en: "Line KPIs" },
+        ],
+        card: {
+          title: { es: "Indicadores acordados", en: "Agreed indicators" },
+          rows: [
+            [
+              { es: "Tiempo de preparación", en: "Setup time" },
+              { es: "min · por turno", en: "min · per shift" },
+            ],
+            [
+              { es: "Reproceso", en: "Rework" },
+              { es: "% · por turno", en: "% · per shift" },
+            ],
+          ],
+          foot: {
+            es: "Mismo criterio en el turno 1 y en el turno 2",
+            en: "Same criteria on shift 1 and shift 2",
+          },
+        },
+      },
+      {
+        key: "M",
+        name: { es: "Medir", en: "Measure" },
+        body: {
+          es: "Mapeamos el estado actual con Value Stream Mapping: cada paso, cada espera y cada inventario entre estaciones. Las variables del proceso se toman en la línea, como la temperatura del agua de enfriamiento.",
+          en: "We mapped the current state with Value Stream Mapping: every step, every wait and every pile between stations. Process variables are taken at the line, such as the cooling water temperature.",
+        },
+        tools: [
+          { es: "VSM estado actual", en: "Current state VSM" },
+          { es: "Toma de tiempos", en: "Time studies" },
+          { es: "Variables de proceso", en: "Process variables" },
+        ],
+        drawing: "line",
+      },
+      {
+        key: "A",
+        name: { es: "Analizar", en: "Analyze" },
+        body: {
+          es: "Cada desviación quedó documentada y la seguimos hasta el paso del proceso que la deja pasar. La causa se busca en el proceso, no en la persona.",
+          en: "Every deviation was documented and traced back to the process step that lets it through. The cause is looked for in the process, not in the person.",
+        },
+        tools: [
+          { es: "Registro de desviaciones", en: "Deviation log" },
+          { es: "Causa raíz", en: "Root cause" },
+          { es: "Inspección de producto", en: "Product inspection" },
+        ],
+        photo: PHOTOS.seccion.src,
+      },
+      {
+        key: "I",
+        name: { es: "Mejorar", en: "Improve" },
+        body: {
+          es: "Estandarizamos procedimientos y reorganizamos las estaciones de trabajo con 5S. El tiempo de preparación bajó 15 % y los reprocesos 20 %.",
+          en: "We standardized procedures and reorganized workstations with 5S. Setup time dropped 15% and rework 20%.",
+        },
+        tools: [
+          { es: "Trabajo estandarizado", en: "Standard work" },
+          { es: "5S", en: "5S" },
+          { es: "Estaciones reorganizadas", en: "Reorganized stations" },
+        ],
+        photo: PHOTOS.linea.src,
+      },
+      {
+        key: "C",
+        name: { es: "Controlar", en: "Control" },
+        body: {
+          es: "Seguimiento de KPI por turno, acciones correctivas cuando algo se desvía y cuatro operadores capacitados para que el estándar se mantenga.",
+          en: "KPI tracking per shift, corrective actions when something drifts and four operators trained so the standard holds.",
+        },
+        tools: [
+          { es: "Seguimiento de KPI", en: "KPI tracking" },
+          { es: "Acciones correctivas", en: "Corrective actions" },
+          { es: "Capacitación", en: "Training" },
+        ],
+        photo: PHOTOS.palet.src,
+      },
+    ],
+    gallery: [
+      PHOTOS.linea,
+      PHOTOS.termometro,
+      PHOTOS.mano,
+      PHOTOS.superficie,
+      PHOTOS.seccion,
+      PHOTOS.palet,
+    ],
+    office: {
+      eyebrow: { es: "Del piso a la oficina", en: "From the floor to the office" },
+      title: {
+        es: "El mismo método, aplicado al cierre de mes",
+        en: "The same method, applied to month-end close",
+      },
+      body: {
+        es: "Un proceso administrativo también tiene pasos, esperas y reprocesos. En un taller que fabrica kits y tótems, el cierre de mes se armaba a mano juntando archivos. Lo mapeamos igual que una línea, viendo dónde nace cada dato y cuántas veces se vuelve a escribir, y lo convertimos en un solo archivo de Excel con macros.",
+        en: "An admin process also has steps, waits and rework. In a workshop that builds kits and kiosks, month-end close was put together by hand from separate files. We mapped it the same way we map a line, looking at where each figure starts and how many times it gets typed again, and turned it into a single Excel file with macros.",
+      },
+      points: [
+        { es: "Las facturas electrónicas del SRI entran solas", en: "SRI e-invoices come in on their own" },
+        { es: "Cada kit se costea desde su despiece", en: "Each kit is costed from its bill of materials" },
+        { es: "El stock avisa antes de que falte", en: "Stock warns before it runs out" },
+        { es: "Tablero y estado de resultados automáticos", en: "Automatic dashboard and income statement" },
+      ],
+      note: {
+        es: "El video usa datos de demostración. Los números del cliente se quedan con el cliente.",
+        en: "The video uses demo data. The client's numbers stay with the client.",
+      },
+      video: {
+        src: {
+          es: "/proyectos/contable/excel-es.mp4",
+          en: "/proyectos/contable/excel-en.mp4",
+        },
+        poster: {
+          es: "/proyectos/contable/excel-es-poster.webp",
+          en: "/proyectos/contable/excel-en-poster.webp",
+        },
+      },
+      cta: { es: "Verlo en la lista de proyectos", en: "See it in the project list" },
+    },
+    close: {
+      title: {
+        es: "¿Tu línea pierde tiempo preparando o fabricando dos veces?",
+        en: "Is your line losing time on setup or making parts twice?",
+      },
+      body: {
+        es: "Lo primero es medir. Si después de medir no hay proyecto, la medición se queda contigo.",
+        en: "Measuring comes first. If no project comes out of it, you keep the measurement.",
+      },
+      primary: { es: "Hablemos", en: "Let's talk" },
+      secondary: { es: "Ver los servicios", en: "See the services" },
+    },
+  },
+];
+
+/* ------------------------------------------------------------------ */
 /* Diagnóstico: síntomas → disciplina                                  */
 /* ------------------------------------------------------------------ */
 
@@ -524,6 +995,8 @@ export type Field = {
   delivers: Localized;
   /** Duración típica de un proyecto de esa disciplina. */
   span: Localized;
+  /** Un caso real de la disciplina, si lo hay. */
+  caseHref?: string;
 };
 
 export const FIELDS: Field[] = [
@@ -535,6 +1008,7 @@ export const FIELDS: Field[] = [
       en: "The redesigned flow, measured before and after, plus the dashboard that keeps it from drifting back.",
     },
     span: { es: "4 a 8 semanas", en: "4 to 8 weeks" },
+    caseHref: "/proyectos/mejora-continua",
   },
   {
     id: "calidad",

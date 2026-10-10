@@ -33,7 +33,12 @@ function shortHours(hours: number) {
   return `${Math.round(hours)} h`;
 }
 
-export default function Nav() {
+/**
+ * `home` es el prefijo de los anclas. En la portada va vacío; en una página de
+ * caso vale "/", para que "Proyectos" lleve de vuelta a la portada en vez de
+ * buscar un `#proyectos` que ahí no existe.
+ */
+export default function Nav({ home = "" }: { home?: string }) {
   const { lang, toggle, t } = useLang();
   const brief = useBrief();
   const [scrolled, setScrolled] = useState(false);
@@ -82,7 +87,7 @@ export default function Nav() {
     >
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 lg:px-10">
         <a
-          href="#top"
+          href={`${home}#top`}
           data-cursor="link"
           className="flex items-center gap-3 outline-none"
           aria-label={COMPANY.name}
@@ -115,7 +120,7 @@ export default function Nav() {
             return (
               <a
                 key={item.id}
-                href={`#${item.id}`}
+                href={`${home}#${item.id}`}
                 data-cursor="link"
                 className={`relative flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-sm transition-colors ${
                   active === item.id ? "text-ink" : "text-ink-dim hover:text-ink"
@@ -148,7 +153,7 @@ export default function Nav() {
           </button>
 
           <a
-            href="#contacto"
+            href={`${home}#contacto`}
             data-cursor="link"
             className="ml-3 bg-cyan-brand px-5 py-2 text-sm font-semibold text-navy-950 transition-colors duration-300 hover:bg-cyan-light"
           >
@@ -197,7 +202,7 @@ export default function Nav() {
           {NAV.map((item) => (
             <a
               key={item.id}
-              href={`#${item.id}`}
+              href={`${home}#${item.id}`}
               onClick={() => setOpen(false)}
               className="border-b border-white/5 py-4 font-display text-lg text-ink last:border-0"
             >

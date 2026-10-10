@@ -1,11 +1,13 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useRef, useState, type KeyboardEvent } from "react";
-import { PROJECTS, type Project } from "@/lib/content";
+import { PROJECTS, pickAsset, type Project } from "@/lib/content";
 import { dragonScreen } from "@/lib/dragonScreen";
 import { useLang } from "@/lib/i18n";
 import LiveSystem from "./LiveSystem";
+import LoopVideo from "./LoopVideo";
 import ProjectVisual from "./ProjectVisual";
 import Reveal from "./Reveal";
 
@@ -47,7 +49,66 @@ const KIND_LABEL: Record<Project["mediaKind"], string> = {
   screen: "UI",
   photo: "FOTO",
   drawing: "DWG",
+  floor: "PISO",
 };
+
+/**
+ * Material de planta.
+ *
+ * El video se grabó en vertical, con el teléfono, recorriendo la línea. En el
+ * 4:3 del panel había que recortarle dos tercios o ampliarlo hasta que se
+ * deshacía (la toma tiene 480 px de ancho). Así que va a su tamaño y el hueco
+ * de al lado lo llenan dos fotos del mismo trabajo.
+ */
+function FloorSheet({
+  project,
+  video,
+  toned,
+}: {
+  project: Project;
+  video: { src: string; poster: string };
+  toned: string;
+}) {
+  const { t, lang } = useLang();
+  const tiles = project.tiles ?? [];
+
+  return (
+    <div className="relative grid h-full grid-cols-[minmax(0,0.92fr)_minmax(0,1fr)] gap-3">
+      <div className="relative overflow-hidden rounded-lg ring-1 ring-white/10">
+        <LoopVideo
+          src={video.src}
+          poster={video.poster}
+          label={t(project.title)}
+          className={`absolute inset-0 h-full w-full object-cover ${toned} group-hover:scale-[1.03]`}
+        />
+        <span className="absolute left-2.5 top-2.5 flex items-center gap-1.5 rounded bg-[rgba(4,16,31,0.78)] px-2 py-1 font-mono text-[9px] uppercase tracking-[0.2em] text-[#e8eef6]">
+          <span className="live-dot h-1.5 w-1.5 rounded-full bg-orange-brand" aria-hidden />
+          {lang === "es" ? "Planta" : "Floor"}
+        </span>
+        <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgba(4,16,31,0.8)] to-transparent px-3 pb-2.5 pt-8 font-mono text-[9px] uppercase tracking-[0.2em] text-[#e8eef6]">
+          01 · {lang === "es" ? "Línea" : "Line"}
+        </span>
+      </div>
+
+      <div className="grid grid-rows-2 gap-3">
+        {tiles.map((tile, i) => (
+          <div key={tile.src} className="relative overflow-hidden rounded-lg ring-1 ring-white/10">
+            <Image
+              src={tile.src}
+              alt={t(tile.alt)}
+              fill
+              sizes="(max-width: 1024px) 50vw, 30vw"
+              className={`object-cover ${toned} group-hover:scale-[1.04]`}
+            />
+            <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgba(4,16,31,0.8)] to-transparent px-3 pb-2.5 pt-8 font-mono text-[9px] uppercase tracking-[0.2em] text-[#e8eef6]">
+              {String(i + 2).padStart(2, "0")} · {t(tile.label)}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /**
  * Panel de medios.
@@ -87,6 +148,13 @@ function Media({
   // Anatris es 1200×630: recortada a 4:3 con `cover` perdía un tercio del
   // ancho y no se entendía qué se estaba mirando.
   const isFramed = project.mediaKind !== "drawing";
+  const video = project.video
+    ? {
+        src: pickAsset(project.video.src, lang),
+        poster: pickAsset(project.video.poster, lang),
+      }
+    : null;
+  const photographic = Boolean(project.image || video);
 
   // Tailwind v4 anima `scale` como propiedad propia, no dentro de `transform`:
   // si no se nombra aquí, el zoom salta en seco en vez de acompañar al color.
@@ -144,7 +212,7 @@ function Media({
         ref={panelRef}
         className="relative overflow-hidden rounded-2xl border border-white/10 bg-navy-950 shadow-[0_30px_90px_-40px_rgba(0,0,0,0.9)]"
       >
-        {/* Barra superior: el mismo chasis para los cuatro */}
+        {/* Barra superior: el mismo chasis para todos */}
         <div className="flex items-center gap-3 border-b border-white/[0.07] px-4 py-2.5">
           <span className="flex gap-1.5">
             <span className={`h-1.5 w-1.5 rounded-[1px] ${accent.dot}`} />
@@ -160,21 +228,37 @@ function Media({
               {lang === "es" ? "En vivo" : "Live"}
             </span>
           ) : (
-            <span className="ml-auto font-mono text-[9px] uppercase tracking-[0.24em] text-ink-dim/60">
-              {KIND_LABEL[project.mediaKind]}
+            <span className="ml-auto flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.24em] text-ink-dim/60">
+              {video && <span className="h-1.5 w-1.5 rounded-full bg-orange-brand/80" aria-hidden />}
+              {video ? "VIDEO" : KIND_LABEL[project.mediaKind]}
             </span>
           )}
         </div>
 
         <div
           className={`relative aspect-4/3 overflow-hidden ${
-            isFramed ? "bg-navy-900 p-4 sm:p-6" : ""
+            project.mediaKind === "floor"
+              ? "bg-navy-900 p-3 sm:p-4"
+              : isFramed
+                ? "bg-navy-900 p-4 sm:p-6"
+                : ""
           }`}
         >
-          {/* Trama de fondo: cose los cuatro paneles al mismo sistema */}
+          {/* Trama de fondo: cose los paneles al mismo sistema */}
           <div className="pointer-events-none absolute inset-0 blueprint-dots opacity-20" />
 
-          {project.image ? (
+          {project.mediaKind === "floor" && video ? (
+            <FloorSheet project={project} video={video} toned={toned} />
+          ) : video ? (
+            <div className="relative h-full w-full overflow-hidden rounded-lg ring-1 ring-white/10">
+              <LoopVideo
+                src={video.src}
+                poster={video.poster}
+                label={t(project.title)}
+                className={`absolute inset-0 h-full w-full object-contain ${toned} group-hover:scale-[1.03]`}
+              />
+            </div>
+          ) : project.image ? (
             <div
               className={`relative h-full w-full overflow-hidden ${
                 isFramed ? "rounded-lg ring-1 ring-white/10" : ""
@@ -196,7 +280,7 @@ function Media({
 
           {/* Tinte de marca sobre las fotos: se retira al pasar el mouse.
               Los dibujos técnicos ya nacen en la paleta, no lo necesitan. */}
-          {project.image && (
+          {photographic && (
             <div
               aria-hidden
               className="pointer-events-none absolute inset-0 opacity-45 transition-opacity duration-700 group-hover:opacity-0"
@@ -245,9 +329,13 @@ function Media({
               ? lang === "es"
                 ? "Toca para abrirlo"
                 : "Tap to open it"
-              : lang === "es"
-                ? "Pasa el mouse"
-                : "Hover"}
+              : project.caseHref
+                ? lang === "es"
+                  ? "Toca para ver el caso"
+                  : "Tap to see the case"
+                : lang === "es"
+                  ? "Pasa el mouse"
+                  : "Hover"}
           </span>
           <span>{project.year}</span>
         </div>
@@ -322,12 +410,27 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
             El dragón se posa en la esquina del panel que mira al texto: por
             encima del borde, sin tapar lo que hay dentro (ahí irán videos).
           */}
-          <Media
-            project={project}
-            perchId={perchId}
-            perchCorner={mediaFirst ? "right" : "left"}
-            onOpen={project.live ? openLive : undefined}
-          />
+          {/* Con caso completo y sin sistema en vivo, el panel lleva al caso */}
+          {project.caseHref && !project.live ? (
+            <Link
+              href={project.caseHref}
+              aria-label={`${t(project.title)}: ${lang === "es" ? "ver el caso completo" : "see the full case"}`}
+              className="block"
+            >
+              <Media
+                project={project}
+                perchId={perchId}
+                perchCorner={mediaFirst ? "right" : "left"}
+              />
+            </Link>
+          ) : (
+            <Media
+              project={project}
+              perchId={perchId}
+              perchCorner={mediaFirst ? "right" : "left"}
+              onOpen={project.live ? openLive : undefined}
+            />
+          )}
           {liveOpen && (
             <LiveSystem project={project} from={liveFrom} onClose={closeLive} />
           )}
@@ -416,6 +519,25 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
               </li>
             ))}
           </ul>
+
+          {project.caseHref && (
+            <Link
+              href={project.caseHref}
+              className="group/case mt-8 mr-6 inline-flex items-center gap-4 border border-orange-brand/60 bg-orange-brand/[0.08] px-5 py-3 text-sm font-semibold text-ink transition-colors duration-300 hover:bg-orange-brand hover:text-navy-950"
+            >
+              {project.caseLabel
+                ? t(project.caseLabel)
+                : lang === "es"
+                  ? "Ver el caso completo"
+                  : "See the full case"}
+              <span
+                aria-hidden
+                className="transition-transform duration-500 group-hover/case:translate-x-1"
+              >
+                →
+              </span>
+            </Link>
+          )}
 
           {project.href && (
             <a

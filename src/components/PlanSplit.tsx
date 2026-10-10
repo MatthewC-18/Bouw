@@ -537,7 +537,7 @@ export default function PlanSplit() {
           aria-valuenow={Math.round(planSplit.x * 100)}
           data-cursor="view"
           data-cursor-label={t({ es: "fijar", en: "pin" })}
-          className={`pointer-events-auto absolute left-1/2 top-1/2 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 cursor-ew-resize touch-none items-center justify-center rounded-full border bg-navy-950/80 backdrop-blur-[2px] outline-none transition-colors duration-300 ${
+          className={`pointer-events-auto absolute left-1/2 top-1/2 flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 cursor-ew-resize touch-none items-center justify-center rounded-full border bg-navy-950/90 outline-none transition-colors duration-300 ${
             grabbed
               ? "border-cyan-light text-cyan-light"
               : "border-cyan-brand/40 text-cyan-light/70 hover:border-cyan-light focus-visible:border-cyan-light"

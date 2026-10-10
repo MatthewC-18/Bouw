@@ -1,9 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useRef } from "react";
+import { useCallback, useRef, useState, type KeyboardEvent } from "react";
 import { PROJECTS, type Project } from "@/lib/content";
+import { dragonScreen } from "@/lib/dragonScreen";
 import { useLang } from "@/lib/i18n";
+import LiveSystem from "./LiveSystem";
 import ProjectVisual from "./ProjectVisual";
 import Reveal from "./Reveal";
 
@@ -61,8 +63,25 @@ const KIND_LABEL: Record<Project["mediaKind"], string> = {
  * 3. Las fotos van sobre paspartú oscuro con `contain`; las capturas van a
  *    sangre con `cover`.
  */
-function Media({ project }: { project: Project }) {
+function Media({
+  project,
+  perchId,
+  perchCorner,
+  onOpen,
+}: {
+  project: Project;
+  /** Percha del dragón: la esquina superior del panel que mira al texto. */
+  perchId: string;
+  perchCorner: "left" | "right";
+  /** Si el proyecto tiene sistema en vivo, abrirlo desde este panel. */
+  onOpen?: (panel: HTMLElement) => void;
+}) {
   const { t, lang } = useLang();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const live = Boolean(project.live && onOpen);
+  const open = () => {
+    if (live && panelRef.current) onOpen?.(panelRef.current);
+  };
   const accent = ACCENT[project.accent];
   // Fotos y capturas van enmarcadas sobre paspartú y completas. La captura de
   // Anatris es 1200×630: recortada a 4:3 con `cover` perdía un tercio del
@@ -74,27 +93,57 @@ function Media({ project }: { project: Project }) {
   // El tratamiento en reposo era tan fuerte (gris al 65 %, brillo al 80 %) que
   // no se distinguía qué había en cada panel hasta pasar el mouse. Ahora solo
   // se unifica la temperatura; el hover sigue devolviendo el color entero.
+  //
+  // El tratamiento vive solo en el hover. Un `filter` permanente sobre la
+  // captura obligaba a recomponerla filtrada en cada fotograma de scroll; a
+  // cambio daba un matiz de temperatura que el tinte de marca de encima ya da.
   const toned =
-    "transition-[filter,scale] duration-[900ms] ease-out " +
-    "grayscale-[0.16] brightness-[0.98] contrast-[1.04] saturate-[0.95] " +
-    "group-hover:grayscale-0 group-hover:brightness-105 group-hover:saturate-110";
+    "transition-[scale] duration-[900ms] ease-out " +
+    "group-hover:brightness-105 group-hover:saturate-110";
 
   return (
     <div
-      data-cursor="view"
-      data-cursor-label={lang === "es" ? "Caso" : "Case"}
-      className="relative"
+      className={`relative ${live ? "cursor-pointer" : ""}`}
+      data-perch={perchId}
+      data-perch-corner={perchCorner}
+      {...(live
+        ? {
+            "data-perch-open": "",
+            role: "button",
+            tabIndex: 0,
+            "aria-label":
+              lang === "es"
+                ? `Abrir ${t(project.title)} en vivo`
+                : `Open ${t(project.title)} live`,
+            onClick: open,
+            onKeyDown: (e: KeyboardEvent) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                open();
+              }
+            },
+          }
+        : {})}
     >
-      {/* Resplandor: solo cambia de opacidad, no se repinta */}
+      {/*
+        Resplandor: un degradado radial ya es una mancha difusa; no lleva
+        `blur`. Con `blur-3xl` encima, la GPU desenfocaba en cada fotograma
+        un rectángulo más grande que el panel —incluso con opacidad 0, por la
+        transición— y la sección bajaba a 15 fps en gráfica integrada. Sin el
+        desenfoque, medido igual: 70.
+      */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 opacity-0 blur-3xl transition-opacity duration-700 group-hover:opacity-100 lg:-inset-10"
+        className="pointer-events-none absolute -inset-6 -z-10 opacity-0 transition-opacity duration-700 group-hover:opacity-100 lg:-inset-16"
         style={{
-          background: `radial-gradient(60% 60% at 50% 50%, ${accent.glow}, transparent 70%)`,
+          background: `radial-gradient(closest-side, ${accent.glow}, transparent)`,
         }}
       />
 
-      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-navy-950 shadow-[0_30px_90px_-40px_rgba(0,0,0,0.9)]">
+      <div
+        ref={panelRef}
+        className="relative overflow-hidden rounded-2xl border border-white/10 bg-navy-950 shadow-[0_30px_90px_-40px_rgba(0,0,0,0.9)]"
+      >
         {/* Barra superior: el mismo chasis para los cuatro */}
         <div className="flex items-center gap-3 border-b border-white/[0.07] px-4 py-2.5">
           <span className="flex gap-1.5">
@@ -105,9 +154,16 @@ function Media({ project }: { project: Project }) {
           <span className="truncate rounded border border-white/[0.08] bg-white/[0.03] px-2.5 py-0.5 font-mono text-[10px] tracking-wide text-ink-dim">
             {project.mediaChip}
           </span>
-          <span className="ml-auto font-mono text-[9px] uppercase tracking-[0.24em] text-ink-dim/60">
-            {KIND_LABEL[project.mediaKind]}
-          </span>
+          {live ? (
+            <span className="ml-auto flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.24em] text-cyan-light">
+              <span className="live-dot h-1.5 w-1.5 rounded-full bg-cyan-light" aria-hidden />
+              {lang === "es" ? "En vivo" : "Live"}
+            </span>
+          ) : (
+            <span className="ml-auto font-mono text-[9px] uppercase tracking-[0.24em] text-ink-dim/60">
+              {KIND_LABEL[project.mediaKind]}
+            </span>
+          )}
         </div>
 
         <div
@@ -146,7 +202,7 @@ function Media({ project }: { project: Project }) {
               className="pointer-events-none absolute inset-0 opacity-45 transition-opacity duration-700 group-hover:opacity-0"
               style={{
                 background:
-                  "linear-gradient(165deg, rgba(4,16,31,0) 0%, rgba(4,16,31,0.28) 55%, rgba(11,58,82,0.42) 100%)",
+                  "linear-gradient(165deg, rgba(var(--page-rgb),0) 0%, rgba(var(--page-rgb),0.28) 55%, rgba(var(--veil-rgb),0.42) 100%)",
               }}
             />
           )}
@@ -161,17 +217,37 @@ function Media({ project }: { project: Project }) {
             de encuadre, que sí dicen "esto es una toma", se quedan.
           */}
 
+          {/* Sistema en vivo: la invitación aparece al pasar el ratón */}
+          {live && (
+            <span className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">
+              <span className="flex items-center gap-3 rounded-full border border-cyan-light/50 bg-navy-950/85 px-5 py-2.5 text-sm font-semibold text-cyan-light shadow-[0_0_40px_-10px_rgba(79,214,232,0.7)]">
+                <svg width="10" height="12" viewBox="0 0 10 12" aria-hidden>
+                  <path d="M0 0l10 6-10 6z" fill="currentColor" />
+                </svg>
+                {lang === "es" ? "Abrir el sistema en vivo" : "Open the live system"}
+              </span>
+            </span>
+          )}
+
           {/* Esquinas de encuadre */}
-          <span className="pointer-events-none absolute left-4 top-4 h-6 w-6 border-l border-t border-white/25 transition-all duration-500 group-hover:left-3 group-hover:top-3 group-hover:h-9 group-hover:w-9 group-hover:border-cyan-light" />
-          <span className="pointer-events-none absolute bottom-4 right-4 h-6 w-6 border-b border-r border-white/25 transition-all duration-500 group-hover:bottom-3 group-hover:right-3 group-hover:h-9 group-hover:w-9 group-hover:border-orange-light" />
+          {/* Las esquinas se abren con `transform`, no animando posición y
+              tamaño: eso rehacía el layout en cada fotograma del hover. */}
+          <span className="pointer-events-none absolute left-4 top-4 h-6 w-6 border-l border-t border-white/25 transition-[transform,border-color] duration-500 group-hover:-translate-x-1 group-hover:-translate-y-1 group-hover:border-cyan-light" />
+          <span className="pointer-events-none absolute bottom-4 right-4 h-6 w-6 border-b border-r border-white/25 transition-[transform,border-color] duration-500 group-hover:translate-x-1 group-hover:translate-y-1 group-hover:border-orange-light" />
         </div>
 
         {/* Pie técnico */}
         <div className="flex items-center gap-4 border-t border-white/[0.07] px-5 py-3 font-mono text-[10px] uppercase tracking-[0.24em] text-ink-dim">
           <span className={accent.text}>{project.slug}</span>
           <span className="h-px flex-1 bg-white/10" />
-          <span className="hidden sm:inline">
-            {lang === "es" ? "Pasa el mouse" : "Hover"}
+          <span className={`hidden sm:inline ${live ? "text-cyan-light" : ""}`}>
+            {live
+              ? lang === "es"
+                ? "Toca para abrirlo"
+                : "Tap to open it"
+              : lang === "es"
+                ? "Pasa el mouse"
+                : "Hover"}
           </span>
           <span>{project.year}</span>
         </div>
@@ -189,6 +265,33 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
   const rowRef = useRef<HTMLElement>(null);
   const accent = ACCENT[project.accent];
   const mediaFirst = i % 2 === 1;
+  const perchId = `proyecto-${project.slug}`;
+
+  /*
+   * Sistema en vivo. Si el dragón está posado en el panel, primero lo
+   * enciende con su fuego y la ventana crece un instante después; si no,
+   * se abre al momento.
+   */
+  const [liveFrom, setLiveFrom] = useState<DOMRect | null>(null);
+  const [liveOpen, setLiveOpen] = useState(false);
+  const panelEl = useRef<HTMLElement | null>(null);
+  const openLive = useCallback(
+    (panel: HTMLElement) => {
+      panelEl.current = panel;
+      window.dispatchEvent(new CustomEvent("bouw:project-open", { detail: { id: perchId } }));
+      const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const wait = !still && dragonScreen.target === perchId ? 450 : 0;
+      setTimeout(() => {
+        setLiveFrom(panel.getBoundingClientRect());
+        setLiveOpen(true);
+      }, wait);
+    },
+    [perchId],
+  );
+  const closeLive = useCallback(() => {
+    setLiveOpen(false);
+    panelEl.current?.closest<HTMLElement>("[data-perch-open]")?.focus();
+  }, []);
 
   // Se alterna el lado del panel. Las clases van completas, sin concatenar
   // fragmentos, porque Tailwind necesita verlas literales para generarlas.
@@ -204,6 +307,7 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
       {/* Numeral fantasma: se sale del contenedor a propósito */}
       <span
         aria-hidden
+        data-dragon-ignore
         className={`pointer-events-none absolute -top-14 z-10 select-none font-display text-[clamp(6rem,15vw,14rem)] font-bold leading-none text-white/[0.045] transition-colors duration-700 group-hover:text-white/[0.08] ${
           mediaFirst ? "right-0" : "left-0"
         }`}
@@ -214,11 +318,29 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
       <div className="relative grid items-center gap-10 lg:grid-cols-12 lg:gap-14">
         {/* Medios */}
         <div className={mediaClass}>
-          <Media project={project} />
+          {/*
+            El dragón se posa en la esquina del panel que mira al texto: por
+            encima del borde, sin tapar lo que hay dentro (ahí irán videos).
+          */}
+          <Media
+            project={project}
+            perchId={perchId}
+            perchCorner={mediaFirst ? "right" : "left"}
+            onOpen={project.live ? openLive : undefined}
+          />
+          {liveOpen && (
+            <LiveSystem project={project} from={liveFrom} onClose={closeLive} />
+          )}
         </div>
 
-        {/* Texto */}
-        <div className={textClass}>
+        {/*
+          Texto. La entrada animada va solo aquí: antes envolvía la ficha
+          entera, y animar la opacidad de un grupo con el panel de imagen
+          dentro obligaba a la GPU a componerlo fuera de pantalla en cada
+          fotograma. En gráfica integrada, la primera bajada por Proyectos iba
+          a 12 fps; sin eso, a 90.
+        */}
+        <Reveal delay={40} className={textClass}>
           <div className="flex items-center gap-3">
             <span className={`h-1.5 w-1.5 rounded-full ${accent.dot}`} />
             <span
@@ -234,7 +356,15 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
           </div>
 
           <h3 className="mt-5 font-display text-[clamp(2rem,4.5vw,3.4rem)] font-bold leading-[0.98] text-ink">
-            <span className="relative inline-block">
+            {/*
+              Segunda percha del proyecto: cuando el borde del panel ya se fue
+              por arriba, el dragón salta al nombre y sigue acompañando.
+            */}
+            <span
+              className="relative inline-block"
+              data-perch={`titulo-${project.slug}`}
+              data-perch-corner="right"
+            >
               {t(project.title)}
               <span
                 className={`absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-gradient-to-r ${accent.rule} to-transparent transition-transform duration-700 group-hover:scale-x-100`}
@@ -307,7 +437,7 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
               </span>
             </a>
           )}
-        </div>
+        </Reveal>
       </div>
     </article>
   );
@@ -322,20 +452,18 @@ export default function Projects() {
 
   return (
     /*
-      Con velo. No lo tenía, y era el peor sitio para no tenerlo: las fichas
-      de proyecto son el bloque de texto más largo de la página y el dragón
-      pasa por delante de ellas a media construcción. Ahora el velo sube solo
-      donde el bicho o la marca cruzan un párrafo — ver `VeilHeat`.
+      Con velo: separa la sección del fondo. `relative` en el contenedor no es
+      decorativo: el velo es un `::before` posicionado y un hijo sin
+      posicionar quedaría debajo de él.
     */
     <section id="proyectos" className="veil relative py-28 lg:py-40">
-      {/*
-        `relative` no es decorativo: el velo de la sección es un `::before`
-        posicionado, y un hijo sin posicionar se pinta por debajo de él. Sin
-        esto el velo se pone delante del texto en vez de detrás.
-      */}
       <div className="relative mx-auto max-w-[1560px] px-6 lg:px-16">
         <Reveal>
-          <div className="flex items-end justify-between gap-8 border-b border-white/[0.08] pb-8">
+          {/* Ancla de etapa: ver `stageAnchors` en `SceneRoot` */}
+          <div
+            data-stage-anchor
+            className="flex items-end justify-between gap-8 border-b border-white/[0.08] pb-8"
+          >
             <div>
               <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-cyan-light">
                 {lang === "es" ? "Proyectos" : "Selected work"}
@@ -357,8 +485,8 @@ export default function Projects() {
 
             <p className="hidden max-w-xs pb-3 text-sm leading-relaxed text-ink-dim lg:block">
               {t({
-                es: "Cuatro proyectos, cuatro industrias. El hilo común: un proceso que antes costaba horas y ahora no.",
-                en: "Four projects, four industries. The common thread: a process that used to cost hours and no longer does.",
+                es: "Lo que tienen en común: procesos que antes costaban horas.",
+                en: "What they have in common: processes that used to cost hours.",
               })}
             </p>
           </div>
@@ -366,9 +494,7 @@ export default function Projects() {
 
         <div className="mt-24 space-y-32 lg:mt-32 lg:space-y-48">
           {PROJECTS.map((p, i) => (
-            <Reveal key={p.slug} delay={40}>
-              <ProjectRow project={p} i={i} />
-            </Reveal>
+            <ProjectRow key={p.slug} project={p} i={i} />
           ))}
         </div>
       </div>

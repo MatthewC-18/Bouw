@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140" role="img" aria-label="BOUW">
+  <title>BOUW</title>
+  <!-- Sello sobre fondo oscuro o sobre imagen: el circulo pasa a blanco y la
+       letra a azul. NUNCA colocar el sello azul dentro de un recuadro blanco. -->
+  <circle cx="70" cy="70" r="70" fill="#FFFFFF"/>
+  <g transform="translate(36.8,24.4) scale(0.76)">
+    <rect x="10" y="10" width="21" height="100" fill="#14395F"/>
+    <g fill="none" stroke-width="18" stroke-linecap="butt">
+      <path d="M38 19 H52 A19.5 19.5 0 0 1 52 58 H38" stroke="#1E9FB5"/>
+      <path d="M38 58 H56 A21.5 21.5 0 0 1 56 101 H38" stroke="#14395F"/>
+    </g>
+  </g>
+</svg>

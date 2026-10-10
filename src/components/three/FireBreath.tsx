@@ -14,6 +14,12 @@ type Props = {
   powerRef: RefObject<number>;
   count: number;
   reducedMotion: boolean;
+  /**
+   * Tamaño de la llama respecto a la que se diseñó, para el dragón en vuelo
+   * a escala 0.77. Posado mide un tercio de aquello, y con la llama de
+   * siempre escupía medio metro de pantalla.
+   */
+  scaleRef?: RefObject<number>;
 };
 
 /** Cuánto vive un grano de fuego, en segundos. */
@@ -68,6 +74,7 @@ export default function FireBreath({
   powerRef,
   count,
   reducedMotion,
+  scaleRef,
 }: Props) {
   const points = useRef<THREE.Points>(null);
   const light = useRef<THREE.PointLight>(null);
@@ -136,6 +143,7 @@ export default function FireBreath({
 
     const d = Math.min(delta, 0.05);
     const power = reducedMotion ? 0 : (powerRef.current ?? 0);
+    const fk = scaleRef?.current ?? 1;
     material.uniforms.uOpacity.value = Math.min(1, power * 1.35);
 
     const origin = originRef.current;
@@ -174,13 +182,13 @@ export default function FireBreath({
         bases[i] = 0.7 + Math.random() * 0.6;
         ages[i] = 0;
 
-        const jitter = 0.06;
+        const jitter = 0.06 * fk;
         pos[k] = origin.x + (Math.random() - 0.5) * jitter;
         pos[k + 1] = origin.y + (Math.random() - 0.5) * jitter;
         pos[k + 2] = origin.z + (Math.random() - 0.5) * jitter;
 
-        const speed = 5 + Math.random() * 4;
-        const cone = 0.7 + Math.random() * 0.9;
+        const speed = (4 + Math.random() * 3.5) * fk;
+        const cone = (0.7 + Math.random() * 0.9) * fk;
         const angle = Math.random() * Math.PI * 2;
         scratch.spread
           .copy(scratch.side)
@@ -195,7 +203,7 @@ export default function FireBreath({
       const t = Math.min(1, ages[i] / spans[i]);
 
       // Flotación hacia arriba y rozamiento: el chorro se abre y se frena
-      velocities[k + 1] += 2.4 * d;
+      velocities[k + 1] += 2.4 * d * fk;
       const drag = 1 - Math.min(0.9, 1.7 * d);
       velocities[k] *= drag;
       velocities[k + 1] *= drag;
@@ -206,18 +214,22 @@ export default function FireBreath({
       pos[k + 2] += velocities[k + 2] * d;
 
       lif[i] = t;
-      // El grano crece según se enfría: la llama se abre al alejarse
-      siz[i] = (0.32 + t * 2.3) * bases[i];
+      // El grano crece según se enfría: la llama se abre al alejarse. Nace ya
+      // con cuerpo: con granos diminutos en la boca, el chorro arrancaba un
+      // palmo por delante del hocico y se leía como una bola suelta
+      siz[i] = (0.62 + t * 2.0) * bases[i] * fk;
     }
 
     position.needsUpdate = true;
     size.needsUpdate = true;
     life.needsUpdate = true;
 
-    // La llama ilumina lo que tiene delante
+    // La llama ilumina lo que tiene delante. La luz baja con el tamaño de la
+    // llama al cuadrado: con el bicho posado, a un tercio del de vuelo, la de
+    // siempre lo teñía entero de cobre
     if (light.current) {
-      light.current.position.copy(origin).addScaledVector(aim, 1.6);
-      light.current.intensity = power * 90;
+      light.current.position.copy(origin).addScaledVector(aim, 1.6 * fk);
+      light.current.intensity = power * 90 * fk * fk;
     }
   });
 

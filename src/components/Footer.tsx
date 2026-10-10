@@ -14,20 +14,15 @@ export default function Footer() {
         <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
           <div className="lg:col-span-2">
             <div className="flex items-center gap-3">
-              <LogoMark className="h-11 w-auto" />
-              <span className="flex flex-col leading-none">
-                <span className="font-display text-2xl font-bold tracking-[0.14em] text-ink">
-                  BOUW
-                </span>
-                <span className="mt-1.5 font-mono text-[9px] uppercase tracking-[0.24em] text-ink-dim">
-                  {t(COMPANY.tagline)}
-                </span>
+              <LogoMark className="h-14 w-auto" />
+              <span className="border-l border-white/10 pl-3 font-mono text-[9px] uppercase leading-[1.6] tracking-[0.24em] text-ink-dim">
+                {t(COMPANY.tagline)}
               </span>
             </div>
             <p className="mt-6 max-w-sm text-[15px] leading-relaxed text-ink-soft">
               {t({
-                es: "Consultoría de procesos, calidad y automatización para equipos que fabrican cosas reales.",
-                en: "Process, quality and automation consulting for teams that build real things.",
+                es: "Ingeniería de procesos, calidad y automatización para empresas que fabrican.",
+                en: "Process, quality and automation engineering for companies that make things.",
               })}
             </p>
           </div>
@@ -78,8 +73,16 @@ export default function Footer() {
 
         <div className="mt-14 flex flex-col gap-3 border-t border-white/[0.06] pt-6 font-mono text-[11px] text-ink-dim sm:flex-row sm:items-center sm:justify-between">
           <p>
-            © {year} {COMPANY.name} · {t(FOOTER.rights)}
+            © {year} {COMPANY.legalName || COMPANY.name}
+            {COMPANY.ruc ? ` · RUC ${COMPANY.ruc}` : ""} · {t(FOOTER.rights)}
           </p>
+          <a
+            href="/privacidad"
+            data-cursor="link"
+            className="transition-colors hover:text-cyan-light"
+          >
+            {lang === "es" ? "Aviso de privacidad" : "Privacy notice"}
+          </a>
           <p className="text-ink-dim/60">{t(FOOTER.builtWith)}</p>
           <a
             href="#top"

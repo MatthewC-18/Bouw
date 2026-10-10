@@ -52,10 +52,64 @@
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
 }
 
+/*
+ * Modos.
+ *
+ * Oscuro y claro, a elección del visitante (Matthew, 4 oct 2026: «el claro y
+ * el oscuro para que el usuario pueda cambiar»). El oscuro son los valores de
+ * `@theme`; el claro los reescribe aquí, fuera de capa, así que gana a los de
+ * Tailwind sin `!important`.
+ *
+ * Los velos, la viñeta y la retícula no usan colores de Tailwind sino rgba
+ * propios, así que llevan su color en tripletes (`--page-rgb`…) que también
+ * cambian con el modo.
+ *
+ * El claro es papel crema, no blanco: el blanco puro deslumbra al lado del
+ * dragón y se lee como plantilla. La tinta es el azul marino de la marca, y
+ * el turquesa baja de tono para que el texto en acento pase AA sobre crema.
+ * `--color-white` pasa a tinta: los filetes `border-white/10` siguen siendo
+ * filetes, ahora oscuros sobre claro.
+ */
 :root {
   color-scheme: dark;
+  --page-rgb: 4, 16, 31;
+  --veil-rgb: 11, 32, 56;
+  --sheet-rgb: 7, 26, 47;
+  --grid-rgb: 79, 214, 232;
+  --halo-opacity: 1;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-navy-950: #f3f0ea;
+  --color-navy-900: #ebe6dd;
+  --color-navy-800: #ddd6ca;
+  --color-navy-700: #c9c0b1;
+  --color-navy-600: #1f5488;
+  --color-ink: #0c1f33;
+  --color-ink-soft: #2b3e53;
+  --color-ink-dim: #5d6c7d;
+  --color-cyan-brand: #0e8fa6;
+  --color-cyan-light: #0b7a8e;
+  --color-orange-brand: #d9661a;
+  --color-orange-light: #bf560f;
+  --color-white: #0c1f33;
+  --color-plan-ink: #0c1f33;
+  --color-plan-dim: #5d6c7d;
+  --color-plan-line: #0e8fa6;
+  --page-rgb: 243, 240, 234;
+  --veil-rgb: 243, 240, 234;
+  --sheet-rgb: 235, 230, 221;
+  --grid-rgb: 12, 31, 51;
+  --halo-opacity: 0.3;
+}
+
+/* Los halos del fondo: en claro, un tercio, o se leen como manchas grises */
+.halo {
+  opacity: var(--halo-opacity);
 }
 
 /*
@@ -87,13 +141,6 @@ body {
   }
 }
 
-/* ---- Cursor personalizado: solo en punteros finos ---- */
-@media (hover: hover) and (pointer: fine) {
-  html.bouw-cursor,
-  html.bouw-cursor * {
-    cursor: none !important;
-  }
-}
 
 /* ---- Utilidades ---- */
 /*
@@ -105,13 +152,25 @@ body {
  * reservado para la escena 3D, que es donde tiene que llamar la atención.
  */
 .text-accent {
-  color: var(--color-orange-brand);
+  color: var(--color-cyan-light);
 }
 
+/*
+ * Titulares: Archivo a ancho normal y seminegra.
+ *
+ * Iban en el corte expandido y en negra (800 / 115), que es el corte del
+ * logo. Repetido en cada titular, el rótulo dejaba de ser del logo y la
+ * página entera gritaba. Ahora el expandido es solo de la marca, y los
+ * titulares van más contenidos, que es como hablan las firmas que no
+ * necesitan levantar la voz.
+ *
+ * Fuera de capa a propósito: así gana a `font-bold` de Tailwind, que vive en
+ * `@layer utilities`, sin tocar los componentes uno por uno.
+ */
 .font-display {
-  /* Archivo en su corte expandido: los titulares se plantan como rótulo */
-  font-stretch: 115%;
-  letter-spacing: -0.02em;
+  font-stretch: 100%;
+  font-weight: 600;
+  letter-spacing: -0.028em;
 }
 
 /*
@@ -153,7 +212,7 @@ body {
    * derecha del titular —donde el velo se abre y se ve la escena— las letras
    * se leerían como bloques oscuros recortados contra el dragón.
    */
-  color: rgba(4, 16, 31, 0.86);
+  color: rgba(var(--page-rgb), 0.86);
   -webkit-text-stroke: 1.5px var(--color-cyan-light);
   /*
    * El realce solo aparece cuando hay un gesto detrás. En reposo vale 0 y el
@@ -188,9 +247,9 @@ body {
  */
 .blueprint-dots {
   background-image:
-    linear-gradient(rgba(79, 214, 232, 0.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(79, 214, 232, 0.055) 1px, transparent 1px),
-    radial-gradient(rgba(79, 214, 232, 0.16) 1px, transparent 1px);
+    linear-gradient(rgba(var(--grid-rgb), 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--grid-rgb), 0.055) 1px, transparent 1px),
+    radial-gradient(rgba(var(--grid-rgb), 0.16) 1px, transparent 1px);
   background-size:
     120px 120px,
     120px 120px,
@@ -198,24 +257,22 @@ body {
 }
 
 /*
- * Grano de película sobre toda la escena.
+ * Viñeta y grano del fondo, en una sola capa (ver `Background`).
  *
- * Misma historia que la retícula: `Background` la aplicaba y no existía. Sin
- * ella el degradado de los halos hace bandas visibles en pantallas de 8 bits.
+ * El grano rompe el bandeado de los halos en pantallas de 8 bits. Lleva su
+ * 5 % dentro del propio SVG (`opacity` del rectángulo) en vez de en el
+ * elemento: la opacidad del elemento apagaría también la viñeta.
+ *
+ * Sin `mix-blend-mode`, y no es un descuido: esta capa va por encima del
+ * canvas WebGL, y un modo de fusión obliga al navegador a leer el fondo sobre
+ * el que mezcla — en varias combinaciones de Chrome y driver el canvas se
+ * queda en negro entero.
  */
-.noise {
+.vignette-grain {
   pointer-events: none;
-  opacity: 0.05;
-  /*
-   * Sin `mix-blend-mode`, y no es un descuido.
-   *
-   * Esta capa va por encima del canvas WebGL. Un modo de fusion obliga al
-   * navegador a leer el fondo sobre el que mezcla, y ese fondo es una capa
-   * compuesta por GPU: en varias combinaciones de Chrome y driver el canvas
-   * se queda en negro entero. Un grano al 5 % ya rompe el bandeado; no vale
-   * la pena arriesgar la escena por el matiz que anade fusionarlo.
-   */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at center, transparent 45%, rgba(var(--page-rgb), 0.42) 100%);
 }
 
 /*
@@ -287,10 +344,10 @@ body {
   opacity: calc(0.6 + 0.4 * var(--veil-heat, 1));
   background-image: linear-gradient(
     180deg,
-    rgba(7, 26, 47, 0.26) 0%,
-    rgba(7, 26, 47, 0.8) 11%,
-    rgba(7, 26, 47, 0.8) 89%,
-    rgba(7, 26, 47, 0.26) 100%
+    rgba(var(--sheet-rgb), 0.26) 0%,
+    rgba(var(--sheet-rgb), 0.8) 11%,
+    rgba(var(--sheet-rgb), 0.8) 89%,
+    rgba(var(--sheet-rgb), 0.26) 100%
   );
   --veil-edge: max(3.5%, calc((100% - 1600px) / 2));
   -webkit-mask-image: linear-gradient(
@@ -350,10 +407,10 @@ body {
    */
   background-image: linear-gradient(
     100deg,
-    rgba(4, 16, 31, 0.94) 0%,
-    rgba(4, 16, 31, 0.88) 45%,
-    rgba(4, 16, 31, 0.58) 63%,
-    rgba(4, 16, 31, 0.2) 77%,
+    rgba(var(--page-rgb), 0.94) 0%,
+    rgba(var(--page-rgb), 0.88) 45%,
+    rgba(var(--page-rgb), 0.58) 63%,
+    rgba(var(--page-rgb), 0.2) 77%,
     transparent 88%
   );
 }
@@ -376,10 +433,31 @@ body {
   .hero-veil::before {
     background-image: linear-gradient(
       185deg,
-      rgba(4, 16, 31, 0.9) 0%,
-      rgba(4, 16, 31, 0.86) 55%,
-      rgba(4, 16, 31, 0.62) 78%,
-      rgba(4, 16, 31, 0.3) 100%
+      rgba(var(--page-rgb), 0.9) 0%,
+      rgba(var(--page-rgb), 0.86) 55%,
+      rgba(var(--page-rgb), 0.62) 78%,
+      rgba(var(--page-rgb), 0.3) 100%
+    );
+  }
+}
+
+/*
+ * En el móvil, además, la franja de arriba queda libre.
+ *
+ * Ahí van la palabra BOUW y el dragón posado (ver el `pt` del móvil en
+ * `Hero`), y con el velo al 90 % desde el borde la palabra salía apagada,
+ * como una marca de agua. Sin texto encima no hay nada que proteger: el velo
+ * entra justo donde empieza el texto.
+ */
+@media (max-width: 767px) {
+  .hero-veil::before {
+    background-image: linear-gradient(
+      180deg,
+      transparent 0,
+      transparent 15rem,
+      rgba(var(--page-rgb), 0.88) 18rem,
+      rgba(var(--page-rgb), 0.86) 70%,
+      rgba(var(--page-rgb), 0.4) 100%
     );
   }
 }
@@ -429,10 +507,10 @@ body {
    */
   background-image: linear-gradient(
     180deg,
-    rgba(11, 32, 56, 0.2) 0%,
-    rgba(11, 32, 56, 0.86) 5%,
-    rgba(11, 32, 56, 0.86) 95%,
-    rgba(11, 32, 56, 0.2) 100%
+    rgba(var(--veil-rgb), 0.2) 0%,
+    rgba(var(--veil-rgb), 0.86) 5%,
+    rgba(var(--veil-rgb), 0.86) 95%,
+    rgba(var(--veil-rgb), 0.2) 100%
   );
   --veil-edge: max(4.5%, calc((100% - 1180px) / 2));
   -webkit-mask-image: linear-gradient(
@@ -449,6 +527,55 @@ body {
     #000 calc(100% - var(--veil-edge)),
     transparent 100%
   );
+}
+
+/*
+ * Lo que se mueve en los dibujos técnicos de Proyectos.
+ *
+ * Solo con el ratón encima de la ficha: en reposo la animación está en pausa
+ * y el dibujo queda quieto con las barras a su altura real. Ver la nota de
+ * coste en `ProjectVisual.tsx`.
+ */
+.pv-bar {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: pv-bar 4.4s ease-in-out infinite paused;
+}
+
+.pv-pulse {
+  animation: pv-pulse 2.2s ease-in-out infinite paused;
+}
+
+.group:hover .pv-bar,
+.group:hover .pv-pulse {
+  animation-play-state: running;
+}
+
+@keyframes pv-bar {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.5);
+  }
+}
+
+@keyframes pv-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.15;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pv-bar,
+  .pv-pulse {
+    animation: none;
+  }
 }
 
 .sheet .sheet-dim {
@@ -491,6 +618,15 @@ body {
 }
 
 /* ---- Reveal on scroll ---- */
+/*
+ * Mientras se hace scroll, el cuerpo no recibe el puntero: así ningún hover
+ * arranca porque el contenido pase por debajo del ratón. Lo pone y lo quita
+ * `scrollTicker` al empezar y al parar el gesto.
+ */
+html[data-scrolling] body {
+  pointer-events: none;
+}
+
 .reveal {
   opacity: 0;
   transform: translateY(28px);
@@ -567,4 +703,78 @@ body {
 ::selection {
   background: var(--color-cyan-brand);
   color: var(--color-navy-950);
+}
+
+/* ------------------------------------------------------------------ */
+/* Sistema en vivo                                                     */
+/* ------------------------------------------------------------------ */
+
+/* El punto de "en vivo": late despacio, como un piloto de equipo */
+.live-dot {
+  animation: live-dot 1.8s ease-in-out infinite;
+}
+@keyframes live-dot {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(79, 214, 232, 0.55);
+  }
+  50% {
+    opacity: 0.55;
+    box-shadow: 0 0 0 5px rgba(79, 214, 232, 0);
+  }
+}
+
+/* Barra de carga sin porcentaje: un tramo que recorre la línea */
+.live-load {
+  animation: live-load 1.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+@keyframes live-load {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot,
+  .live-load {
+    animation: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Mapa de flujo de valor (proyecto de mejora continua)                */
+/* ------------------------------------------------------------------ */
+
+/*
+ * En reposo, el estado actual; con el ratón encima del proyecto, el futuro.
+ * Solo opacidad y escala: nada que rehaga el SVG por fotograma.
+ */
+.pv-future {
+  opacity: 0;
+  transition: opacity 0.6s ease-out;
+}
+.pv-now,
+.pv-loop {
+  transition: opacity 0.6s ease-out;
+}
+.pv-lead {
+  transform-box: fill-box;
+  transform-origin: left center;
+  transition: transform 0.9s var(--ease-out-expo);
+}
+.group:hover .pv-future {
+  opacity: 1;
+}
+.group:hover .pv-now {
+  opacity: 0;
+}
+.group:hover .pv-loop {
+  opacity: 0.28;
+}
+.group:hover .pv-lead {
+  transform: scaleX(0.85);
 }

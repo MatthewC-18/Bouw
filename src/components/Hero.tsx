@@ -65,7 +65,11 @@ export default function Hero() {
       {/* El titular dice "Del diseño a la realidad". Esto lo deja tocarlo. */}
       <PlanSplit />
 
-      <div className="relative z-10 mx-auto w-full max-w-6xl px-6 pt-32 pb-24 lg:px-10">
+      {/*
+        En el móvil el titular ocupa el ancho entero, así que la palabra BOUW
+        en 3D y el dragón posado van encima: este `pt` es su franja.
+      */}
+      <div className="relative z-10 mx-auto w-full max-w-6xl px-6 pt-[17rem] pb-24 md:pt-32 lg:px-10">
         <div className="max-w-3xl">
           <div className="mb-8 flex items-center gap-4">
             <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-cyan-light">
@@ -142,25 +146,12 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Coordenadas de las sedes: detalle de plano, no adorno */}
-      <div className="pointer-events-none absolute right-8 top-1/2 hidden -translate-y-1/2 flex-col items-end gap-6 xl:flex">
-        {[
-          { city: "QUITO", coords: "0.1807° S · 78.4678° W" },
-          { city: "MONTERREY", coords: "25.6866° N · 100.3161° W" },
-        ].map((o) => (
-          <div key={o.city} className="text-right">
-            <p className="font-mono text-[10px] uppercase tracking-[0.34em] text-ink-dim">
-              {o.city}
-            </p>
-            <p className="mt-1 font-mono text-[10px] tracking-[0.12em] text-cyan-light/60">
-              {o.coords}
-            </p>
-          </div>
-        ))}
-        <p className="font-mono text-[10px] uppercase tracking-[0.34em] text-ink-dim/60">
-          {COMPANY.yearsExperience}+ {"//"} EST.
-        </p>
-      </div>
+      {/*
+        Aquí iban las coordenadas de las dos sedes. Se fueron con el
+        rediseño: la portada ya dice dónde está la empresa dos veces —el
+        rótulo de arriba y los relojes— y las sedes tienen su sitio en
+        Nosotros. Una tercera vez en mono diminuto era decoración.
+      */}
 
       {/* Indicador de scroll */}
       <div

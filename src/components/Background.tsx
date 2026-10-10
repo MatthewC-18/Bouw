@@ -61,6 +61,7 @@ export default function Background() {
   }, [attempt]);
 
   return (
+    <>
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
       {/*
         Base y halos de color.
@@ -76,21 +77,21 @@ export default function Background() {
       */}
       <div className="absolute inset-0 bg-navy-950" />
       <div
-        className="absolute -left-40 top-[8%] h-[820px] w-[820px] rounded-full"
+        className="halo absolute -left-40 top-[8%] h-[820px] w-[820px] rounded-full"
         style={{
           background:
             "radial-gradient(closest-side, rgba(34,181,207,0.10), rgba(34,181,207,0.05) 45%, transparent 72%)",
         }}
       />
       <div
-        className="absolute -right-40 top-[45%] h-[800px] w-[800px] rounded-full"
+        className="halo absolute -right-40 top-[45%] h-[800px] w-[800px] rounded-full"
         style={{
           background:
             "radial-gradient(closest-side, rgba(232,119,34,0.09), rgba(232,119,34,0.04) 45%, transparent 72%)",
         }}
       />
       <div
-        className="absolute bottom-0 left-1/4 h-[700px] w-[700px] rounded-full"
+        className="halo absolute bottom-0 left-1/4 h-[700px] w-[700px] rounded-full"
         style={{
           background:
             "radial-gradient(closest-side, rgba(23,64,107,0.22), rgba(23,64,107,0.10) 45%, transparent 72%)",
@@ -99,15 +100,37 @@ export default function Background() {
 
       {/* Rejilla técnica */}
       <div className="absolute inset-0 blueprint-dots opacity-[0.55]" />
-
-      {/* Escena */}
-      <div className="absolute inset-0">
-        {mounted && <SceneRoot key={attempt} />}
-      </div>
-
-      {/* Viñeta suave: oscurece los bordes sin apagar la escena */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(4,16,31,0.42)_100%)]" />
-      <div className="noise absolute inset-0" />
     </div>
+
+    {/*
+      Escena, en capa propia y por delante de la página.
+
+      Vivía dentro del fondo, detrás de todo, y ahí el dragón no podía hacer
+      otra cosa que esconderse detrás del texto. Ahora se posa encima de las
+      cosas —la W, la esquina del panel de cada proyecto, los titulares—, así
+      que tiene que ir delante. El lienzo es transparente y no recibe el
+      puntero: por delante no tapa más que lo que pinta, y lo que pinta es un
+      bicho pequeño en un borde. Por debajo de la barra (z 50).
+    */}
+    <div
+      aria-hidden
+      className="pointer-events-none fixed inset-0"
+      style={{ zIndex: 30 }}
+    >
+      {mounted && <SceneRoot key={attempt} />}
+    </div>
+
+    {/*
+      Viñeta y grano, en una sola capa, por encima de la escena cuando la
+      escena va detrás. Juntas son la misma imagen por la mitad de relleno —
+      en gráfica integrada, el relleno es justo lo que se acaba. Ver
+      `.vignette-grain`.
+    */}
+    <div
+      aria-hidden
+      className="vignette-grain pointer-events-none fixed inset-0"
+      style={{ zIndex: -4 }}
+    />
+    </>
   );
 }

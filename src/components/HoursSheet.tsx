@@ -159,7 +159,7 @@ export default function HoursSheet() {
       <div className="relative z-10 mx-auto flex max-w-[1560px] items-center justify-between px-6 py-4 font-mono text-[10px] uppercase tracking-[0.3em] text-plan-ink/50 lg:px-16">
         <span className="ink-chip px-2.5 py-1">BOUW</span>
         <span className="hidden sm:inline">
-          {lang === "es" ? "Pliego 04 — La cuenta" : "Sheet 04 — The count"}
+          {lang === "es" ? "Pliego 04 · La cuenta" : "Sheet 04 · The count"}
         </span>
         <span>04 / 05</span>
       </div>
@@ -179,7 +179,9 @@ export default function HoursSheet() {
                 {t(HOURS.eyebrow)}
               </p>
               <h2 className="mt-5 font-display text-[clamp(2rem,5vw,4rem)] font-bold leading-[0.98]">
-                {t(HOURS.title)}
+                <span data-perch="calculadora" data-perch-corner="right">
+                  {t(HOURS.title)}
+                </span>
               </h2>
             </div>
 
@@ -233,7 +235,7 @@ export default function HoursSheet() {
                     setTaken(false);
                     setTouched(true);
                   }}
-                  placeholder={id === "h-rate" ? "—" : "0"}
+                  placeholder="0"
                   className={`${FIELD} mt-3 text-2xl`}
                 />
               </div>

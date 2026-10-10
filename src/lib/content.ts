@@ -20,6 +20,13 @@ export const COMPANY = {
   whatsapp: "https://wa.me/593963684012",
   locations: ["Quito, Ecuador", "Monterrey, México"],
   yearsExperience: 7,
+  /*
+   * Identidad legal: va en el pie y en el aviso de privacidad (la Ley de
+   * Protección de Datos pide identificar al responsable). Vacíos hasta tener
+   * los datos del RUC; mientras estén vacíos, no se muestra la línea.
+   */
+  legalName: "",
+  ruc: "",
 };
 
 /* ------------------------------------------------------------------ */
@@ -31,10 +38,18 @@ export const COMPANY = {
  * dos de estas secciones ya no son un catálogo ni un método, son cosas que
  * el visitante puede usar, y el menú tiene que prometerlo.
  */
+/*
+ * Nombres que entiende quien viene a contratar.
+ *
+ * "Diagnóstico" y "La cuenta" son los nombres de las herramientas, y tienen
+ * sentido una vez dentro; en el menú, antes de entrar, no dicen qué hay. Un
+ * cliente busca servicios y quiere saber si le sale a cuenta: eso es lo que
+ * pone ahora. Las secciones conservan su nombre propio en el titular.
+ */
 export const NAV: { id: string; label: Localized }[] = [
   { id: "proyectos", label: { es: "Proyectos", en: "Work" } },
-  { id: "servicios", label: { es: "Diagnóstico", en: "Diagnosis" } },
-  { id: "proceso", label: { es: "La cuenta", en: "The count" } },
+  { id: "servicios", label: { es: "Servicios", en: "Services" } },
+  { id: "proceso", label: { es: "Calculadora", en: "Calculator" } },
   { id: "nosotros", label: { es: "Nosotros", en: "About" } },
   { id: "contacto", label: { es: "Contacto", en: "Contact" } },
 ];
@@ -57,8 +72,8 @@ export const HERO = {
     en: "to reality",
   } satisfies Localized,
   subtitle: {
-    es: "Automatizamos procesos, elevamos la calidad y convertimos ideas de ingeniería en productos que funcionan. Más de 7 años de experiencia combinada.",
-    en: "We automate processes, raise quality standards and turn engineering ideas into products that actually work. 7+ years of combined experience.",
+    es: "Automatizamos procesos y convertimos ideas de ingeniería en productos que funcionan. Llevamos más de 7 años haciéndolo entre Ecuador y México.",
+    en: "We automate processes and turn engineering ideas into products that work. We have been doing it for over 7 years across Ecuador and Mexico.",
   } satisfies Localized,
   ctaPrimary: {
     es: "Ver proyectos",
@@ -154,47 +169,50 @@ export const OFFICE_STATUS = {
     en: "Both offices are closed. Anything you send now gets answered when Quito opens.",
   } satisfies Localized,
   overlap: {
-    es: "Solape diario de las dos sedes: 09:00–18:00 hora de Quito.",
-    en: "Daily overlap between both offices: 09:00–18:00 Quito time.",
+    es: "Las dos sedes coinciden todos los días de 09:00 a 18:00, hora de Quito.",
+    en: "Both offices overlap every day from 09:00 to 18:00, Quito time.",
   } satisfies Localized,
 };
 
 /* ------------------------------------------------------------------ */
-/* Bandas entre secciones                                              */
+/* Capítulos                                                           */
 /* ------------------------------------------------------------------ */
 
 /**
- * Texto de las bandas donde la escena 3D queda a la vista.
+ * Las bandas entre secciones, que ahora son capítulos.
  *
- * Eran tres aforismos —"si no se puede medir, no lo llamamos mejora"— y ese
- * es exactamente el género de frase que se puede pegar en la página de
- * cualquier consultora del mundo sin cambiar una palabra. Suenan a postura y
- * no dicen nada comprobable.
+ * Eran una cita pequeña en una esquina, y eso era lo que les quitaba fuerza:
+ * la banda existe para que el dragón pase, y una frase de cuatro líneas a la
+ * izquierda no se ve pasar nada. Ahora la primera frase va a toda la anchura
+ * y el bicho la cruza por delante (ver `SceneBreak` y la capa de la escena en
+ * `SceneRoot`). El resto queda debajo, pequeño.
  *
- * Ahora cada banda hace un trabajo: anuncia lo que viene justo debajo, con
- * un dato que se puede verificar bajando dos dedos de pantalla. La banda
- * sigue siendo aire para que se vea el dragón, pero deja de ser relleno.
+ * Cada una sigue haciendo un trabajo: anuncia lo que viene justo debajo con
+ * un dato que se comprueba bajando dos dedos de pantalla.
  */
-export const BREAKS: { mark: string; quote: Localized }[] = [
+export const BREAKS: { mark: string; title: Localized; body: Localized }[] = [
   {
-    mark: "A—01",
-    quote: {
-      es: "Cuatro proyectos abajo. Uno lo puedes abrir ahora mismo; los otros tres viven dentro de la operación de alguien.",
-      en: "Four projects below. One you can open right now; the other three live inside somebody's operation.",
+    mark: "01",
+    title: { es: "Proyectos que ya funcionan.", en: "Projects already at work." },
+    body: {
+      es: "Dos los puedes abrir ahora mismo. Los demás funcionan dentro de la operación de nuestros clientes.",
+      en: "You can open two of them right now. The rest run inside our clients' operations.",
     },
   },
   {
-    mark: "A—02",
-    quote: {
-      es: "Lo que sigue es una calculadora. Dice que no más veces de las que dice que sí.",
-      en: "What follows is a calculator. It says no more often than it says yes.",
+    mark: "02",
+    title: { es: "Lo que sigue es una calculadora.", en: "What follows is a calculator." },
+    body: {
+      es: "Y muchas veces te dirá que no vale la pena automatizar.",
+      en: "And it will often tell you automation isn't worth it.",
     },
   },
   {
-    mark: "A—03",
-    quote: {
-      es: "Quito y Monterrey solapan nueve horas al día. Ese es todo el secreto de trabajar en dos husos.",
-      en: "Quito and Monterrey overlap nine hours a day. That is the whole secret of working across two time zones.",
+    mark: "03",
+    title: { es: "Nueve horas al día en común.", en: "Nine shared hours a day." },
+    body: {
+      es: "Quito y Monterrey comparten nueve horas de trabajo, así que siempre hay alguien para responderte.",
+      en: "Quito and Monterrey share nine working hours, so someone is always there to answer.",
     },
   },
 ];
@@ -232,8 +250,13 @@ export type Project = {
   image?: string;
   imageAlt?: Localized;
   /** Cuando no hay imagen, se dibuja este gráfico técnico */
-  visual?: "device" | "ledger";
+  visual?: "device" | "ledger" | "line";
   href?: string;
+  /**
+   * El sistema funcionando, para abrirlo desde el panel a pantalla completa
+   * (ver `LiveSystem`). Solo los que se pueden usar de verdad.
+   */
+  live?: { url: string; label: string; hint?: Localized };
   year: string;
 };
 
@@ -260,8 +283,8 @@ export const PROJECTS: Project[] = [
       en: "The full body loaded as a navigable model: explore it by clinical region, inspect it muscle by muscle and review real ranges of motion. Every clinical figure carries its citation.",
     },
     outcome: {
-      es: "En línea y en producción en anatris.app, con recorrido guiado y aviso legal antes de usarse.",
-      en: "Live in production at anatris.app, with a guided tour and a legal disclaimer before use.",
+      es: "En línea y en producción en anatris.vercel.app, con recorrido guiado y aviso legal antes de usarse.",
+      en: "Live in production at anatris.vercel.app, with a guided tour and a legal disclaimer before use.",
     },
     tags: ["React", "Three.js", "WebGL", "Supabase", "PWA"],
     metrics: [
@@ -272,17 +295,166 @@ export const PROJECTS: Project[] = [
     accent: "cyan",
     has3D: true,
     mediaKind: "screen",
-    mediaChip: "anatris.app",
+    mediaChip: "anatris.vercel.app",
     image: "/proyectos/anatris.png",
     imageAlt: {
       es: "Pantalla de Anatris mostrando un rango de movimiento de 116 grados",
       en: "Anatris screen showing a 116-degree range of motion",
     },
-    href: "https://anatris.app",
+    /*
+     * `anatris.app` no resuelve en DNS (comprobado el 3 oct 2026 con 8.8.8.8):
+     * el enlace estaba roto. La aplicación responde en Vercel; se enlaza ahí
+     * hasta que el dominio exista.
+     */
+    href: "https://anatris.vercel.app",
+    live: {
+      url: "https://anatris.vercel.app",
+      label: "anatris.vercel.app",
+      hint: {
+        es: "Es Anatris funcionando ahora mismo: gira el cuerpo, elige una región y abre un músculo.",
+        en: "This is Anatris running right now: rotate the body, pick a region and open a muscle.",
+      },
+    },
+  },
+  {
+    slug: "mejora-continua",
+    index: "02",
+    /*
+     * Texto de Matthew (4 oct 2026), pasado a la voz de la página: «iniciativas
+     * de mejora continua en piso, coordinando con producción y calidad en dos
+     * turnos…». Cifras, las suyas: 15 % y 20 %, 4 operadores. Sin año hasta
+     * que lo confirme.
+     */
+    year: "",
+    title: {
+      es: "Mejora continua en planta",
+      en: "Continuous improvement on the floor",
+    },
+    client: {
+      es: "Línea de producción · Dos turnos",
+      en: "Production line · Two shifts",
+    },
+    category: {
+      es: "Calidad · Lean Six Sigma",
+      en: "Quality · Lean Six Sigma",
+    },
+    summary: {
+      es: "Una línea de producción con menos tiempo perdido y menos desperdicio, para que el producto salga bien a la primera.",
+      en: "A production line with less lost time and less waste, so the product comes out right the first time.",
+    },
+    description: {
+      es: "Coordinamos con producción y calidad iniciativas de mejora continua en piso, en dos turnos. Mapeamos el estado actual con Value Stream Mapping (VSM), estandarizamos procedimientos y reorganizamos las estaciones de trabajo con 5S. Dimos seguimiento a los KPI, documentamos desviaciones, impulsamos acciones correctivas y capacitamos a cuatro operadores para que los cambios se adoptaran y se sostuvieran.",
+      en: "Together with production and quality we ran continuous improvement on the floor, across two shifts. We mapped the current state with Value Stream Mapping (VSM), standardized procedures and reorganized workstations with 5S. We tracked KPIs, documented deviations, drove corrective actions and trained four operators so the changes were adopted and kept.",
+    },
+    outcome: {
+      es: "15 % menos tiempo de preparación y 20 % menos reprocesos, con métodos Lean Six Sigma.",
+      en: "15% less setup time and 20% less rework, using Lean Six Sigma methods.",
+    },
+    tags: ["Lean Six Sigma", "VSM", "5S", "KPI", "Acciones correctivas"],
+    metrics: [
+      { value: "−15 %", label: { es: "Tiempo de preparación", en: "Setup time" } },
+      { value: "−20 %", label: { es: "Reprocesos", en: "Rework" } },
+      { value: "4", label: { es: "Operadores capacitados", en: "Operators trained" } },
+    ],
+    accent: "mixed",
+    has3D: false,
+    mediaKind: "drawing",
+    mediaChip: "VSM · ACTUAL → FUTURO",
+    visual: "line",
+  },
+  {
+    slug: "programa-contable",
+    index: "03",
+    year: "2025",
+    title: {
+      es: "Programa contable",
+      en: "Accounting system",
+    },
+    client: {
+      es: "Taller de manufactura",
+      en: "Manufacturing workshop",
+    },
+    category: {
+      es: "Automatización · Gestión",
+      en: "Automation · Operations",
+    },
+    summary: {
+      es: "Un ERP pequeño montado sobre Excel: inventario, kits, ventas y caja en un solo archivo.",
+      en: "A small ERP built on Excel: inventory, kits, sales and cash in a single file.",
+    },
+    description: {
+      es: "Once hojas conectadas por macros: clientes, productos, componentes, kits con su despiece, ventas, compras y gastos, anticipos y un tablero que se recalcula solo. El equipo siguió trabajando en la herramienta que ya sabía usar, sin migrar a otro sistema ni pagar licencias nuevas.",
+      en: "Eleven sheets wired together with macros: customers, products, components, kits with their bill of materials, sales, purchases and expenses, advance payments and a dashboard that recalculates itself. The team kept working in the tool they already knew, with no migration and no new licenses.",
+    },
+    outcome: {
+      es: "El cierre mensual dejó de ser un armado manual: se genera desde los movimientos ya capturados.",
+      en: "Month-end close stopped being manual assembly: it now builds itself from the entries already captured.",
+    },
+    tags: ["Excel", "VBA", "Inventario", "Kits / BOM", "Dashboard"],
+    metrics: [
+      { value: "11", label: { es: "Hojas conectadas", en: "Connected sheets" } },
+      { value: "1", label: { es: "Archivo, cero licencias", en: "File, zero licenses" } },
+      { value: "0", label: { es: "Migraciones de sistema", en: "System migrations" } },
+    ],
+    accent: "orange",
+    has3D: false,
+    mediaKind: "drawing",
+    mediaChip: "Programa_contable.xlsm",
+    visual: "ledger",
+  },
+  {
+    slug: "charms",
+    index: "04",
+    year: "2026",
+    title: { es: "Charms Ecuador", en: "Charms Ecuador" },
+    client: {
+      es: "Taller de regalos en porcelana fría",
+      en: "Cold porcelain gift workshop",
+    },
+    category: {
+      es: "Web · Pedidos por WhatsApp",
+      en: "Web · Orders over WhatsApp",
+    },
+    summary: {
+      es: "Una web que recibe el pedido completo y lo lleva a WhatsApp ya escrito, que es como el taller cierra sus ventas.",
+      en: "A website that takes the full order and hands it to WhatsApp already written, which is how the workshop closes sales.",
+    },
+    description: {
+      es: "Catálogo con filtros y fotos reales de las piezas, un cotizador en cuatro pasos que calcula el precio mientras se elige, una página para regalos de empresa y un muñeco en 3D que se configura y se gira con el dedo. Sin servidor ni base de datos: no cuesta nada mantenerla en línea.",
+      en: "A catalog with filters and real photos of the pieces, a four-step quote tool that prices the order as you choose, a corporate gifts page and a 3D figure you configure and spin with a finger. No server and no database: it costs nothing to keep online.",
+    },
+    outcome: {
+      es: "El cliente llega a WhatsApp con la pieza, los detalles y el precio estimado ya escritos.",
+      en: "Customers reach WhatsApp with the piece, the details and the estimated price already written.",
+    },
+    tags: ["React", "Three.js", "Tailwind", "WhatsApp", "Vercel"],
+    metrics: [
+      { value: "15", label: { es: "Modelos con foto real", en: "Models with real photos" } },
+      { value: "4", label: { es: "Pasos del cotizador", en: "Quote steps" } },
+      { value: "$0", label: { es: "Costo de hosting", en: "Hosting cost" } },
+    ],
+    accent: "cyan",
+    has3D: true,
+    mediaKind: "screen",
+    mediaChip: "charms-ecuador.vercel.app",
+    image: "/proyectos/charms.webp",
+    imageAlt: {
+      es: "Portada de la web de Charms Ecuador con un cuadro de porcelana fría",
+      en: "Charms Ecuador home page showing a cold porcelain frame",
+    },
+    href: "https://charms-ecuador.vercel.app",
+    live: {
+      url: "https://charms-ecuador.vercel.app",
+      label: "charms-ecuador.vercel.app",
+      hint: {
+        es: "Es la web de Charms funcionando: abre el catálogo o arma una cotización y mira el mensaje que se envía.",
+        en: "This is the Charms site running: open the catalog or build a quote and see the message it sends.",
+      },
+    },
   },
   {
     slug: "dispositivos-medicos",
-    index: "02",
+    index: "05",
     year: "2025",
     title: {
       es: "Dispositivo médico",
@@ -319,87 +491,6 @@ export const PROJECTS: Project[] = [
     mediaKind: "drawing",
     mediaChip: "PLANO · REV C · 1:1",
     visual: "device",
-  },
-  {
-    slug: "programa-contable",
-    index: "03",
-    year: "2025",
-    title: {
-      es: "Programa contable",
-      en: "Accounting system",
-    },
-    client: {
-      es: "Taller de manufactura",
-      en: "Manufacturing workshop",
-    },
-    category: {
-      es: "Automatización · Gestión",
-      en: "Automation · Operations",
-    },
-    summary: {
-      es: "Un ERP pequeño montado sobre Excel: inventario, kits, ventas y caja en un solo archivo.",
-      en: "A small ERP built on Excel: inventory, kits, sales and cash in a single file.",
-    },
-    description: {
-      es: "Once hojas conectadas por macros: clientes, productos, componentes, kits con su despiece, ventas, compras y gastos, anticipos y un tablero que se recalcula solo. El equipo siguió trabajando en la herramienta que ya sabía usar, sin migrar a otro sistema ni pagar licencias nuevas.",
-      en: "Eleven sheets wired together with macros: customers, products, components, kits with their bill of materials, sales, purchases and expenses, advance payments and a dashboard that recalculates itself. The team kept working in the tool they already knew — no migration, no new licenses.",
-    },
-    outcome: {
-      es: "El cierre mensual dejó de ser un armado manual: se genera desde los movimientos ya capturados.",
-      en: "Month-end close stopped being manual assembly: it now builds itself from the entries already captured.",
-    },
-    tags: ["Excel", "VBA", "Inventario", "Kits / BOM", "Dashboard"],
-    metrics: [
-      { value: "11", label: { es: "Hojas conectadas", en: "Connected sheets" } },
-      { value: "1", label: { es: "Archivo, cero licencias", en: "File, zero licenses" } },
-      { value: "0", label: { es: "Migraciones de sistema", en: "System migrations" } },
-    ],
-    accent: "orange",
-    has3D: false,
-    mediaKind: "drawing",
-    mediaChip: "Programa_contable.xlsm",
-    visual: "ledger",
-  },
-  {
-    slug: "charms-ecuador",
-    index: "04",
-    year: "2026",
-    title: { es: "Charms Ecuador", en: "Charms Ecuador" },
-    client: {
-      es: "Taller de regalos en porcelana fría",
-      en: "Cold porcelain gift workshop",
-    },
-    category: {
-      es: "E-commerce · Marca",
-      en: "E-commerce · Brand",
-    },
-    summary: {
-      es: "De vender por Instagram a tener catálogo propio y cotizador automático.",
-      en: "From selling over Instagram to a proper catalog with an automatic quote builder.",
-    },
-    description: {
-      es: "Cada pieza es hecha a mano y a medida, así que el reto no era un carrito: era cotizar. El configurador arma el pedido paso a paso —tipo de pieza, personajes, mascotas, texto— calcula el precio y lo manda listo por WhatsApp al taller.",
-      en: "Every piece is handmade to order, so the challenge was never a cart — it was quoting. The configurator builds the order step by step (piece type, characters, pets, text), prices it, and sends it ready to the workshop over WhatsApp.",
-    },
-    outcome: {
-      es: "Sitio construido y listo para publicar; falta cerrar fotos finales y precios con la clienta.",
-      en: "Site built and ready to publish; final photos and pricing still to be signed off with the client.",
-    },
-    tags: ["React", "Vite", "Tailwind", "Cotizador", "WhatsApp"],
-    metrics: [
-      { value: "3D", label: { es: "Renders de producto", en: "Product renders" } },
-      { value: "1", label: { es: "Cotizador paso a paso", en: "Step-by-step quoter" } },
-      { value: "0", label: { es: "Comisiones de plataforma", en: "Platform fees" } },
-    ],
-    accent: "mixed",
-    has3D: false,
-    mediaKind: "photo",
-    mediaChip: "Pieza personalizada · porcelana fría",
-    image: "/proyectos/charms-cuadro.webp",
-    imageAlt: {
-      es: "Cuadro de porcelana fría con figuras de una familia hecho por Charms",
-      en: "Cold porcelain family portrait handmade by Charms",
-    },
   },
 ];
 /* ------------------------------------------------------------------ */
@@ -443,7 +534,7 @@ export const FIELDS: Field[] = [
       es: "El flujo rediseñado, medido antes y después, y el tablero con el que se vigila que no se vuelva a torcer.",
       en: "The redesigned flow, measured before and after, plus the dashboard that keeps it from drifting back.",
     },
-    span: { es: "4–8 semanas", en: "4–8 weeks" },
+    span: { es: "4 a 8 semanas", en: "4 to 8 weeks" },
   },
   {
     id: "calidad",
@@ -452,7 +543,7 @@ export const FIELDS: Field[] = [
       es: "Procedimientos, registros y trazabilidad que aguantan una auditoría, y el equipo entrenado en usarlos.",
       en: "Procedures, records and traceability that survive an audit, and the team trained to keep them.",
     },
-    span: { es: "6–10 semanas", en: "6–10 weeks" },
+    span: { es: "6 a 10 semanas", en: "6 to 10 weeks" },
   },
   {
     id: "automatizacion",
@@ -461,7 +552,7 @@ export const FIELDS: Field[] = [
       es: "La herramienta corriendo dentro de tu operación, con la documentación para mantenerla sin nosotros.",
       en: "The tool running inside your operation, documented well enough to keep without us.",
     },
-    span: { es: "4–10 semanas", en: "4–10 weeks" },
+    span: { es: "4 a 10 semanas", en: "4 to 10 weeks" },
   },
   {
     id: "producto",
@@ -470,7 +561,7 @@ export const FIELDS: Field[] = [
       es: "Del CAD al prototipo validado, con el expediente técnico armado en paralelo y no al final.",
       en: "From CAD to a validated prototype, with the technical file built alongside instead of at the end.",
     },
-    span: { es: "8–16 semanas", en: "8–16 weeks" },
+    span: { es: "8 a 16 semanas", en: "8 to 16 weeks" },
   },
 ];
 
@@ -510,8 +601,8 @@ export const SYMPTOMS: Symptom[] = [
     },
     fields: ["procesos"],
     firstMove: {
-      es: "Medimos en planta, con reloj, durante los turnos que haga falta. No preguntamos cuánto tarda: lo tomamos.",
-      en: "We measure on the floor, with a stopwatch, for as many shifts as it takes. We don't ask how long it takes — we time it.",
+      es: "Medimos en planta, con cronómetro, durante los turnos que haga falta. En vez de preguntar cuánto tarda, lo cronometramos.",
+      en: "We measure on the floor with a stopwatch, for as many shifts as it takes. Instead of asking how long it takes, we time it.",
     },
     needs: {
       es: "Acceso al piso y permiso para estorbar un poco.",
@@ -526,8 +617,8 @@ export const SYMPTOMS: Symptom[] = [
     },
     fields: ["calidad", "procesos"],
     firstMove: {
-      es: "Contamos los reprocesos de los últimos tres meses y buscamos en qué paso se cuelan. En qué paso, no quién.",
-      en: "We count the last three months of rework and find which step lets it through. Which step — not who.",
+      es: "Contamos los reprocesos de los últimos tres meses y buscamos en qué paso del proceso se cuelan, sin buscar culpables.",
+      en: "We count the last three months of rework and find the step where it slips through, without looking for someone to blame.",
     },
     needs: {
       es: "Registros de rechazo, aunque estén incompletos.",
@@ -639,12 +730,12 @@ export const DIAGNOSIS = {
     en: "Tick whatever sounds familiar",
   } satisfies Localized,
   subtitle: {
-    es: "Esta no es la lista de lo que vendemos: es la lista de frases con las que nos llaman. Marca las que se parezcan a tu semana y debajo aparece qué haríamos primero.",
-    en: "This isn't a list of what we sell: it's the list of sentences people call us with. Tick the ones that sound like your week and what we'd do first appears below.",
+    es: "Son frases que nos dicen los clientes cuando nos llaman. Marca las que se parezcan a tu semana y abajo verás qué haríamos primero.",
+    en: "These are things clients tell us when they call. Tick the ones that sound like your week and you'll see what we'd do first.",
   } satisfies Localized,
   empty: {
-    es: "Sin nada marcado no hay nada que decir. Si ninguna de estas frases se parece a tu semana, probablemente todavía no nos necesitas — y preferimos decírtelo aquí que en una reunión.",
-    en: "With nothing ticked there's nothing to say. If none of these sound like your week you probably don't need us yet — and we'd rather tell you here than in a meeting.",
+    es: "Marca al menos una frase para ver qué haríamos. Si ninguna se parece a tu semana, puede que todavía no nos necesites, y preferimos decírtelo aquí.",
+    en: "Tick at least one to see what we'd do. If none of them sound like your week, you may not need us yet, and we'd rather tell you here.",
   } satisfies Localized,
   movesTitle: { es: "Lo que haríamos primero", en: "What we'd do first" } satisfies Localized,
   needsTitle: { es: "Lo que hace falta de tu lado", en: "What we'd need from you" } satisfies Localized,
@@ -694,8 +785,8 @@ export const HOURS = {
     en: "What doing it by hand costs",
   } satisfies Localized,
   subtitle: {
-    es: "Rellena la fila con algo que hoy se haga a mano. La aritmética se ve entera y el veredicto sale solo. Si el número no da, lo dice.",
-    en: "Fill the row with something done by hand today. The arithmetic stays visible and the verdict comes out on its own. If the number doesn't clear the bar, it says so.",
+    es: "Rellena la fila con una tarea que hoy se haga a mano. Verás la cuenta completa y el veredicto. Si no compensa automatizarla, también te lo dice.",
+    en: "Fill the row with a task you do by hand today. You'll see the full calculation and a verdict. If automating it doesn't pay off, it tells you that too.",
   } satisfies Localized,
   task: { es: "La tarea", en: "The task" } satisfies Localized,
   taskPlaceholder: {
@@ -719,8 +810,8 @@ export const HOURS = {
     low: {
       title: { es: "No lo automatices", en: "Don't automate it" } satisfies Localized,
       body: {
-        es: `Menos de ${HOURS_LOW} horas al año. Un proyecto para esto cuesta más de lo que ahorra, y quien te diga lo contrario te está vendiendo algo. Vuelve cuando crezca.`,
-        en: `Under ${HOURS_LOW} hours a year. A project for this costs more than it saves, and anyone who tells you otherwise is selling something. Come back when it grows.`,
+        es: `Menos de ${HOURS_LOW} horas al año. Un proyecto para esto cuesta más de lo que ahorra. Si la tarea crece, vuelve a hacer la cuenta.`,
+        en: `Under ${HOURS_LOW} hours a year. A project for this costs more than it saves. If the task grows, run the numbers again.`,
       } satisfies Localized,
     },
     edge: {
@@ -733,8 +824,8 @@ export const HOURS = {
     high: {
       title: { es: "Aquí sí", en: "This one, yes" } satisfies Localized,
       body: {
-        es: `Más de ${HOURS_HIGH} horas al año: casi un mes de trabajo de una persona, todos los años. Algo de este tamaño cierra alcance y precio en 3–5 días y se construye en 4–10 semanas.`,
-        en: `Over ${HOURS_HIGH} hours a year: nearly a full month of one person's time, every year. Something this size gets scope and price locked in 3–5 days and built in 4–10 weeks.`,
+        es: `Más de ${HOURS_HIGH} horas al año: casi un mes de trabajo de una persona, todos los años. Algo de este tamaño cierra alcance y precio en 3 a 5 días y se construye en 4 a 10 semanas.`,
+        en: `Over ${HOURS_HIGH} hours a year: nearly a full month of one person's time, every year. Something this size gets scope and price locked in 3 to 5 days and built in 4 to 10 weeks.`,
       } satisfies Localized,
     },
   },
@@ -781,7 +872,7 @@ export const COMMITMENTS = {
   items: [
     {
       term: { es: "Diagnóstico primero", en: "Diagnosis first" } satisfies Localized,
-      spec: { es: "1–2 semanas", en: "1–2 weeks" } satisfies Localized,
+      spec: { es: "1 a 2 semanas", en: "1 to 2 weeks" } satisfies Localized,
       body: {
         es: "Medimos tu proceso real antes de proponer nada. Si al final no hay proyecto, la medición se queda contigo igual.",
         en: "We measure your real process before proposing anything. If no project comes out of it, the measurement is yours anyway.",
@@ -789,26 +880,26 @@ export const COMMITMENTS = {
     },
     {
       term: { es: "Precio cerrado", en: "Fixed price" } satisfies Localized,
-      spec: { es: "3–5 días", en: "3–5 days" } satisfies Localized,
+      spec: { es: "3 a 5 días", en: "3 to 5 days" } satisfies Localized,
       body: {
-        es: "Alcance, entregables, plazo y precio por escrito antes de construir. Lo que no se pueda prometer se dice ahí, no después.",
-        en: "Scope, deliverables, timeline and price in writing before we build. Whatever can't be promised is said there, not later.",
+        es: "Alcance, entregables, plazo y precio por escrito antes de construir. Si algo no se puede prometer, lo decimos desde el principio.",
+        en: "Scope, deliverables, timeline and price in writing before we build. If something can't be promised, we say so from the start.",
       } satisfies Localized,
     },
     {
       term: { es: "Entrega cada semana", en: "Weekly delivery" } satisfies Localized,
-      spec: { es: "4–10 semanas", en: "4–10 weeks" } satisfies Localized,
+      spec: { es: "4 a 10 semanas", en: "4 to 10 weeks" } satisfies Localized,
       body: {
-        es: "Cada semana hay algo que se puede abrir. Corregir el rumbo en la semana 3 cuesta una semana; en la 9, cuesta el proyecto.",
-        en: "Every week there's something you can open. Changing course in week 3 costs a week; in week 9 it costs the project.",
+        es: "Cada semana te enseñamos algo que ya funciona, para corregir el rumbo cuando todavía cuesta poco.",
+        en: "Every week we show you something that already works, so changes happen while they are still cheap.",
       } satisfies Localized,
     },
     {
       term: { es: "Acompañamiento", en: "Support" } satisfies Localized,
       spec: { es: "30 días", en: "30 days" } satisfies Localized,
       body: {
-        es: "Después de entregar seguimos disponibles mientras el proceso se estabiliza. Sin contrato nuevo.",
-        en: "After handover we stay available while the process settles. No new contract.",
+        es: "Después de entregar seguimos disponibles mientras el proceso se estabiliza, sin contrato nuevo.",
+        en: "After handover we stay available while the process settles, with no new contract.",
       } satisfies Localized,
     },
   ],
@@ -840,11 +931,37 @@ export const CONTACT = {
       es: "Cuéntanos brevemente el reto…",
       en: "Briefly, what's the challenge…",
     } satisfies Localized,
-    sendEmail: { es: "Enviar por correo", en: "Send by email" } satisfies Localized,
+    send: { es: "Enviar mensaje", en: "Send message" } satisfies Localized,
+    sending: { es: "Enviando…", en: "Sending…" } satisfies Localized,
+    sendEmail: { es: "Abrir en mi correo", en: "Open in my mail app" } satisfies Localized,
     sendWhatsapp: { es: "Enviar por WhatsApp", en: "Send on WhatsApp" } satisfies Localized,
     subject: {
       es: "Nuevo contacto desde el sitio de BOUW",
       en: "New enquiry from the BOUW site",
+    } satisfies Localized,
+    /*
+     * Consentimiento expreso: la Ley Orgánica de Protección de Datos
+     * Personales pide que sea libre, específico, informado e inequívoco. Una
+     * casilla sin marcar de antemano es la forma inequívoca; un texto debajo
+     * del botón no lo es.
+     */
+    consent: {
+      es: "Acepto que BOUW use estos datos solo para responder a mi mensaje, según el",
+      en: "I agree that BOUW may use this data only to reply to my message, as set out in the",
+    } satisfies Localized,
+    privacyLink: { es: "aviso de privacidad", en: "privacy notice" } satisfies Localized,
+    sentTitle: { es: "Mensaje recibido", en: "Message received" } satisfies Localized,
+    sentBody: {
+      es: "Te contestamos al correo que dejaste, en menos de 24 horas hábiles.",
+      en: "We'll reply to the address you left within one business day.",
+    } satisfies Localized,
+    fallback: {
+      es: "No pudimos enviarlo desde aquí. Tu mensaje sigue escrito: mándalo por WhatsApp o por tu correo.",
+      en: "We couldn't send it from here. Your message is still written: send it on WhatsApp or by email.",
+    } satisfies Localized,
+    invalidEmail: {
+      es: "Revisa el correo: lo necesitamos para contestarte.",
+      en: "Check the email address: we need it to reply.",
     } satisfies Localized,
   },
 };

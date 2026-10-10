@@ -28,6 +28,32 @@ function flush() {
   for (const cb of scrollCbs) cb();
 }
 
+/*
+ * Sin hover mientras se baja.
+ *
+ * Con la rueda, el ratón se queda quieto y es la página la que pasa por
+ * debajo: cada ficha de proyecto que cruzaba el puntero arrancaba su hover
+ * —la imagen escalando, el resplandor, las esquinas animando `left`, `top`,
+ * `width` y `height`— y se lo quitaba medio segundo después. Medido sin la
+ * escena 3D, eso solo tiraba la sección de Proyectos de 80 a 15 fps.
+ *
+ * Mientras dura el gesto, `<html data-scrolling>` y el CSS deja el cuerpo sin
+ * eventos de puntero: no hay hover que arrancar. Son dos escrituras por gesto
+ * —al empezar y al parar—, no una por fotograma.
+ */
+let scrollIdle = 0;
+function markScrolling() {
+  const root = document.documentElement;
+  if (!root.hasAttribute("data-scrolling")) root.setAttribute("data-scrolling", "");
+  window.clearTimeout(scrollIdle);
+  scrollIdle = window.setTimeout(() => root.removeAttribute("data-scrolling"), 160);
+}
+
+function onScroll() {
+  markScrolling();
+  request();
+}
+
 function request() {
   if (!raf) raf = window.requestAnimationFrame(flush);
 }
@@ -54,7 +80,7 @@ function bind() {
   if (bound || typeof window === "undefined") return;
   bound = true;
   lastHeight = document.documentElement.scrollHeight;
-  window.addEventListener("scroll", request, { passive: true });
+  window.addEventListener("scroll", onScroll, { passive: true });
   window.addEventListener("resize", relayout, { passive: true });
   observer = new ResizeObserver(onBodyResize);
   observer.observe(document.body);
@@ -63,7 +89,7 @@ function bind() {
 function unbind() {
   if (!bound || scrollCbs.size || layoutCbs.size) return;
   bound = false;
-  window.removeEventListener("scroll", request);
+  window.removeEventListener("scroll", onScroll);
   window.removeEventListener("resize", relayout);
   observer?.disconnect();
   observer = null;

@@ -123,8 +123,17 @@ export default function Contact() {
     setForm((f) => ({ ...f, message: "" }));
   };
 
-  // El sitio no tiene backend: el formulario compone el mensaje y lo abre
-  // en el cliente de correo o en WhatsApp. Cero dependencias de servidor.
+  /*
+   * El mensaje sale desde el servidor (/api/contacto). WhatsApp y el correo
+   * propio quedan como segunda vía: WhatsApp porque en Ecuador es por donde
+   * escribe la mitad de la gente, y el correo para cuando el envío falla —
+   * con el texto ya compuesto, que no se pierde.
+   */
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "fallback">("idle");
+  const [consent, setConsent] = useState(false);
+  const [trap, setTrap] = useState("");
+  const [triedEmail, setTriedEmail] = useState(false);
+
   const body = useMemo(() => {
     const lines = [
       `${t(CONTACT.form.name)}: ${form.name}`,
@@ -145,7 +154,26 @@ export default function Contact() {
   )}`;
 
   const canSend = form.name.trim() !== "" && form.message.trim() !== "";
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email.trim());
+  const canSubmit = canSend && emailOk && consent && status !== "sending";
   const carried = brief.symptoms.length > 0 || brief.count !== null;
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailOk) setTriedEmail(true);
+    if (!canSubmit) return;
+    setStatus("sending");
+    try {
+      const res = await fetch("/api/contacto", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, lang, website: trap }),
+      });
+      setStatus(res.ok ? "sent" : "fallback");
+    } catch {
+      setStatus("fallback");
+    }
+  };
 
   return (
     <section
@@ -174,10 +202,15 @@ export default function Contact() {
             <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-cyan-light">
               {t(CONTACT.eyebrow)}
             </p>
-            <h2 className="mt-5 font-display text-[clamp(2rem,4.5vw,3.25rem)] font-bold leading-[1.06] text-ink">
+            {/*
+              Titular de segundo nivel a propósito: el de la sección es
+              "Contáctanos", justo encima. Dos titulares grandes seguidos que
+              dicen casi lo mismo se leían como dos secciones pegadas.
+            */}
+            <h3 className="mt-4 font-display text-[clamp(1.4rem,2.4vw,1.9rem)] font-bold leading-[1.15] text-ink">
               {t(CONTACT.title)}
-            </h2>
-            <p className="mt-6 max-w-md text-[17px] leading-relaxed text-ink-soft">
+            </h3>
+            <p className="mt-4 max-w-md text-[17px] leading-relaxed text-ink-soft">
               {t(CONTACT.subtitle)}
             </p>
 
@@ -220,10 +253,39 @@ export default function Contact() {
           </Reveal>
 
           <Reveal delay={120}>
+            {status === "sent" ? (
+              <div
+                role="status"
+                className="flex h-full flex-col justify-center border border-cyan-brand/30 bg-navy-900/82 p-7 sm:p-10"
+              >
+                <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-cyan-light">
+                  ✓ {t(CONTACT.form.sentTitle)}
+                </p>
+                <p className="mt-4 max-w-md text-[17px] leading-relaxed text-ink-soft">
+                  {t(CONTACT.form.sentBody)}
+                </p>
+              </div>
+            ) : (
             <form
-              onSubmit={(e) => e.preventDefault()}
+              onSubmit={submit}
+              noValidate
               className="border border-white/10 bg-navy-900/82 p-7 sm:p-10"
             >
+              {/*
+                Trampa para robots: fuera de pantalla, sin tabulación y sin
+                autocompletar. Una persona no la ve y la deja vacía.
+              */}
+              <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+                <label htmlFor="c-website">Website</label>
+                <input
+                  id="c-website"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={trap}
+                  onChange={(e) => setTrap(e.target.value)}
+                />
+              </div>
+
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
                   <label className={LABEL} htmlFor="c-name">
@@ -263,9 +325,17 @@ export default function Contact() {
                   className={FIELD}
                   value={form.email}
                   onChange={update("email")}
+                  onBlur={() => form.email && setTriedEmail(true)}
                   placeholder={t(CONTACT.form.emailPlaceholder)}
                   autoComplete="email"
+                  aria-invalid={triedEmail && !emailOk}
+                  aria-describedby={triedEmail && !emailOk ? "c-email-error" : undefined}
                 />
+                {triedEmail && !emailOk && (
+                  <p id="c-email-error" className="mt-2 text-[12px] text-orange-light">
+                    {t(CONTACT.form.invalidEmail)}
+                  </p>
+                )}
               </div>
 
               <div className="mt-5">
@@ -302,19 +372,40 @@ export default function Contact() {
                 titular y de la barra de desplazamiento por ser lo que más
                 delata una plantilla generada.
               */}
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <a
-                  href={canSend ? mailto : undefined}
-                  aria-disabled={!canSend}
+              <label className="mt-6 flex cursor-pointer items-start gap-3 text-[13px] leading-relaxed text-ink-dim">
+                <input
+                  type="checkbox"
+                  checked={consent}
+                  onChange={(e) => setConsent(e.target.checked)}
+                  className="mt-[3px] h-4 w-4 shrink-0 accent-cyan-brand"
+                />
+                <span>
+                  {t(CONTACT.form.consent)}{" "}
+                  <a
+                    href="/privacidad"
+                    target="_blank"
+                    data-cursor="link"
+                    className="text-cyan-light underline decoration-cyan-light/40 underline-offset-2 hover:decoration-cyan-light"
+                  >
+                    {t(CONTACT.form.privacyLink)}
+                  </a>
+                  .
+                </span>
+              </label>
+
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="submit"
+                  disabled={!canSubmit}
                   data-cursor="link"
                   className={`flex-1 px-7 py-4 text-center text-sm font-semibold transition-colors duration-300 ${
-                    canSend
+                    canSubmit
                       ? "bg-cyan-brand text-navy-950 hover:bg-cyan-light"
                       : "cursor-not-allowed border border-white/10 text-ink-dim/60"
                   }`}
                 >
-                  {t(CONTACT.form.sendEmail)}
-                </a>
+                  {status === "sending" ? t(CONTACT.form.sending) : t(CONTACT.form.send)}
+                </button>
 
                 <a
                   href={canSend ? whatsapp : undefined}
@@ -332,12 +423,20 @@ export default function Contact() {
                 </a>
               </div>
 
-              <p className="mt-4 text-center text-[11px] text-ink-dim/70">
-                {lang === "es"
-                  ? "Al enviar se abre tu correo o WhatsApp con el mensaje listo."
-                  : "Sending opens your mail app or WhatsApp with the message ready."}
-              </p>
+              {status === "fallback" && (
+                <div role="alert" className="mt-5 border border-orange-brand/40 bg-orange-brand/[0.06] p-4 text-[13px] leading-relaxed text-ink-soft">
+                  {t(CONTACT.form.fallback)}{" "}
+                  <a
+                    href={mailto}
+                    data-cursor="link"
+                    className="font-semibold text-cyan-light underline underline-offset-2"
+                  >
+                    {t(CONTACT.form.sendEmail)}
+                  </a>
+                </div>
+              )}
             </form>
+            )}
           </Reveal>
         </div>
       </div>

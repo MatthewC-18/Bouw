@@ -6,50 +6,33 @@ import { useLang } from "@/lib/i18n";
 import { onLayoutChange, onScrollFrame, tickNow } from "@/lib/scrollTicker";
 
 type Props = {
-  /** Índice técnico que aparece junto a la frase */
   mark: string;
-  quote: Localized;
-  /** A qué lado se ancla el texto; el otro lado queda libre para la escena */
+  title: Localized;
+  body: Localized;
   align?: "left" | "right";
 };
 
 /**
- * Banda sin contenido opaco entre secciones.
+ * Capítulo entre dos secciones.
  *
- * Aquí es donde el ensamblaje de la marca ocurre a la vista: nada la tapa.
- * El texto es corto y se pega a un costado para no competir con la escena.
+ * La frase va a toda la anchura y el dragón se posa encima de su primera
+ * línea, como en el logo se posa sobre la W (`data-perch`, ver `Dragon.tsx`).
+ *
+ * La frase entra con el scroll: sube y se ilumina al acercarse al centro, y se
+ * apaga al irse. Todo por `transform` y `opacity` en capas propias; nada de
+ * geometría por fotograma.
  */
-export default function SceneBreak({ mark, quote, align = "left" }: Props) {
+export default function SceneBreak({ mark, title, body, align = "left" }: Props) {
   const { t } = useLang();
   const ref = useRef<HTMLDivElement>(null);
-  const figureRef = useRef<HTMLElement>(null);
+  const titleRef = useRef<HTMLParagraphElement>(null);
+  const bodyRef = useRef<HTMLParagraphElement>(null);
   const ruleRef = useRef<HTMLSpanElement>(null);
 
-  /*
-   * Se anima escribiendo estilos, no con estado.
-   *
-   * Hay tres bandas en la página y cada una hacía `setState` en cada
-   * fotograma de scroll: tres renders de React por fotograma para mover una
-   * opacidad y un ancho. Escribirlos directamente cuesta lo mismo que la
-   * asignación y no despierta al reconciliador.
-   */
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
 
-    /*
-     * La banda se mide aparte del scroll.
-     *
-     * `getBoundingClientRect` obliga al navegador a rehacer el layout de
-     * forma sincrona. Hay tres bandas en la pagina y cada una escribia
-     * estilos justo antes de que la siguiente pidiera su rectangulo: leer,
-     * escribir, leer, escribir, sesenta veces por segundo y con el lienzo 3D
-     * peleando por el mismo hilo. Eso es exactamente lo que se siente como
-     * que la pagina va pesada al bajar.
-     *
-     * Ahora la posicion se mide cuando cambia el layout y durante el scroll
-     * solo se lee `scrollY`, que no cuesta nada.
-     */
     let top = 0;
     let height = 0;
 
@@ -61,21 +44,24 @@ export default function SceneBreak({ mark, quote, align = "left" }: Props) {
 
     const compute = () => {
       const vh = window.innerHeight || 1;
-      // 0 al entrar por abajo, 1 al salir por arriba
+      // 0 cuando la banda entra por abajo, 1 cuando sale por arriba
       const p = Math.min(
-        Math.max(1 - (top - window.scrollY + height / 2) / vh, 0),
+        Math.max((window.scrollY + vh - top) / (height + vh), 0),
         1,
       );
-      // Se revela cerca del centro de la pantalla y se retira al salir
       const near = Math.sin(p * Math.PI);
 
-      const fig = figureRef.current;
-      if (fig) {
-        fig.style.opacity = String(0.25 + near * 0.75);
-        fig.style.transform = `translateY(${(1 - near) * 20}px)`;
+      // La frase no se desplaza: el dragón se posa en ella, y su percha se
+      // mide en el layout. Solo se enciende y se apaga
+      const title = titleRef.current;
+      if (title) title.style.opacity = String(0.12 + near * 0.88);
+      const body = bodyRef.current;
+      if (body) {
+        body.style.opacity = String(Math.max(near * 1.4 - 0.4, 0));
+        body.style.transform = `translate3d(0, ${((0.5 - p) * 9).toFixed(2)}vh, 0)`;
       }
       const rule = ruleRef.current;
-      if (rule) rule.style.width = `${24 + near * 56}px`;
+      if (rule) rule.style.transform = `scaleX(${(0.3 + near * 0.7).toFixed(3)})`;
     };
 
     const remeasure = () => {
@@ -93,35 +79,56 @@ export default function SceneBreak({ mark, quote, align = "left" }: Props) {
     };
   }, []);
 
+  const right = align === "right";
+
   return (
     <div
       ref={ref}
-      aria-hidden={false}
-      className="relative flex min-h-[85svh] items-center overflow-hidden"
+      className="relative flex min-h-[100svh] items-center overflow-hidden"
     >
-      <div className="mx-auto flex w-full max-w-6xl px-6 lg:px-10">
-        <figure
-          ref={figureRef}
-          className={`max-w-sm ${align === "right" ? "ml-auto text-right" : ""}`}
-          style={{ opacity: 0.25, transition: "opacity 120ms linear" }}
-        >
-          <div
-            className={`flex items-center gap-3 ${align === "right" ? "justify-end" : ""}`}
-          >
-            <span className="font-mono text-[11px] tracking-[0.3em] text-ink-dim">
-              {mark}
-            </span>
-            <span
-              ref={ruleRef}
-              className="h-px bg-gradient-to-r from-cyan-brand to-transparent transition-[width] duration-500"
-              style={{ width: "24px" }}
-            />
-          </div>
+      <div
+        className={`mx-auto w-full max-w-[1560px] px-6 lg:px-16 ${right ? "text-right" : ""}`}
+      >
+        <div className={`flex items-center gap-3 ${right ? "justify-end" : ""}`}>
+          <span className="font-mono text-[11px] tracking-[0.3em] text-ink-dim">
+            {mark}
+          </span>
+          <span
+            ref={ruleRef}
+            className="h-px w-20 origin-left bg-gradient-to-r from-cyan-brand to-transparent"
+            style={{ transform: "scaleX(0.3)" }}
+          />
+        </div>
 
-          <blockquote className="mt-6 font-display text-[clamp(1.5rem,3.2vw,2.5rem)] font-bold leading-[1.12] text-ink">
-            {t(quote)}
-          </blockquote>
-        </figure>
+        {/*
+          La frase a toda la anchura. Va en capa propia porque el scroll la
+          mueve en cada fotograma; sin capa, cada escritura repintaba un
+          bloque de texto del tamaño de la pantalla.
+        */}
+        <p
+          ref={titleRef}
+          className="mt-8 font-display text-[clamp(3.25rem,9.5vw,10rem)] leading-[0.9] text-ink will-change-[opacity]"
+          style={{ opacity: 0.12 }}
+        >
+          {/*
+            Percha: el borde de arriba de la frase, cerca de su arranque. Va en
+            un `span` y no en el párrafo para medir la tinta y no la caja.
+          */}
+          <span
+            data-perch={`capitulo-${mark}`}
+            data-perch-corner={right ? "right" : "left"}
+          >
+            {t(title)}
+          </span>
+        </p>
+
+        <p
+          ref={bodyRef}
+          className={`mt-10 max-w-xl text-xl leading-relaxed text-ink-soft will-change-[transform,opacity] ${right ? "ml-auto" : ""}`}
+          style={{ opacity: 0 }}
+        >
+          {t(body)}
+        </p>
       </div>
     </div>
   );

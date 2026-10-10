@@ -13,14 +13,16 @@ import { Environment, Lightformer } from "@react-three/drei";
 import { Bloom, EffectComposer } from "@react-three/postprocessing";
 import type { BloomEffect } from "postprocessing";
 import * as THREE from "three";
-import AssemblyField from "./AssemblyField";
-import BouwMark from "./BouwMark";
 import Dragon from "./Dragon";
+import WordMark from "./WordMark";
 import { LAST_STAGE } from "./layouts";
 import { spreadFor } from "./scenes";
 import { BRAND } from "./logoShapes";
 import { onLayoutChange, onScrollFrame, tickNow } from "@/lib/scrollTicker";
+import { dragonScreen } from "@/lib/dragonScreen";
 import { debug } from "@/lib/debug";
+import { perf } from "@/lib/perfFlags";
+import { detectTier, TIERS, type TierConfig } from "@/lib/gpuTier";
 
 /**
  * Anclas de cada etapa, en orden.
@@ -30,15 +32,37 @@ import { debug } from "@/lib/debug";
  * pasa por delante. Se resuelven contra el DOM porque los proyectos salen de
  * `content.ts` y no tienen id propio.
  */
+/** Etapas que reserva `scenes.ts` para Proyectos (la 1 a la 4). */
+const PROJECT_STAGES = 4;
+
 function stageAnchors(): HTMLElement[] {
   const byId = (id: string) => document.getElementById(id);
   const rows = Array.from(
     document.querySelectorAll<HTMLElement>("#proyectos article"),
   );
+  /*
+   * Con menos fichas que etapas, el encabezado de la sección ocupa la que
+   * falta.
+   *
+   * Al quitar un proyecto la lista se quedaba en ocho anclas para nueve
+   * etapas, `measure` la daba por incompleta y la etapa se quedaba en 0 en
+   * toda la página: el dragón no salía nunca de la portada, ni se construía,
+   * ni escupía fuego en contacto. Y no daba ningún error — simplemente no
+   * pasaba nada.
+   *
+   * El encabezado es la etapa natural: es lo primero que se lee de la
+   * sección, y con él delante cada ficha cae en el escenario del lado de su
+   * maqueta.
+   */
+  const header = document.querySelector<HTMLElement>("#proyectos [data-stage-anchor]");
+  const projects =
+    rows.length >= PROJECT_STAGES || !header
+      ? rows.slice(0, PROJECT_STAGES)
+      : [header, ...rows];
 
   const list = [
     byId("top"),
-    ...rows,
+    ...projects,
     byId("servicios"),
     byId("proceso"),
     byId("nosotros"),
@@ -72,13 +96,17 @@ function StageCamera({
   useFrame((_, delta) => {
     const stage = Math.min(Math.max(stageRef.current ?? 0, 0), LAST_STAGE);
 
-    // Cerca en los extremos (la B manda), un poco atrás en el medio para que
+    // Cerca en los extremos (la palabra manda), un poco atrás en el medio para que
     // quepan los layouts anchos. Nunca tan atrás que las piezas se vuelvan polvo.
-    const edge = Math.min(stage, LAST_STAGE - stage);
-    const z = 10.5 + Math.min(edge, 1) * 3.2;
+    /*
+     * Distancia fija. Se alejaba en mitad del recorrido para que cupieran los
+     * circuitos de vuelo; con el dragón posado en las perchas, alejarse solo
+     * lo encogería de una sección a otra.
+     */
+    const z = 10.5;
 
-    // En el hero la cámara se corre a la izquierda para que la B quede a la
-    // derecha del titular; en contacto vuelve al centro. El desplazamiento se
+    // En el hero la cámara se corre a la izquierda para que la palabra quede a
+    // la derecha del titular; en contacto vuelve al centro. El desplazamiento se
     // encoge con el aspecto, igual que el de la escena: en una ventana
     // estrecha correr la cámara a la izquierda es justo lo que echaba al
     // dragón fuera del encuadre por el otro lado.
@@ -105,48 +133,6 @@ function StageCamera({
 }
 
 /* ------------------------------------------------------------------ */
-/* Partículas de fondo                                                 */
-/* ------------------------------------------------------------------ */
-
-function ParticleField({ count }: { count: number }) {
-  const points = useRef<THREE.Points>(null);
-
-  const geometry = useMemo(() => {
-    const positions = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) {
-      const r = 10 + Math.random() * 13;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-      positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta) * 0.6;
-      positions[i * 3 + 2] = r * Math.cos(phi) * 0.5 - 6;
-    }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    return g;
-  }, [count]);
-
-  useFrame((state, delta) => {
-    if (!points.current) return;
-    points.current.rotation.y += delta * 0.018;
-    points.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.08) * 0.05;
-  });
-
-  return (
-    <points ref={points} geometry={geometry}>
-      <pointsMaterial
-        size={0.045}
-        color={BRAND.cyanLight}
-        transparent
-        opacity={0.18}
-        sizeAttenuation
-        depthWrite={false}
-      />
-    </points>
-  );
-}
-
-/* ------------------------------------------------------------------ */
 /* Contexto WebGL                                                      */
 /* ------------------------------------------------------------------ */
 
@@ -162,12 +148,55 @@ function ParticleField({ count }: { count: number }) {
  * Con un techo de píxeles el dpr se ajusta a la ventana: una ventana pequeña
  * se sigue viendo nítida y una grande cede resolución antes que morirse.
  */
-const PIXEL_BUDGET = 4.6e6;
-
-function maxDpr() {
+function maxDpr(budget: number) {
   const area = window.innerWidth * window.innerHeight;
-  if (!area) return 1.5;
-  return THREE.MathUtils.clamp(Math.sqrt(PIXEL_BUDGET / area), 1, 2);
+  if (!area) return 1;
+  // En gráfica integrada el presupuesto queda por debajo de un píxel de
+  // lienzo por píxel CSS: el dragón se mueve siempre, y a esa velocidad la
+  // diferencia de nitidez no se ve; la de fluidez sí.
+  return THREE.MathUtils.clamp(Math.sqrt(budget / area), 0.6, 2);
+}
+
+/**
+ * Bajada automática de calidad.
+ *
+ * El nombre de la gráfica no lo dice todo: un portátil con dedicada en modo
+ * ahorro rinde como una integrada. Si en dos ventanas seguidas de dos segundos
+ * la página no pasa de 40 fps, la escena pasa al nivel bajo y se queda ahí.
+ */
+function useFpsGuard(active: boolean, onSlow: () => void) {
+  useEffect(() => {
+    if (!active) return;
+    let raf = 0;
+    let frames = 0;
+    let start = 0;
+    let strikes = 0;
+    const tick = (t: number) => {
+      raf = requestAnimationFrame(tick);
+      if (!start) start = t;
+      frames++;
+      if (t - start >= 2000) {
+        const fps = (frames * 1000) / (t - start);
+        // Pestaña en segundo plano: el navegador frena el rAF, no cuenta
+        if (document.visibilityState === "visible" && fps > 3) {
+          strikes = fps < 40 ? strikes + 1 : 0;
+          if (strikes >= 2) {
+            onSlow();
+            cancelAnimationFrame(raf);
+            return;
+          }
+        }
+        frames = 0;
+        start = t;
+      }
+    };
+    // Se empieza a vigilar después del arranque, que siempre da tirones
+    const delay = window.setTimeout(() => (raf = requestAnimationFrame(tick)), 4000);
+    return () => {
+      window.clearTimeout(delay);
+      cancelAnimationFrame(raf);
+    };
+  }, [active, onSlow]);
 }
 
 /**
@@ -258,6 +287,94 @@ function ContextGuard({ onLost }: { onLost: () => void }) {
   return null;
 }
 
+/**
+ * Calentamiento de la GPU al cargar.
+ *
+ * Sin esto, cada material se compilaba la primera vez que aparecía en
+ * pantalla —el dragón en malla al llegar a Proyectos, el fuego al final— y la
+ * textura del dragón (1,2 MB) subía a la GPU en ese mismo fotograma. Eran los
+ * tirones de la primera bajada, justo la que ve el visitante. Aquí se hace todo
+ * al arrancar, en paralelo si el driver lo permite (`compileAsync`). `compile`
+ * recorre también los objetos ocultos, así que entran los de etapas tardías.
+ */
+function GpuWarmup() {
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
+  const camera = useThree((s) => s.camera);
+  useEffect(() => {
+    let alive = true;
+    const id = window.setTimeout(async () => {
+      try {
+        await gl.compileAsync(scene, camera);
+      } catch {
+        // Un material que no compile aquí lo hará al dibujarse, como antes
+      }
+      if (!alive) return;
+      const seen = new Set<THREE.Texture>();
+      scene.traverse((o) => {
+        const mats = (o as THREE.Mesh).material;
+        for (const m of Array.isArray(mats) ? mats : mats ? [mats] : []) {
+          for (const v of Object.values(m)) {
+            if (v instanceof THREE.Texture && !seen.has(v)) {
+              seen.add(v);
+              gl.initTexture(v);
+            }
+          }
+        }
+      });
+    }, 200);
+    return () => {
+      alive = false;
+      window.clearTimeout(id);
+    };
+  }, [gl, scene, camera]);
+  return null;
+}
+
+/**
+ * Cada cuánto se dibuja la escena.
+ *
+ * Con `frameloop="demand"` R3F solo dibuja cuando se le pide; esto se lo pide.
+ * El scroll de la página no depende de esto —lo compone el navegador— así que
+ * el texto sigue bajando a 60 aunque el dragón se dibuje a 30.
+ *
+ * `fps` es el tope; 0 es sin tope, un fotograma por cada uno de la pantalla.
+ */
+function FrameCap({ fps }: { fps: number }) {
+  const invalidate = useThree((s) => s.invalidate);
+  useEffect(() => {
+    let raf = 0;
+    let last = 0;
+    const step = fps > 0 ? 1000 / fps : 0;
+    const root = document.documentElement;
+
+    /*
+     * A ritmo entero mientras la página se mueve o el dragón vuela o anda.
+     *
+     * Posado, el dragón va pegado a su percha y la página la mueve el
+     * compositor a 60: con la escena a 30 el bicho iba a saltos al lado del
+     * texto, que se desliza («cuando sale del borde se traba», Matthew,
+     * 4 oct 2026). Antes solo se pagaba en la portada; fuera de ella la escena
+     * es solo el dragón, pequeño, y el ritmo entero sale casi gratis (medido:
+     * los mismos tirones con dragón que sin él).
+     */
+    const pinnedToPage = () =>
+      root.hasAttribute("data-scrolling") || dragonScreen.moving;
+
+    const tick = (t: number) => {
+      raf = requestAnimationFrame(tick);
+      // Medio fotograma de holgura: a 60 Hz con tope 30, dibuja uno sí y uno no
+      if (step === 0 || t - last >= step - 4 || pinnedToPage()) {
+        last = t;
+        invalidate();
+      }
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [fps, invalidate]);
+  return null;
+}
+
 /* ------------------------------------------------------------------ */
 /* Raíz de la escena                                                   */
 /* ------------------------------------------------------------------ */
@@ -272,19 +389,13 @@ export default function SceneRoot() {
    * Ver `GAZE_*` en `Dragon.tsx`.
    */
   const pointerRef = useRef({ x: 0, y: 0, movedAt: 0 });
-  // Puente entre el dragón y el campo de piezas: el dragón publica dónde está
-  // su frente de construcción y el campo manda piezas ahí
-  const frontRef = useRef(new THREE.Vector3());
-  const buildRef = useRef(0);
-  const flowRef = useRef(0);
   /** Dónde vale la pena el bloom: portada y remate. */
   const heatRef = useRef(1);
-  /** Avance dentro de la sección en la que está posado el dragón, 0 … 1. */
-  const localRef = useRef(0);
   const bloomRef = useRef<BloomEffect | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [small, setSmall] = useState(false);
-  const [dpr, setDpr] = useState(1.5);
+  const [quality, setQuality] = useState<TierConfig>(() => detectTier());
+  const [dpr, setDpr] = useState(() => maxDpr(quality.pixelBudget));
   const [degraded, setDegraded] = useState(false);
   const [bloomOn, setBloomOn] = useState(true);
 
@@ -294,7 +405,7 @@ export default function SceneRoot() {
     const apply = () => {
       setReducedMotion(motion.matches);
       setSmall(width.matches);
-      setDpr(maxDpr());
+      setDpr(maxDpr(quality.pixelBudget));
     };
     apply();
     motion.addEventListener("change", apply);
@@ -305,7 +416,10 @@ export default function SceneRoot() {
       width.removeEventListener("change", apply);
       window.removeEventListener("resize", apply);
     };
-  }, []);
+  }, [quality.pixelBudget]);
+
+  const toLow = useCallback(() => setQuality(TIERS.low), []);
+  useFpsGuard(quality.tier === "high" && !perf.fps, toLow);
 
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
@@ -340,7 +454,6 @@ export default function SceneRoot() {
      * cuesta layout.
      */
     let rests: { start: number; end: number }[] = [];
-
     const measure = () => {
       const vh = window.innerHeight || 1;
       const anchors = stageAnchors();
@@ -398,23 +511,6 @@ export default function SceneRoot() {
         1 - THREE.MathUtils.smoothstep(stage, 0.35, 1.5),
         THREE.MathUtils.smoothstep(stage, LAST_STAGE - 1.9, LAST_STAGE - 0.7),
       );
-
-      /*
-       * Avance dentro de la zona de reposo actual.
-       *
-       * La etapa se congela en un entero mientras el centro de la pantalla
-       * recorre una sección — que es justo lo que queremos para el dragón,
-       * pero deja sin señal a todo lo que sí tiene que seguir al scroll
-       * dentro del bloque, como el barrido de Proceso.
-       */
-      const i = Math.round(stage);
-      const band = rests[Math.min(Math.max(i, 0), rests.length - 1)];
-      const span = Math.max(band.end - band.start, 1);
-      localRef.current = THREE.MathUtils.clamp(
-        (window.scrollY + window.innerHeight / 2 - band.start) / span,
-        0,
-        1,
-      );
     };
 
     const remeasure = () => {
@@ -437,34 +533,19 @@ export default function SceneRoot() {
   // sin estabilizarlo volvería a suscribirse en cada render
   const onContextLost = useCallback(() => setDegraded(true), []);
 
-  /*
-   * Tres motores de movimiento compitiendo —dragón, piezas y polvo— no dan
-   * tres veces más vida: dan ruido sin jerarquía, y ninguno se lee. Ahora
-   * manda la criatura y el resto es acompañamiento, así que hay bastante
-   * menos de las dos cosas que la acompañan.
-   */
-  /*
-   * Menos piezas.
-   *
-   * Ciento cuarenta cubos de colores flotando por delante del texto no se
-   * leen como ingeniería: se leen como confeti. Es el elemento que más
-   * abarataba la página — el que la hacía parecerse a cualquier plantilla con
-   * partículas. Con la mitad, las piezas vuelven a leerse como lo que son:
-   * despiece de la marca, no relleno.
-   */
-  const pieceCount = small ? 48 : 72;
-  const dustCount = small ? 18 : 28;
+  const fpsCap = perf.fps ?? quality.fps;
+  const dprMax = small ? Math.min(dpr, 1.5) : dpr;
 
   return (
     <Canvas
       // Todas las muestras por píxel que quepan en el presupuesto: la escama
       // del dragón es detalle de alta frecuencia y agradece cada una, pero no
       // a costa de quedarse sin contexto
-      dpr={[1, small ? Math.min(dpr, 1.5) : dpr]}
+      dpr={perf.dpr ? [perf.dpr, perf.dpr] : [Math.min(1, dprMax), dprMax]}
       gl={{
         // El compositor hace su propio MSAA en escritorio; esto cubre el móvil,
         // que no lo lleva, y el blit final del compositor
-        antialias: true,
+        antialias: !perf.aa0,
         alpha: true,
         powerPreference: "high-performance",
         toneMapping: THREE.ACESFilmicToneMapping,
@@ -473,15 +554,25 @@ export default function SceneRoot() {
       }}
       camera={{ position: [-2.4, 0, 10.5], fov: 38 }}
       style={{ pointerEvents: "none" }}
+      frameloop="demand"
     >
+      <FrameCap fps={fpsCap ?? 0} />
       {/*
         Ambiente muy bajo: la luz plana come el volumen. El relleno lo dan
         las luces posicionadas y el Environment.
       */}
       <ambientLight intensity={0.22} />
 
-      {/* Luz principal: ámbar cálido desde arriba-derecha (sol de tarde) */}
-      <directionalLight position={[8, 10, 5]} intensity={3.2} color="#ffd080" />
+      {/*
+        Luz principal: blanco cálido desde arriba-derecha.
+
+        Era ámbar (#ffd080), y con el fill y el punto naranjas de abajo la
+        escena entera salía color bronce. Tenía sentido con el dragón de antes,
+        de piel casi negra y teñida a mano; el de Rodin trae su propia piel
+        —grafito azulado y hueso— y el ámbar le volvía naranjas las membranas.
+        La marca es azul y cian: el naranja queda para el fuego.
+      */}
+      <directionalLight position={[8, 10, 5]} intensity={2.8} color="#fff1e0" />
 
       {/* Contraluz cían: recorta la silueta del dragón como fuego frío.
           Es el efecto más visible de la imagen de referencia. */}
@@ -491,67 +582,57 @@ export default function SceneRoot() {
         color={BRAND.cyanLight}
       />
 
-      {/* Fill naranja para el vientre y las alas desde abajo */}
-      <directionalLight
+      {/* Relleno azul acero para el vientre y las alas desde abajo */}
+      {!perf.lights2 && <directionalLight
         position={[-4, -6, 4]}
-        intensity={1.4}
-        color={BRAND.orange}
-      />
+        intensity={1.1}
+        color="#6f8fb8"
+      />}
 
-      {/* Point de cerca: la brasa del ojo y las juntas de escama */}
-      <pointLight
+      {/* Punto de cerca: un brillo tibio en el ojo y las juntas, ya sin brasa */}
+      {!perf.lights2 && <pointLight
         position={[3, 1, 6]}
-        intensity={55}
-        color="#ff8040"
+        intensity={22}
+        color="#ffc49a"
         distance={28}
-      />
+      />}
 
       {/* Relleno frío de arriba: para que la cabeza no quede completamente oscura */}
-      <pointLight
+      {!perf.lights2 && <pointLight
         position={[0, 6, 4]}
         intensity={20}
         color="#c0e8ff"
         distance={20}
-      />
+      />}
 
       <StageCamera stageRef={stageRef} pointerRef={pointerRef} />
-      <BouwMark
-        stageRef={stageRef}
-        pointerRef={pointerRef}
-        reducedMotion={reducedMotion}
-      />
       {/*
-        El dragón va antes que el campo a propósito: R3F ejecuta los `useFrame`
-        en orden de montaje, así que el frente de construcción está ya escrito
-        cuando las piezas lo leen para saber a dónde volar.
+        La palabra va antes que el dragón a propósito: R3F ejecuta los
+        `useFrame` en orden de montaje, y la palabra escribe dónde está la W
+        antes de que el dragón la lea para posarse.
+
+        Ya no hay campo de piezas ni polvo: con la escena por delante de la
+        página flotarían encima del texto, y su trabajo —acompañar al dragón
+        en vuelo— dejó de existir con el dragón posado.
       */}
-      <Dragon
-        stageRef={stageRef}
-        reducedMotion={reducedMotion}
-        frontRef={frontRef}
-        buildRef={buildRef}
-        flowRef={flowRef}
-        localRef={localRef}
-        pointerRef={pointerRef}
-      />
-      <AssemblyField
+      {!perf.nomark && <WordMark
         stageRef={stageRef}
         pointerRef={pointerRef}
-        count={pieceCount}
         reducedMotion={reducedMotion}
-        frontRef={frontRef}
-        flowRef={flowRef}
-      />
-      <ParticleField count={dustCount} />
+      />}
+      {!perf.nodragon && <Dragon
+        reducedMotion={reducedMotion}
+        pointerRef={pointerRef}
+      />}
 
       {/* Estudio de luz propio: sin descargar HDRIs externos */}
-      <Environment resolution={256} frames={1}>
-        {/* Domo superior: azul de cielo cálido */}
+      {!perf.noenv && <Environment resolution={256} frames={1}>
+        {/* Domo superior: blanco de estudio, apenas tibio */}
         <Lightformer
-          intensity={2.2}
+          intensity={2.0}
           position={[0, 5, -4]}
           scale={[14, 5, 1]}
-          color="#ffe8b0"
+          color="#f4f1ea"
         />
         {/* Lateral cián: el rim de las alas y el lomo */}
         <Lightformer
@@ -560,25 +641,26 @@ export default function SceneRoot() {
           scale={[3, 10, 1]}
           color={BRAND.cyanLight}
         />
-        {/* Lateral naranja: el vientre y el borde de las membranas */}
+        {/* Lateral tibio, más bajo que antes: el borde de las membranas */}
         <Lightformer
-          intensity={2.0}
+          intensity={1.1}
           position={[7, -2, 2]}
           scale={[3, 8, 1]}
-          color="#ff8040"
+          color="#ffc49a"
         />
-        {/* Suelo: reflejo cálido desde abajo */}
+        {/* Suelo: reflejo azul de noche desde abajo */}
         <Lightformer
           intensity={0.8}
           position={[0, -6, 3]}
           scale={[12, 3, 1]}
-          color="#7a4020"
+          color="#1d3550"
         />
-      </Environment>
+      </Environment>}
 
       <ContextGuard onLost={onContextLost} />
+      <GpuWarmup />
 
-      {!small && !degraded && (
+      {!small && !degraded && quality.bloom && !perf.nobloom && (
         /*
          * El compositor, sin multimuestreado.
          *

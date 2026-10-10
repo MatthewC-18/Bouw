@@ -2,7 +2,6 @@
 
 import { ABOUT, COMMITMENTS, COMPANY, OFFICES } from "@/lib/content";
 import { useLang } from "@/lib/i18n";
-import LogoMark from "./LogoMark";
 
 /**
  * Nosotros — segundo pliego del dossier.
@@ -20,7 +19,7 @@ export default function About() {
       <div className="relative z-10 mx-auto flex max-w-[1560px] items-center justify-between px-6 py-4 font-mono text-[10px] uppercase tracking-[0.3em] text-plan-ink/50 lg:px-16">
         <span className="ink-chip px-2.5 py-1">BOUW</span>
         <span className="hidden sm:inline">
-          {lang === "es" ? "Pliego 05 — Equipo" : "Sheet 05 — Team"}
+          {lang === "es" ? "Pliego 05 · Equipo" : "Sheet 05 · Team"}
         </span>
         <span>05 / 05</span>
       </div>
@@ -28,10 +27,6 @@ export default function About() {
 
       <div className="ledger-columns relative z-10">
         <div className="relative mx-auto max-w-[1560px] px-6 py-20 lg:px-16 lg:py-28">
-          {/* Marca de agua del pliego: sobre fondo oscuro tiene que aclarar, no
-              oscurecer, o el logo se traga a sí mismo */}
-          <LogoMark className="pointer-events-none absolute -top-6 right-4 h-64 w-auto opacity-[0.10] mix-blend-screen lg:right-16 lg:h-80" />
-
           <div className="relative grid gap-8 lg:grid-cols-12">
             <div className="lg:col-span-2">
               <span className="font-display text-[clamp(3rem,7vw,6rem)] font-bold leading-none text-plan-ink/14">
@@ -44,7 +39,9 @@ export default function About() {
                 {t(ABOUT.eyebrow)}
               </p>
               <h2 className="mt-5 font-display text-[clamp(2rem,5vw,4rem)] font-bold leading-[0.98]">
-                {t(ABOUT.title)}
+                <span data-perch="nosotros" data-perch-corner="right">
+                  {t(ABOUT.title)}
+                </span>
               </h2>
               <p className="sheet-dim mt-8 max-w-xl text-lg leading-relaxed">
                 {t(ABOUT.body)}

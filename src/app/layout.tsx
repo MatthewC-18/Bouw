@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
-import Cursor from "@/components/Cursor";
 import { LanguageProvider } from "@/lib/i18n";
+import { THEME_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 /**
@@ -49,7 +49,7 @@ const SITE_URL = "https://bouw-eight.vercel.app";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "BOUW — Automation & Digital Solutions",
+    default: "BOUW | Automation & Digital Solutions",
     template: "%s | BOUW",
   },
   description:
@@ -99,7 +99,7 @@ export const metadata: Metadata = {
     type: "website",
     url: SITE_URL,
     siteName: "BOUW",
-    title: "BOUW — Automation & Digital Solutions",
+    title: "BOUW | Automation & Digital Solutions",
     description:
       "Del diseño a la realidad: automatización, calidad y consultoría de procesos. Quito · Monterrey.",
     locale: "es_EC",
@@ -107,18 +107,20 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "BOUW — Automation & Digital Solutions",
+    title: "BOUW | Automation & Digital Solutions",
     description:
       "Del diseño a la realidad: automatización, calidad y consultoría de procesos.",
   },
-  icons: {
-    icon: "/logo-bouw.svg",
-  },
+  /*
+   * Sin `icons`: favicon.ico, icon.png, apple-icon.png y opengraph-image.png
+   * viven en src/app/ y Next.js arma las etiquetas solo. Los genera
+   * Bouw/logo/web.py desde el vector del logo.
+   */
 };
 
 export const viewport: Viewport = {
-  themeColor: "#04101f",
-  colorScheme: "dark",
+  themeColor: "#f3f0ea",
+  colorScheme: "light dark",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -126,11 +128,21 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="es"
       className={`${archivo.variable} ${plexSans.variable} ${plexMono.variable} h-full antialiased`}
+      data-theme="light"
       suppressHydrationWarning
     >
+      <head>
+        {/* El modo que eligió el visitante, antes de pintar: sin destello */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className="flex min-h-full flex-col">
+        {/*
+          Sin cursor propio: escondía la flecha del sistema y la cambiaba por
+          un punto con anillo. Es de los recursos que más delatan una web de
+          plantilla, y a quien viene a contratar le quita lo único que espera
+          encontrar donde siempre.
+        */}
         <LanguageProvider>
-          <Cursor />
           {children}
         </LanguageProvider>
       </body>

@@ -4,6 +4,13 @@
  * Son SVG, no imágenes: pesan nada y se ven nítidos en cualquier pantalla.
  * Cuando lleguen capturas reales, se reemplazan por el campo `image` del
  * proyecto en `content.ts` y estos dejan de usarse.
+ *
+ * Lo que se mueve —el punto que late y las barras del tablero— se mueve solo
+ * con el ratón encima (`.pv-pulse` y `.pv-bar` en `globals.css`). Iba con
+ * `<animate>` en bucle, y una animación SMIL repinta el SVG ENTERO en cada
+ * fotograma: el panel completo, 600 × 450 px, se volvía a rasterizar sesenta
+ * veces por segundo mientras se veía. Medido al bajar por Proyectos en
+ * gráfica integrada, era la mayor parte del raster de la sección.
  */
 
 const C = {
@@ -48,14 +55,7 @@ function DeviceVisual() {
         <path d="M256 142 h26 v26 h-26" />
         <circle cx="222" cy="155" r="13" />
       </g>
-      <circle cx="222" cy="155" r="5" fill={C.cyanLight}>
-        <animate
-          attributeName="opacity"
-          values="1;0.15;1"
-          dur="2.2s"
-          repeatCount="indefinite"
-        />
-      </circle>
+      <circle className="pv-pulse" cx="222" cy="155" r="5" fill={C.cyanLight} />
 
       {/* Línea de eje */}
       <line
@@ -185,6 +185,8 @@ function LedgerVisual() {
         {bars.map((h, i) => (
           <rect
             key={i}
+            className="pv-bar"
+            style={{ animationDelay: `${i * 0.16}s` }}
             x={232 + i * 20}
             y={210 - h}
             width="12"
@@ -192,22 +194,7 @@ function LedgerVisual() {
             rx="2.5"
             fill={i === 5 ? C.orange : C.cyan}
             opacity="0.85"
-          >
-            <animate
-              attributeName="height"
-              values={`${h * 0.5};${h};${h * 0.5}`}
-              dur="4.4s"
-              begin={`${i * 0.16}s`}
-              repeatCount="indefinite"
-            />
-            <animate
-              attributeName="y"
-              values={`${210 - h * 0.5};${210 - h};${210 - h * 0.5}`}
-              dur="4.4s"
-              begin={`${i * 0.16}s`}
-              repeatCount="indefinite"
-            />
-          </rect>
+          />
         ))}
         <line x1="226" y1="210" x2="364" y2="210" stroke={C.dim} strokeWidth="1" opacity="0.6" />
       </g>
@@ -245,6 +232,160 @@ function LedgerVisual() {
   );
 }
 
-export default function ProjectVisual({ kind }: { kind: "device" | "ledger" }) {
+/**
+ * Mejora continua: el mapa de flujo de valor de la línea.
+ *
+ * En reposo es el estado actual: cinco estaciones empujando inventario, un
+ * lazo de reproceso que devuelve piezas atrás y el tiempo total de la línea.
+ * Al pasar el ratón pasa al estado futuro: el lazo se apaga (−20 %), aparece
+ * el 5S en las estaciones y la barra de tiempo se acorta (−15 % de
+ * preparación). Las estaciones no llevan nombre ni tiempos inventados: el
+ * dibujo enseña el método, las cifras son las del proyecto.
+ */
+function LineVisual() {
+  const xs = [22, 98, 174, 250, 326];
+  return (
+    <Frame>
+      <g stroke={C.navy} strokeWidth="0.5" opacity="0.35">
+        {Array.from({ length: 21 }, (_, i) => (
+          <line key={`x${i}`} x1={i * 20} y1="0" x2={i * 20} y2="300" />
+        ))}
+        {Array.from({ length: 16 }, (_, i) => (
+          <line key={`y${i}`} x1="0" y1={i * 20} x2="400" y2={i * 20} />
+        ))}
+      </g>
+
+      {/* Rótulo de estado: actual en reposo, futuro con el ratón */}
+      <g fontSize="9" fontFamily="ui-monospace, monospace" letterSpacing="1.5">
+        <text className="pv-now" x="22" y="40" fill={C.dim}>ESTADO ACTUAL</text>
+        <text className="pv-future" x="22" y="40" fill={C.cyanLight}>ESTADO FUTURO</text>
+      </g>
+
+      {/* Estaciones */}
+      {xs.map((x, i) => (
+        <g key={x}>
+          <rect
+            x={x}
+            y="96"
+            width="52"
+            height="38"
+            rx="3"
+            fill="rgba(34,181,207,0.08)"
+            stroke={C.cyan}
+            strokeWidth="1.3"
+          />
+          <text
+            x={x + 26}
+            y="119"
+            textAnchor="middle"
+            fill={C.cyanLight}
+            fontSize="10"
+            fontFamily="ui-monospace, monospace"
+          >
+            {`E${i + 1}`}
+          </text>
+          {/* 5S: solo en el estado futuro */}
+          <g className="pv-future">
+            <rect x={x + 36} y="86" width="20" height="13" rx="2" fill={C.orange} />
+            <text
+              x={x + 46}
+              y="96"
+              textAnchor="middle"
+              fill="#04101f"
+              fontSize="8"
+              fontWeight="700"
+              fontFamily="ui-monospace, monospace"
+            >
+              5S
+            </text>
+          </g>
+        </g>
+      ))}
+
+      {/* Empuje e inventario entre estaciones */}
+      {xs.slice(0, -1).map((x, i) => (
+        <g key={`p${x}`}>
+          <line
+            x1={x + 54}
+            y1="115"
+            x2={xs[i + 1] - 4}
+            y2="115"
+            stroke={C.dim}
+            strokeWidth="1.2"
+            strokeDasharray="4 3"
+          />
+          <path
+            d={`M${x + 64} 160 l9 -14 l9 14 z`}
+            fill="none"
+            stroke={C.orangeLight}
+            strokeWidth="1"
+          />
+          <text
+            x={x + 73}
+            y="157"
+            textAnchor="middle"
+            fill={C.orangeLight}
+            fontSize="7"
+            fontFamily="ui-monospace, monospace"
+          >
+            I
+          </text>
+        </g>
+      ))}
+
+      {/* Lazo de reproceso: de la inspección vuelve atrás */}
+      <g className="pv-loop">
+        <path
+          d="M276 96 C276 58 150 58 150 92"
+          fill="none"
+          stroke={C.orange}
+          strokeWidth="1.6"
+          strokeDasharray="5 3"
+        />
+        <path d="M144 86 L150 96 L156 86 Z" fill={C.orange} />
+        <text
+          x="213"
+          y="56"
+          textAnchor="middle"
+          fill={C.orangeLight}
+          fontSize="8"
+          fontFamily="ui-monospace, monospace"
+        >
+          REPROCESO
+        </text>
+      </g>
+      <text
+        className="pv-future"
+        x="213"
+        y="70"
+        textAnchor="middle"
+        fill={C.cyanLight}
+        fontSize="10"
+        fontWeight="700"
+        fontFamily="ui-monospace, monospace"
+      >
+        −20 %
+      </text>
+
+      {/* Escalera de tiempos: espera arriba, proceso abajo */}
+      <g stroke={C.dim} strokeWidth="1" fill="none" opacity="0.8">
+        <path d="M22 196 h44 v12 h28 v-12 h48 v12 h28 v-12 h48 v12 h28 v-12 h48 v12 h28 v-12 h30" />
+      </g>
+
+      {/* Tiempo total de la línea: se acorta en el estado futuro */}
+      <rect x="22" y="232" width="356" height="8" rx="4" fill="rgba(109,134,164,0.2)" />
+      <rect className="pv-lead" x="22" y="232" width="356" height="8" rx="4" fill={C.cyan} />
+      <g fontSize="9" fontFamily="ui-monospace, monospace">
+        <text x="22" y="260" fill={C.dim}>TIEMPO DE PREPARACIÓN</text>
+        <text className="pv-future" x="378" y="260" textAnchor="end" fill={C.cyanLight} fontWeight="700">
+          −15 %
+        </text>
+      </g>
+    </Frame>
+  );
+}
+
+export default function ProjectVisual({ kind }: { kind: "device" | "ledger" | "line" }) {
+  if (kind === "line") return <LineVisual />;
   return kind === "device" ? <DeviceVisual /> : <LedgerVisual />;
 }

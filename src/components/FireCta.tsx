@@ -25,13 +25,24 @@ export default function FireCta() {
     };
     window.addEventListener("bouw:fire", onFire);
 
-    // Respaldo: si no hay canvas, o el fuego está apagado, basta con llegar
+    /*
+     * Respaldo: si no hay canvas, o el fuego está apagado, basta con llegar.
+     *
+     * Con el dragón, el titular espera a su fuego: se posa al principio de la
+     * palabra, la recorre andando y escupe al final (Matthew, 3 oct 2026). Si
+     * en un rato no ha llegado, se enciende igual; con menos movimiento
+     * pedido, al momento.
+     */
     const el = root.current;
     let observer: IntersectionObserver | undefined;
+    let wait: ReturnType<typeof setTimeout> | undefined;
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (el) {
       observer = new IntersectionObserver(
         (entries) => {
-          if (entries.some((entry) => entry.isIntersecting)) setLit(true);
+          if (!entries.some((entry) => entry.isIntersecting)) return;
+          if (still) setLit(true);
+          else if (!wait) wait = setTimeout(() => setLit(true), 16000);
         },
         { threshold: 0.4 },
       );
@@ -41,6 +52,7 @@ export default function FireCta() {
     return () => {
       window.removeEventListener("bouw:fire", onFire);
       observer?.disconnect();
+      if (wait) clearTimeout(wait);
     };
   }, []);
 
@@ -51,12 +63,14 @@ export default function FireCta() {
       {/* Brasa detrás del titular: crece cuando prende */}
       <div
         aria-hidden
-        className={`pointer-events-none absolute -inset-x-10 -top-16 h-56 blur-[90px] transition-all duration-[1400ms] ease-out ${
+        // Sin `blur-[90px]`: el degradado ya es difuso, y el desenfoque se
+        // recalculaba en GPU en cada fotograma del dragón
+        className={`pointer-events-none absolute -inset-x-24 -top-28 h-80 transition-all duration-[1400ms] ease-out ${
           lit ? "opacity-100" : "scale-y-50 opacity-0"
         }`}
         style={{
           background:
-            "radial-gradient(50% 60% at 30% 60%, rgba(232,119,34,0.5), transparent 70%)",
+            "radial-gradient(45% 50% at 30% 60%, rgba(232,119,34,0.32), rgba(232,119,34,0.12) 55%, transparent 100%)",
         }}
       />
 
@@ -70,8 +84,16 @@ export default function FireCta() {
         </span>
 
         <h2 className="mt-5 font-display text-[clamp(2.8rem,9vw,7rem)] font-bold leading-[0.9]">
+          {/*
+            Percha de contacto: el dragón se posa al principio de la palabra,
+            la recorre andando y al final escupe fuego sobre ella. Tocar la
+            palabra también la enciende.
+          */}
           <span
-            className={`bg-clip-text transition-all duration-1000 ease-out ${
+            data-perch="contacto"
+            data-perch-corner="left"
+            data-perch-walk
+            className={`cursor-pointer bg-clip-text transition-all duration-1000 ease-out ${
               lit ? "text-transparent" : "text-ink"
             }`}
             style={
@@ -79,7 +101,6 @@ export default function FireCta() {
                 ? {
                     backgroundImage:
                       "linear-gradient(100deg, #ffd9a8 0%, #f79b4a 32%, #e87722 62%, #b7702c 100%)",
-                    filter: "drop-shadow(0 0 26px rgba(232,119,34,0.35))",
                   }
                 : undefined
             }
@@ -103,8 +124,8 @@ export default function FireCta() {
           } text-ink`}
         >
           {t({
-            es: "Cuéntanos qué proceso te está costando horas. Te respondemos con un plan, no con un catálogo.",
-            en: "Tell us which process is costing you hours. You get a plan back, not a catalogue.",
+            es: "Cuéntanos qué proceso te está costando horas y te respondemos con un plan concreto.",
+            en: "Tell us which process is costing you hours and we will reply with a concrete plan.",
           })}
         </p>
 

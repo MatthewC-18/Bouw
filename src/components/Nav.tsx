@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
+import ThemeToggle from "./ThemeToggle";
 import LogoMark from "./LogoMark";
 import { getBrief, getBriefServer, subscribeBrief } from "@/lib/brief";
 import { COMPANY, NAV } from "@/lib/content";
@@ -15,8 +16,8 @@ import { onScrollFrame, tickNow } from "@/lib/scrollTicker";
  * de navegación normal enseña cinco enlaces iguales, los mismos para todo el
  * mundo y los mismos toda la visita.
  *
- * Esta enseña sus dos números. Marca cuatro síntomas y "Diagnóstico" pasa a
- * llevar un 4; haz la cuenta y "La cuenta" pasa a decir 48 h. No es un
+ * Esta enseña sus dos números. Marca cuatro síntomas y "Servicios" pasa a
+ * llevar un 4; haz la cuenta y "Calculadora" pasa a decir 48 h. No es un
  * indicador de progreso ni una insignia: es su respuesta, que ahora le sigue
  * por la página y le espera en el formulario ya escrita.
  *
@@ -72,7 +73,10 @@ export default function Nav() {
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
         scrolled
-          ? "border-b border-white/[0.07] bg-navy-950/80 backdrop-blur-xl"
+          ? // Fondo casi opaco en vez de `backdrop-blur-xl`: el desenfoque
+            // de lo que hay debajo se rehacía cada fotograma, porque debajo
+            // está la escena 3D moviéndose, en toda la página
+            "border-b border-white/[0.07] bg-navy-950/[0.94]"
           : "border-b border-transparent"
       }`}
     >
@@ -83,14 +87,12 @@ export default function Nav() {
           className="flex items-center gap-3 outline-none"
           aria-label={COMPANY.name}
         >
-          <LogoMark className="h-9 w-auto shrink-0" />
-          <span className="flex flex-col leading-none">
-            <span className="font-display text-xl font-bold tracking-[0.14em] text-ink">
-              BOUW
-            </span>
-            <span className="mt-1 text-[9px] uppercase tracking-[0.24em] text-ink-dim">
-              Automation &amp; Digital
-            </span>
+          {/* La palabra ya va dentro del logo: aquí solo queda el oficio. */}
+          <LogoMark className="h-10 w-auto shrink-0" preload />
+          <span className="hidden border-l border-white/10 pl-3 text-[9px] uppercase leading-[1.5] tracking-[0.24em] text-ink-dim sm:block">
+            Automation
+            <br />
+            &amp; Digital
           </span>
         </a>
 
@@ -134,6 +136,7 @@ export default function Nav() {
             );
           })}
 
+          <ThemeToggle className="ml-2" />
           <button
             type="button"
             onClick={toggle}
@@ -155,6 +158,7 @@ export default function Nav() {
 
         {/* Mobile */}
         <div className="flex items-center gap-3 md:hidden">
+          <ThemeToggle />
           <button
             type="button"
             onClick={toggle}
@@ -185,7 +189,7 @@ export default function Nav() {
 
       {/* Panel móvil */}
       <div
-        className={`overflow-hidden border-t border-white/[0.07] bg-navy-950/95 backdrop-blur-xl transition-[max-height] duration-500 md:hidden ${
+        className={`overflow-hidden border-t border-white/[0.07] bg-navy-950/[0.97] transition-[max-height] duration-500 md:hidden ${
           open ? "max-h-96" : "max-h-0 border-transparent"
         }`}
       >

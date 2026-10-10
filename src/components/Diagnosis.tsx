@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { DIAGNOSIS, FIELDS, SYMPTOMS, type FieldId } from "@/lib/content";
-import { HANDOFF_TIME, handoff } from "@/lib/handoff";
 import { setBrief } from "@/lib/brief";
 import { useLang } from "@/lib/i18n";
 import Reveal from "./Reveal";
@@ -30,18 +29,21 @@ export default function Diagnosis() {
 
   const toggle = (id: string) => {
     setTaken(false);
+    /*
+     * Y el dragón se posa en la respuesta.
+     *
+     * Al marcar una frase vuela a la esquina de la tarjeta de resultado, que
+     * es una percha que solo se usa así (`data-perch-focus`): presenta lo que
+     * la página acaba de contestar. Es su forma de decir que ha oído lo que
+     * el visitante acaba de contar.
+     */
+    if (!picked.includes(id)) {
+      window.dispatchEvent(
+        new CustomEvent("bouw:perch-focus", { detail: { id: "resultado" } }),
+      );
+    }
     setPicked((prev) => {
       const had = prev.includes(id);
-      /*
-       * Y la escena acusa recibo.
-       *
-       * Marcar manda una tanda de piezas de la marca hacia el dragón;
-       * desmarcar las devuelve. No es adorno: es la única forma que tiene el
-       * fondo de demostrar que ha oído lo que el visitante acaba de decir, y
-       * ocurre solo cuando él actúa — así que no compite con la lectura.
-       * Ver `handoff` y `AssemblyField`.
-       */
-      handoff.pulse = had ? -HANDOFF_TIME : HANDOFF_TIME;
       return had ? prev.filter((p) => p !== id) : [...prev, id];
     });
   };
@@ -98,15 +100,15 @@ export default function Diagnosis() {
       id="servicios"
       className="veil relative border-y border-white/[0.06] py-28 lg:py-40"
     >
-      <div className="pointer-events-none absolute inset-0 z-0 blueprint-dots opacity-25" />
-
       <div className="relative mx-auto max-w-6xl px-6 lg:px-10">
         <Reveal className="max-w-2xl">
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-orange-light">
             {t(DIAGNOSIS.eyebrow)}
           </p>
           <h2 className="mt-5 font-display text-[clamp(2rem,4.5vw,3.25rem)] font-bold leading-[1.06] text-ink">
-            {t(DIAGNOSIS.title)}
+            <span data-perch="servicios" data-perch-corner="right">
+              {t(DIAGNOSIS.title)}
+            </span>
           </h2>
           <p className="mt-6 text-[17px] leading-relaxed text-ink-soft">
             {t(DIAGNOSIS.subtitle)}
@@ -162,7 +164,17 @@ export default function Diagnosis() {
 
           {/* El resultado */}
           <div className="lg:sticky lg:top-28 lg:self-start">
-            <div className="border border-white/10 bg-navy-950/80 p-7 sm:p-9">
+            {/*
+              Percha de foco y en vivo: la tarjeta es fija al bajar, así que su
+              sitio se lee cada fotograma en vez de medirse una vez.
+            */}
+            <div
+              className="border border-white/10 bg-navy-950/80 p-7 sm:p-9"
+              data-perch="resultado"
+              data-perch-corner="right"
+              data-perch-focus
+              data-perch-live
+            >
               <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-ink-dim">
                 {picked.length === 0
                   ? lang === "es"

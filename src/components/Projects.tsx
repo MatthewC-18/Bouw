@@ -2,7 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useRef, useState, type KeyboardEvent } from "react";
+import {
+  useCallback,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+} from "react";
 import { PROJECTS, pickAsset, type Project } from "@/lib/content";
 import { dragonScreen } from "@/lib/dragonScreen";
 import { useLang } from "@/lib/i18n";
@@ -11,45 +17,21 @@ import LoopVideo from "./LoopVideo";
 import ProjectVisual from "./ProjectVisual";
 import Reveal from "./Reveal";
 
-const ACCENT: Record<
-  Project["accent"],
-  { text: string; rule: string; glow: string; dot: string }
-> = {
-  cyan: {
-    text: "text-cyan-light",
-    rule: "from-cyan-brand",
-    glow: "rgba(34,181,207,0.35)",
-    dot: "bg-cyan-brand",
-  },
-  orange: {
-    text: "text-orange-light",
-    rule: "from-orange-brand",
-    glow: "rgba(232,119,34,0.35)",
-    dot: "bg-orange-brand",
-  },
-  navy: {
-    text: "text-ink",
-    rule: "from-navy-600",
-    glow: "rgba(31,84,136,0.45)",
-    dot: "bg-navy-600",
-  },
-  mixed: {
-    text: "text-cyan-light",
-    rule: "from-cyan-brand",
-    glow: "rgba(79,214,232,0.3)",
-    dot: "bg-orange-brand",
-  },
-};
+/*
+ * Cada ficha lleva su color (`project.hue`) y todas el mismo chasis. Los
+ * colores salen de `.project` en `globals.css`: misma luz y misma intensidad
+ * para todos, cambia solo el tono. Aquí solo se leen las variables.
+ */
 
 /* ------------------------------------------------------------------ */
 /* Panel de medios                                                     */
 /* ------------------------------------------------------------------ */
 
-const KIND_LABEL: Record<Project["mediaKind"], string> = {
-  screen: "UI",
-  photo: "FOTO",
-  drawing: "DWG",
-  floor: "PISO",
+const KIND_LABEL: Record<Project["mediaKind"], { es: string; en: string }> = {
+  screen: { es: "Interfaz", en: "Interface" },
+  photo: { es: "Foto", en: "Photo" },
+  drawing: { es: "Plano", en: "Drawing" },
+  floor: { es: "Planta", en: "Floor" },
 };
 
 /**
@@ -63,44 +45,43 @@ const KIND_LABEL: Record<Project["mediaKind"], string> = {
 function FloorSheet({
   project,
   video,
-  toned,
+  zoom,
 }: {
   project: Project;
   video: { src: string; poster: string };
-  toned: string;
+  zoom: string;
 }) {
   const { t, lang } = useLang();
   const tiles = project.tiles ?? [];
+  const label =
+    "absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgba(4,16,31,0.8)] to-transparent px-3 pb-2 pt-7 font-mono text-[9px] uppercase tracking-[0.2em] text-[#e8eef6]";
 
   return (
-    <div className="relative grid h-full grid-cols-[minmax(0,0.92fr)_minmax(0,1fr)] gap-3">
-      <div className="relative overflow-hidden rounded-lg ring-1 ring-white/10">
+    <div className="absolute inset-0 grid grid-cols-[minmax(0,0.92fr)_minmax(0,1fr)] gap-1.5 p-1.5">
+      <div className="relative overflow-hidden rounded-[9px]">
         <LoopVideo
           src={video.src}
           poster={video.poster}
           label={t(project.title)}
-          className={`absolute inset-0 h-full w-full object-cover ${toned} group-hover:scale-[1.03]`}
+          className={`absolute inset-0 h-full w-full object-cover ${zoom}`}
         />
-        <span className="absolute left-2.5 top-2.5 flex items-center gap-1.5 rounded bg-[rgba(4,16,31,0.78)] px-2 py-1 font-mono text-[9px] uppercase tracking-[0.2em] text-[#e8eef6]">
-          <span className="live-dot h-1.5 w-1.5 rounded-full bg-orange-brand" aria-hidden />
-          {lang === "es" ? "Planta" : "Floor"}
-        </span>
-        <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgba(4,16,31,0.8)] to-transparent px-3 pb-2.5 pt-8 font-mono text-[9px] uppercase tracking-[0.2em] text-[#e8eef6]">
+        {/* Rótulos dentro de la ventana: el dragón puede taparlos (`data-dragon-ignore`) */}
+        <span className={label} data-dragon-ignore>
           01 · {lang === "es" ? "Línea" : "Line"}
         </span>
       </div>
 
-      <div className="grid grid-rows-2 gap-3">
+      <div className="grid grid-rows-2 gap-1.5">
         {tiles.map((tile, i) => (
-          <div key={tile.src} className="relative overflow-hidden rounded-lg ring-1 ring-white/10">
+          <div key={tile.src} className="relative overflow-hidden rounded-[9px]">
             <Image
               src={tile.src}
               alt={t(tile.alt)}
               fill
               sizes="(max-width: 1024px) 50vw, 30vw"
-              className={`object-cover ${toned} group-hover:scale-[1.04]`}
+              className={`object-cover ${zoom}`}
             />
-            <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgba(4,16,31,0.8)] to-transparent px-3 pb-2.5 pt-8 font-mono text-[9px] uppercase tracking-[0.2em] text-[#e8eef6]">
+            <span className={label} data-dragon-ignore>
               {String(i + 2).padStart(2, "0")} · {t(tile.label)}
             </span>
           </div>
@@ -111,18 +92,20 @@ function FloorSheet({
 }
 
 /**
- * Panel de medios.
+ * Panel de medios: el escenario.
  *
- * Las piezas vienen de mundos distintos: una captura de interfaz oscura, una
- * foto de producto sobre fondo claro y dos dibujos técnicos. Para que convivan
- * se les impone el mismo tratamiento:
+ * Las piezas vienen de mundos distintos: una interfaz oscura, una web de
+ * colores pastel, una hoja de cálculo, fotos de planta y un plano. Antes cada
+ * una iba como venía y la fila parecía de cinco portafolios distintos. Ahora
+ * todas pasan por el mismo molde, de arriba abajo:
  *
- * 1. Mismo chasis (barra superior con chip, encuadre, pie técnico).
- * 2. La imagen entra desaturada y bajada de brillo, y recupera su color real
- *    al pasar el mouse. Así una foto blanca no rompe la paleta, y el hover
- *    tiene una recompensa.
- * 3. Las fotos van sobre paspartú oscuro con `contain`; las capturas van a
- *    sangre con `cover`.
+ * 1. Cabecera: número, tipo de material y estado.
+ * 2. La ventana, con su barra y la dirección o el nombre del archivo. La
+ *    captura entra entera, a su proporción (`project.frame`): ni se recorta
+ *    ni se le pone un paspartú distinto a cada una.
+ * 3. Pie: la cifra que resume el proyecto y lo que pasa al tocarlo.
+ *
+ * Todo sobre un escenario del color del proyecto.
  */
 function Media({
   project,
@@ -138,40 +121,47 @@ function Media({
   onOpen?: (panel: HTMLElement) => void;
 }) {
   const { t, lang } = useLang();
-  const panelRef = useRef<HTMLDivElement>(null);
+  const windowRef = useRef<HTMLDivElement>(null);
   const live = Boolean(project.live && onOpen);
   const open = () => {
-    if (live && panelRef.current) onOpen?.(panelRef.current);
+    if (live && windowRef.current) onOpen?.(windowRef.current);
   };
-  const accent = ACCENT[project.accent];
-  // Fotos y capturas van enmarcadas sobre paspartú y completas. La captura de
-  // Anatris es 1200×630: recortada a 4:3 con `cover` perdía un tercio del
-  // ancho y no se entendía qué se estaba mirando.
-  const isFramed = project.mediaKind !== "drawing";
   const video = project.video
     ? {
         src: pickAsset(project.video.src, lang),
         poster: pickAsset(project.video.poster, lang),
       }
     : null;
-  const photographic = Boolean(project.image || video);
+  const feature = project.metrics[project.feature] ?? project.metrics[0];
 
   // Tailwind v4 anima `scale` como propiedad propia, no dentro de `transform`:
-  // si no se nombra aquí, el zoom salta en seco en vez de acompañar al color.
-  // El tratamiento en reposo era tan fuerte (gris al 65 %, brillo al 80 %) que
-  // no se distinguía qué había en cada panel hasta pasar el mouse. Ahora solo
-  // se unifica la temperatura; el hover sigue devolviendo el color entero.
-  //
-  // El tratamiento vive solo en el hover. Un `filter` permanente sobre la
-  // captura obligaba a recomponerla filtrada en cada fotograma de scroll; a
-  // cambio daba un matiz de temperatura que el tinte de marca de encima ya da.
-  const toned =
-    "transition-[scale] duration-[900ms] ease-out " +
-    "group-hover:brightness-105 group-hover:saturate-110";
+  // si no se nombra aquí, el zoom salta en seco. Nada de `filter` permanente:
+  // obligaba a recomponer la captura filtrada en cada fotograma de scroll.
+  const zoom = "transition-[scale] duration-[900ms] ease-out group-hover:scale-[1.03]";
+
+  const status = live
+    ? lang === "es"
+      ? "En vivo"
+      : "Live"
+    : video
+      ? "Video"
+      : t(KIND_LABEL[project.mediaKind]);
+
+  const action = live
+    ? lang === "es"
+      ? "Abrir en vivo"
+      : "Open it live"
+    : project.caseHref
+      ? lang === "es"
+        ? "Ver el caso"
+        : "See the case"
+      : lang === "es"
+        ? "Pasa el mouse"
+        : "Hover";
 
   return (
     <div
-      className={`relative ${live ? "cursor-pointer" : ""}`}
+      className={`p-stage aspect-[10/11] sm:aspect-[6/5] lg:aspect-[5/4] ${live ? "cursor-pointer" : ""}`}
       data-perch={perchId}
       data-perch-corner={perchCorner}
       {...(live
@@ -193,153 +183,122 @@ function Media({
           }
         : {})}
     >
-      {/*
-        Resplandor: un degradado radial ya es una mancha difusa; no lleva
-        `blur`. Con `blur-3xl` encima, la GPU desenfocaba en cada fotograma
-        un rectángulo más grande que el panel —incluso con opacidad 0, por la
-        transición— y la sección bajaba a 15 fps en gráfica integrada. Sin el
-        desenfoque, medido igual: 70.
-      */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -inset-6 -z-10 opacity-0 transition-opacity duration-700 group-hover:opacity-100 lg:-inset-16"
-        style={{
-          background: `radial-gradient(closest-side, ${accent.glow}, transparent)`,
-        }}
-      />
+      {/* Cabecera */}
+      <div className="relative flex items-center gap-3 px-5 pb-3 pt-4 font-mono text-[10px] uppercase tracking-[0.24em] sm:px-7 sm:pt-6">
+        <span className="font-semibold text-(--p-accent)">{project.index}</span>
+        <span className="h-px w-6 bg-(--p-line)" aria-hidden />
+        {/* `min-w-0` o el rótulo no se corta: ensancha el panel y la fila
+            entera se sale de la pantalla en el teléfono */}
+        <span className="min-w-0 truncate text-ink-dim">{t(project.category)}</span>
+        <span className="ml-auto flex shrink-0 items-center gap-2 text-(--p-accent)">
+          <span
+            className={`h-1.5 w-1.5 rounded-full bg-(--p-accent) ${live ? "live-dot" : ""}`}
+            aria-hidden
+          />
+          {status}
+        </span>
+      </div>
 
-      <div
-        ref={panelRef}
-        className="relative overflow-hidden rounded-2xl border border-white/10 bg-navy-950 shadow-[0_30px_90px_-40px_rgba(0,0,0,0.9)]"
-      >
-        {/* Barra superior: el mismo chasis para todos */}
-        <div className="flex items-center gap-3 border-b border-white/[0.07] px-4 py-2.5">
-          <span className="flex gap-1.5">
-            <span className={`h-1.5 w-1.5 rounded-[1px] ${accent.dot}`} />
-            <span className="h-1.5 w-1.5 rounded-[1px] bg-white/20" />
-            <span className="h-1.5 w-1.5 rounded-[1px] bg-white/10" />
-          </span>
-          <span className="truncate rounded border border-white/[0.08] bg-white/[0.03] px-2.5 py-0.5 font-mono text-[10px] tracking-wide text-ink-dim">
-            {project.mediaChip}
-          </span>
-          {live ? (
-            <span className="ml-auto flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.24em] text-cyan-light">
-              <span className="live-dot h-1.5 w-1.5 rounded-full bg-cyan-light" aria-hidden />
-              {lang === "es" ? "En vivo" : "Live"}
-            </span>
-          ) : (
-            <span className="ml-auto flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.24em] text-ink-dim/60">
-              {video && <span className="h-1.5 w-1.5 rounded-full bg-orange-brand/80" aria-hidden />}
-              {video ? "VIDEO" : KIND_LABEL[project.mediaKind]}
-            </span>
-          )}
-        </div>
-
+      {/* La ventana */}
+      <div className="p-area relative flex-1 px-5 sm:px-7">
         <div
-          className={`relative aspect-4/3 overflow-hidden ${
-            project.mediaKind === "floor"
-              ? "bg-navy-900 p-3 sm:p-4"
-              : isFramed
-                ? "bg-navy-900 p-4 sm:p-6"
-                : ""
-          }`}
+          ref={windowRef}
+          className="p-window"
+          style={{ "--p-frame": project.frame } as CSSProperties}
         >
-          {/* Trama de fondo: cose los paneles al mismo sistema */}
-          <div className="pointer-events-none absolute inset-0 blueprint-dots opacity-20" />
+          <div className="p-window-bar flex items-center gap-3 px-3.5">
+            <span className="flex gap-1.5" aria-hidden>
+              <span className="h-2 w-2 rounded-full bg-(--p-line)" />
+              <span className="h-2 w-2 rounded-full bg-(--p-line)" />
+              <span className="h-2 w-2 rounded-full bg-(--p-line)" />
+            </span>
+            <span className="mx-auto max-w-[70%] truncate rounded-md bg-(--p-window) px-3 py-0.5 font-mono text-[10px] tracking-wide text-ink-dim">
+              {project.mediaChip}
+            </span>
+            <span className="w-[42px]" aria-hidden />
+          </div>
 
-          {project.mediaKind === "floor" && video ? (
-            <FloorSheet project={project} video={video} toned={toned} />
-          ) : video ? (
-            <div className="relative h-full w-full overflow-hidden rounded-lg ring-1 ring-white/10">
+          <div className="p-media">
+            {project.mediaKind === "floor" && video ? (
+              <FloorSheet project={project} video={video} zoom={zoom} />
+            ) : video ? (
               <LoopVideo
                 src={video.src}
                 poster={video.poster}
                 label={t(project.title)}
-                className={`absolute inset-0 h-full w-full object-contain ${toned} group-hover:scale-[1.03]`}
+                className={`absolute inset-0 h-full w-full object-cover ${zoom}`}
               />
-            </div>
-          ) : project.image ? (
-            <div
-              className={`relative h-full w-full overflow-hidden ${
-                isFramed ? "rounded-lg ring-1 ring-white/10" : ""
-              }`}
-            >
+            ) : project.image ? (
               <Image
                 src={project.image}
                 alt={project.imageAlt ? t(project.imageAlt) : t(project.title)}
                 fill
-                sizes="(max-width: 1024px) 100vw, 58vw"
-                className={`${isFramed ? "object-contain" : "object-cover"} ${toned} group-hover:scale-[1.03]`}
+                sizes="(max-width: 1024px) 100vw, 55vw"
+                className={`object-cover object-top ${zoom}`}
               />
-            </div>
-          ) : (
-            <div className="absolute inset-0 transition-transform duration-[900ms] ease-out group-hover:scale-[1.04]">
-              <ProjectVisual kind={project.visual ?? "device"} />
-            </div>
-          )}
+            ) : (
+              <div className={`absolute inset-0 ${zoom}`}>
+                <ProjectVisual kind={project.visual ?? "device"} />
+              </div>
+            )}
 
-          {/* Tinte de marca sobre las fotos: se retira al pasar el mouse.
-              Los dibujos técnicos ya nacen en la paleta, no lo necesitan. */}
-          {photographic && (
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 opacity-45 transition-opacity duration-700 group-hover:opacity-0"
-              style={{
-                background:
-                  "linear-gradient(165deg, rgba(var(--page-rgb),0) 0%, rgba(var(--page-rgb),0.28) 55%, rgba(var(--veil-rgb),0.42) 100%)",
-              }}
-            />
-          )}
-
-          {/*
-            Aquí cruzaba un destello blanco en diagonal al pasar el ratón.
-
-            Es el "brillo de tarjeta": la banda clara que barre el panel, del
-            mismo repertorio que las píldoras con degradado y las tarjetas que
-            se levantan un píxel. No informa de nada y compite con lo único
-            que importa del panel, que es la imagen del trabajo. Las esquinas
-            de encuadre, que sí dicen "esto es una toma", se quedan.
-          */}
-
-          {/* Sistema en vivo: la invitación aparece al pasar el ratón */}
-          {live && (
-            <span className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">
-              <span className="flex items-center gap-3 rounded-full border border-cyan-light/50 bg-navy-950/85 px-5 py-2.5 text-sm font-semibold text-cyan-light shadow-[0_0_40px_-10px_rgba(79,214,232,0.7)]">
-                <svg width="10" height="12" viewBox="0 0 10 12" aria-hidden>
-                  <path d="M0 0l10 6-10 6z" fill="currentColor" />
-                </svg>
-                {lang === "es" ? "Abrir el sistema en vivo" : "Open the live system"}
+            {/* Sistema en vivo: la invitación aparece al pasar el ratón */}
+            {live && (
+              <span
+                data-dragon-ignore
+                className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[rgba(4,16,31,0.28)] opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+              >
+                <span className="flex items-center gap-3 rounded-full bg-(--p-accent) px-5 py-2.5 text-sm font-semibold text-(--p-on-accent) shadow-[0_12px_40px_-12px_rgba(0,0,0,0.6)]">
+                  <svg width="10" height="12" viewBox="0 0 10 12" aria-hidden>
+                    <path d="M0 0l10 6-10 6z" fill="currentColor" />
+                  </svg>
+                  {lang === "es" ? "Abrir el sistema en vivo" : "Open the live system"}
+                </span>
               </span>
-            </span>
-          )}
-
-          {/* Esquinas de encuadre */}
-          {/* Las esquinas se abren con `transform`, no animando posición y
-              tamaño: eso rehacía el layout en cada fotograma del hover. */}
-          <span className="pointer-events-none absolute left-4 top-4 h-6 w-6 border-l border-t border-white/25 transition-[transform,border-color] duration-500 group-hover:-translate-x-1 group-hover:-translate-y-1 group-hover:border-cyan-light" />
-          <span className="pointer-events-none absolute bottom-4 right-4 h-6 w-6 border-b border-r border-white/25 transition-[transform,border-color] duration-500 group-hover:translate-x-1 group-hover:translate-y-1 group-hover:border-orange-light" />
-        </div>
-
-        {/* Pie técnico */}
-        <div className="flex items-center gap-4 border-t border-white/[0.07] px-5 py-3 font-mono text-[10px] uppercase tracking-[0.24em] text-ink-dim">
-          <span className={accent.text}>{project.slug}</span>
-          <span className="h-px flex-1 bg-white/10" />
-          <span className={`hidden sm:inline ${live ? "text-cyan-light" : ""}`}>
-            {live
-              ? lang === "es"
-                ? "Toca para abrirlo"
-                : "Tap to open it"
-              : project.caseHref
-                ? lang === "es"
-                  ? "Toca para ver el caso"
-                  : "Tap to see the case"
-                : lang === "es"
-                  ? "Pasa el mouse"
-                  : "Hover"}
-          </span>
-          <span>{project.year}</span>
+            )}
+          </div>
         </div>
       </div>
+
+      {/*
+        Pie: la cifra y lo que pasa al tocar, y entre las dos, sitio para el
+        dragón. Con la ficha centrada en pantalla el borde de arriba del
+        escenario queda pegado a la barra y el bicho no cabe encima; aquí
+        abajo sí (ver la repisa al final).
+      */}
+      <div className="relative flex min-h-[4.5rem] items-end gap-4 px-5 pb-4 pt-3 sm:min-h-[5.5rem] sm:px-7 sm:pb-6 lg:min-h-[8.75rem]">
+        {feature && (
+          <div className="flex items-baseline gap-3">
+            <span className="font-display text-[1.6rem] font-bold leading-none text-(--p-accent) sm:text-[2rem] lg:text-[2.5rem]">
+              {feature.value}
+            </span>
+            <span className="max-w-[11rem] text-[12px] leading-snug text-ink-soft">
+              {t(feature.label)}
+            </span>
+          </div>
+        )}
+        <span className="ml-auto flex shrink-0 items-center gap-2 pb-1 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-dim transition-colors duration-500 group-hover:text-(--p-accent)">
+          {action}
+          <span
+            aria-hidden
+            className="transition-transform duration-500 group-hover:translate-x-1"
+          >
+            {live ? "↗" : "→"}
+          </span>
+        </span>
+      </div>
+
+      {/*
+        Repisa: segunda percha del panel, en el pie. El dragón busca a lo
+        largo de ella el tramo sin texto, que es el hueco entre la cifra y la
+        acción, y se queda de pie delante de la ventana.
+      */}
+      <span
+        aria-hidden
+        data-perch={`pie-${project.slug}`}
+        data-perch-corner={perchCorner}
+        className="pointer-events-none absolute inset-x-0 bottom-4 h-px sm:bottom-5"
+      />
     </div>
   );
 }
@@ -350,8 +309,6 @@ function Media({
 
 function ProjectRow({ project, i }: { project: Project; i: number }) {
   const { t, lang } = useLang();
-  const rowRef = useRef<HTMLElement>(null);
-  const accent = ACCENT[project.accent];
   const mediaFirst = i % 2 === 1;
   const perchId = `proyecto-${project.slug}`;
 
@@ -391,24 +348,23 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
     : "lg:col-start-1 lg:col-span-5 lg:row-start-1";
 
   return (
-    <article ref={rowRef} className="group relative">
-      {/* Numeral fantasma: se sale del contenedor a propósito */}
-      <span
-        aria-hidden
-        data-dragon-ignore
-        className={`pointer-events-none absolute -top-14 z-10 select-none font-display text-[clamp(6rem,15vw,14rem)] font-bold leading-none text-white/[0.045] transition-colors duration-700 group-hover:text-white/[0.08] ${
-          mediaFirst ? "right-0" : "left-0"
-        }`}
-      >
-        {project.index}
-      </span>
+    <article
+      className="project group relative isolate"
+      style={
+        {
+          "--p-h": project.hue,
+          "--p-glow-x": mediaFirst ? "28%" : "72%",
+        } as CSSProperties
+      }
+    >
+      <div aria-hidden className="project-glow" />
 
-      <div className="relative grid items-center gap-10 lg:grid-cols-12 lg:gap-14">
+      <div className="relative grid grid-cols-[minmax(0,1fr)] items-center gap-10 lg:grid-cols-12 lg:gap-14">
         {/* Medios */}
-        <div className={mediaClass}>
+        <div className={`min-w-0 ${mediaClass}`}>
           {/*
             El dragón se posa en la esquina del panel que mira al texto: por
-            encima del borde, sin tapar lo que hay dentro (ahí irán videos).
+            encima del borde, sin tapar lo que hay dentro.
           */}
           {/* Con caso completo y sin sistema en vivo, el panel lleva al caso */}
           {project.caseHref && !project.live ? (
@@ -445,14 +401,12 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
         */}
         <Reveal delay={40} className={textClass}>
           <div className="flex items-center gap-3">
-            <span className={`h-1.5 w-1.5 rounded-full ${accent.dot}`} />
-            <span
-              className={`font-mono text-[11px] uppercase tracking-[0.24em] ${accent.text}`}
-            >
+            <span className="h-1.5 w-1.5 rounded-full bg-(--p-accent)" />
+            <span className="font-mono text-[11px] uppercase tracking-[0.24em] text-(--p-accent)">
               {t(project.category)}
             </span>
             {project.has3D && (
-              <span className="rounded-full border border-cyan-brand/40 bg-cyan-brand/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-widest text-cyan-light">
+              <span className="rounded-full border border-(--p-line) bg-(--p-accent-soft) px-2 py-0.5 font-mono text-[9px] uppercase tracking-widest text-(--p-accent)">
                 3D
               </span>
             )}
@@ -469,9 +423,7 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
               data-perch-corner="right"
             >
               {t(project.title)}
-              <span
-                className={`absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-gradient-to-r ${accent.rule} to-transparent transition-transform duration-700 group-hover:scale-x-100`}
-              />
+              <span className="absolute -bottom-1 left-0 h-[2px] w-full origin-left scale-x-0 bg-(--p-accent) transition-transform duration-700 group-hover:scale-x-100" />
             </span>
           </h3>
 
@@ -487,8 +439,8 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
             {t(project.description)}
           </p>
 
-          <div className="mt-6 flex gap-3 border-l-2 border-cyan-brand/60 pl-4">
-            <span className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-light">
+          <div className="mt-6 flex gap-3 border-l-2 border-(--p-accent) pl-4">
+            <span className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-(--p-accent)">
               {lang === "es" ? "Resultado" : "Outcome"}
             </span>
             <p className="text-sm leading-relaxed text-ink">
@@ -499,7 +451,7 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
           <dl className="mt-8 grid grid-cols-3 gap-4 border-t border-white/[0.08] pt-6">
             {project.metrics.map((m) => (
               <div key={m.value + t(m.label)}>
-                <dt className="font-display text-[1.75rem] font-bold leading-none text-ink transition-colors duration-500 group-hover:text-cyan-light">
+                <dt className="font-display text-[1.75rem] font-bold leading-none text-ink transition-colors duration-500 group-hover:text-(--p-accent)">
                   {m.value}
                 </dt>
                 <dd className="mt-2 text-[12px] leading-snug text-ink-dim">
@@ -513,7 +465,7 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
             {project.tags.map((tag) => (
               <li
                 key={tag}
-                className="rounded-full border border-white/10 px-3 py-1 font-mono text-[11px] text-ink-dim"
+                className="rounded-full border border-(--p-line) px-3 py-1 font-mono text-[11px] text-ink-dim"
               >
                 {tag}
               </li>
@@ -523,7 +475,7 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
           {project.caseHref && (
             <Link
               href={project.caseHref}
-              className="group/case mt-8 mr-6 inline-flex items-center gap-4 border border-orange-brand/60 bg-orange-brand/[0.08] px-5 py-3 text-sm font-semibold text-ink transition-colors duration-300 hover:bg-orange-brand hover:text-navy-950"
+              className="group/case mt-8 mr-6 inline-flex items-center gap-4 rounded-full border border-(--p-accent) bg-(--p-accent-soft) px-5 py-3 text-sm font-semibold text-ink transition-colors duration-300 hover:bg-(--p-accent) hover:text-(--p-on-accent)"
             >
               {project.caseLabel
                 ? t(project.caseLabel)
@@ -545,11 +497,11 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
               target="_blank"
               rel="noreferrer noopener"
               data-cursor="link"
-              className="group/link mt-8 inline-flex items-center gap-3 text-sm font-semibold text-cyan-light"
+              className="group/link mt-8 inline-flex items-center gap-3 text-sm font-semibold text-(--p-accent)"
             >
               <span className="relative">
                 {project.href.replace("https://", "")}
-                <span className="absolute -bottom-0.5 left-0 h-px w-full origin-right scale-x-100 bg-cyan-light transition-transform duration-500 group-hover/link:origin-left group-hover/link:scale-x-0" />
+                <span className="absolute -bottom-0.5 left-0 h-px w-full origin-right scale-x-100 bg-(--p-accent) transition-transform duration-500 group-hover/link:origin-left group-hover/link:scale-x-0" />
               </span>
               <span
                 aria-hidden

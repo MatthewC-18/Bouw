@@ -35,11 +35,22 @@ function Frame({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Dispositivo médico: plano de taller con cotas y tolerancia. */
+/**
+ * Dispositivo médico: plano de taller con cotas y tolerancia.
+ *
+ * A una sola tinta, la del proyecto (`--p-accent`, ver `.project` en
+ * `globals.css`): el plano es la captura de este proyecto y va en su color,
+ * igual que las otras fichas llevan el suyo. Las variables van en `style`
+ * porque un atributo de presentación de SVG no admite `var()`.
+ */
 function DeviceVisual() {
+  const ink = { stroke: "var(--p-accent)" };
+  const faint = { stroke: "var(--p-line)" };
+  const label = { fill: "var(--p-accent)" };
+  const dim = { fill: "var(--color-ink-dim)" };
   return (
     <Frame>
-      <g stroke={C.navy} strokeWidth="0.5" opacity="0.4">
+      <g strokeWidth="0.5" style={faint}>
         {Array.from({ length: 21 }, (_, i) => (
           <line key={`x${i}`} x1={i * 20} y1="0" x2={i * 20} y2="300" />
         ))}
@@ -49,13 +60,13 @@ function DeviceVisual() {
       </g>
 
       {/* Cuerpo del dispositivo */}
-      <g fill="none" stroke={C.cyan} strokeWidth="1.6" strokeLinejoin="round">
+      <g fill="none" strokeWidth="1.6" strokeLinejoin="round" style={ink}>
         <path d="M108 112 h122 a26 26 0 0 1 26 26 v34 a26 26 0 0 1 -26 26 h-122 a14 14 0 0 1 -14 -14 v-58 a14 14 0 0 1 14 -14 z" />
-        <path d="M124 132 h64 v48 h-64 z" opacity="0.65" />
+        <path d="M124 132 h64 v48 h-64 z" opacity="0.6" />
         <path d="M256 142 h26 v26 h-26" />
         <circle cx="222" cy="155" r="13" />
       </g>
-      <circle className="pv-pulse" cx="222" cy="155" r="5" fill={C.cyanLight} />
+      <circle className="pv-pulse" cx="222" cy="155" r="5" style={{ fill: "var(--p-accent)" }} />
 
       {/* Línea de eje */}
       <line
@@ -63,14 +74,14 @@ function DeviceVisual() {
         y1="155"
         x2="330"
         y2="155"
-        stroke={C.dim}
         strokeWidth="0.7"
         strokeDasharray="10 4 2 4"
+        style={{ stroke: "var(--color-ink-dim)" }}
         opacity="0.7"
       />
 
       {/* Cotas */}
-      <g stroke={C.orange} strokeWidth="0.9" opacity="0.95">
+      <g strokeWidth="0.9" opacity="0.85" style={ink}>
         <line x1="94" y1="92" x2="256" y2="92" />
         <line x1="94" y1="86" x2="94" y2="98" />
         <line x1="256" y1="86" x2="256" y2="98" />
@@ -79,11 +90,7 @@ function DeviceVisual() {
         <line x1="280" y1="198" x2="292" y2="198" />
       </g>
 
-      <g
-        fill={C.orangeLight}
-        fontSize="10"
-        fontFamily="ui-monospace, monospace"
-      >
+      <g fontSize="10" fontFamily="ui-monospace, monospace" style={label}>
         <text x="175" y="84" textAnchor="middle">
           162.00 ±0.01
         </text>
@@ -92,12 +99,7 @@ function DeviceVisual() {
         </text>
       </g>
 
-      <g
-        fill={C.dim}
-        fontSize="9"
-        fontFamily="ui-monospace, monospace"
-        opacity="0.9"
-      >
+      <g fontSize="9" fontFamily="ui-monospace, monospace" opacity="0.9" style={dim}>
         <text x="22" y="270">ESC 1:1</text>
         <text x="22" y="284">REV C · VALIDADO</text>
         <text x="378" y="284" textAnchor="end">ISO 13485</text>

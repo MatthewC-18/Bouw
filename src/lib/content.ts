@@ -245,7 +245,20 @@ export type Project = {
   tags: string[];
   /** Cifras reales del proyecto */
   metrics: { value: string; label: Localized }[];
-  accent: "cyan" | "orange" | "navy" | "mixed";
+  /**
+   * Tono del proyecto, en grados OKLCH (0–360).
+   *
+   * Cada proyecto lleva su color, pero todos con la misma luz y la misma
+   * intensidad: solo gira el tono (ver `.project` en `globals.css`). Matthew,
+   * 10 oct 2026: no quiere que todos tengan los mismos colores, pero que
+   * Charms saliera más vivo que los demás «se ve feo a la vista». Con L y C
+   * fijos ninguno grita más que otro.
+   */
+  hue: number;
+  /** Proporción de la captura o el video, para enmarcarlo sin recortarlo. */
+  frame: string;
+  /** La cifra que va al pie del panel (índice en `metrics`). */
+  feature: number;
   /** Marca los proyectos donde el 3D es el diferenciador */
   has3D: boolean;
   /**
@@ -315,7 +328,9 @@ export const PROJECTS: Project[] = [
       { value: "113", label: { es: "Músculos con ficha", en: "Muscles documented" } },
       { value: "79", label: { es: "Tests con sens/spec", en: "Tests with sens/spec" } },
     ],
-    accent: "cyan",
+    hue: 225,
+    frame: "1200 / 630",
+    feature: 1,
     has3D: true,
     mediaKind: "screen",
     mediaChip: "anatris.vercel.app",
@@ -379,7 +394,9 @@ export const PROJECTS: Project[] = [
       { value: "−20 %", label: { es: "Reprocesos", en: "Rework" } },
       { value: "4", label: { es: "Operadores capacitados", en: "Operators trained" } },
     ],
-    accent: "mixed",
+    hue: 62,
+    frame: "4 / 3",
+    feature: 1,
     has3D: false,
     /*
      * El dibujo del VSM pasa a la página del caso, en la fase de medir. Aquí
@@ -446,7 +463,9 @@ export const PROJECTS: Project[] = [
       { value: "1", label: { es: "Archivo, cero licencias", en: "File, zero licenses" } },
       { value: "0", label: { es: "Migraciones de sistema", en: "System migrations" } },
     ],
-    accent: "orange",
+    hue: 150,
+    frame: "4 / 3",
+    feature: 0,
     has3D: false,
     /*
      * El archivo funcionando: un recorrido grabado cuadro a cuadro sobre una
@@ -503,7 +522,9 @@ export const PROJECTS: Project[] = [
       { value: "4", label: { es: "Pasos del cotizador", en: "Quote steps" } },
       { value: "$0", label: { es: "Costo de hosting", en: "Hosting cost" } },
     ],
-    accent: "cyan",
+    hue: 350,
+    frame: "1200 / 750",
+    feature: 1,
     has3D: true,
     mediaKind: "screen",
     mediaChip: "charms-ecuador.vercel.app",
@@ -556,7 +577,9 @@ export const PROJECTS: Project[] = [
       { value: "3", label: { es: "Iteraciones de prototipo", en: "Prototype iterations" } },
       { value: "100%", label: { es: "Requisitos trazados", en: "Requirements traced" } },
     ],
-    accent: "navy",
+    hue: 290,
+    frame: "4 / 3",
+    feature: 0,
     has3D: false,
     mediaKind: "drawing",
     mediaChip: "PLANO · REV C · 1:1",

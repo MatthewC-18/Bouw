@@ -86,7 +86,27 @@ const CORNER_INSET = 0.12;
  */
 const READ_LINE = 0.5;
 const VIEW_FROM = 0.26;
-const VIEW_TO = 1.1;
+/**
+ * Por abajo, hasta el borde y no más. Con 1.1 escogía perchas un palmo por
+ * debajo de la ventana y, si el visitante paraba ahí, se posaba sin que se
+ * le viera.
+ */
+const VIEW_TO = 0.95;
+/**
+ * Una percha «se ve» si el bicho entero cabe encima de ella: por debajo de la
+ * barra y de su propio alto. Con el scroll en marcha despega en cuanto su
+ * percha sube de aquí, antes de quedar medio tapado por la barra.
+ */
+const SEEN_FROM = 0.24;
+const SEEN_TO = 0.98;
+/**
+ * Sin ninguna percha a la vista no se adelanta a una que aún no ha entrado:
+ * vuela a tu lado, en el aire, hasta que aparece una. Es una percha más con
+ * este nombre, sin elemento.
+ */
+const AIR_SPOT = "aire";
+/** Cada cuánto busca, volando a tu lado, el hueco con menos texto debajo. */
+const AIR_RECHECK = 0.7;
 /** Con la portada a la vista manda la W, hasta este scroll en altos de ventana. */
 const HERO_UNTIL = 0.45;
 /**
@@ -124,6 +144,27 @@ const EDGE_NDC = 1.08;
 /** Batidas por segundo: más rápido al despegar, ritmo de crucero después. */
 const FLAP_TAKEOFF = 2.2;
 const FLAP_CRUISE = 1.4;
+const FLAP_HOVER = 1.15;
+
+/**
+ * En el aire, más pequeño: con las alas extendidas ocupa el doble de ancho
+ * que posado. Ver «Fases del vuelo».
+ */
+const AIR_SHRINK = 0.38;
+/**
+ * Volando, la percha elegida se mantiene mientras se vea entera: el bicho se
+ * compromete con ella. Antes cambiaba de destino con cada percha nueva que
+ * entraba en la franja de lectura y cada cambio volvía a empezar el vuelo
+ * desde cero, posado y quieto: con el scroll seguido se quedaba clavado
+ * arriba de la ventana, en la misma pose, bajando con la página («baja
+ * conmigo en la misma pose», Matthew, 10 oct 2026).
+ */
+const COMMIT_FROM = SEEN_FROM;
+const COMMIT_TO = 1.0;
+/** Velocidad de scroll (px/s) a la que el bicho posado ya abre del todo las alas para equilibrarse. */
+const SCROLL_FULL = 2600;
+/** Alabeo en mitad de un vuelo, hacia el lado al que se abre el arco. */
+const BANK = 0.42;
 
 /** Fases de un vuelo, en fracción de su duración. */
 const TAKEOFF_END = 0.12;
@@ -160,6 +201,10 @@ const TURN_TIME = 0.5;
 /* ------------------------------------------------------------------ */
 /* Inactividad                                                         */
 /* ------------------------------------------------------------------ */
+
+/** La invitación a tocarlo: segundos posado antes de salir, y dónde se recuerda que ya lo tocaron. */
+const HINT_AFTER = 1.4;
+const HINT_KEY = "bouw-dragon-tocado";
 
 /** Segundos sin tocar nada antes de que haga algo por su cuenta. */
 const IDLE_AFTER = 7;
@@ -390,6 +435,25 @@ const SKIN_FINAL = /* glsl */ `
   }
 `;
 
+/** Sombra de contacto: una elipse que se desvanece hacia el borde. */
+const SHADOW_VERT = /* glsl */ `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const SHADOW_FRAG = /* glsl */ `
+  uniform float uOpacity;
+  varying vec2 vUv;
+  void main() {
+    float d = length((vUv - 0.5) * 2.0);
+    float a = pow(1.0 - smoothstep(0.0, 1.0, d), 1.7);
+    gl_FragColor = vec4(0.02, 0.05, 0.09, a * uOpacity);
+  }
+`;
+
 /* ------------------------------------------------------------------ */
 /* Huecos libres                                                       */
 /* ------------------------------------------------------------------ */
@@ -478,11 +542,37 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
   const target = useRef("");
   /** Percha señalada por la página (una casilla recién marcada), si la hay. */
   const focus = useRef("");
-  /** Vuelo en curso: segundos recorridos y duración. */
-  const flight = useRef({ active: false, t: 0, dur: 1 });
+  /**
+   * Vuelo en curso: segundos recorridos y duración. `inAir`: empezó ya en el
+   * aire (cambio de destino a medio vuelo), así que no despega otra vez, y
+   * `swoop` es hacia dónde se abre el arco, para alabear.
+   */
+  const flight = useRef({ active: false, t: 0, dur: 1, inAir: false, swoop: 0 });
   const flightFrom = useRef(new THREE.Vector3());
   const flightFromQuat = useRef(new THREE.Quaternion());
   const flightFromScale = useRef(1);
+  /** Velocidad con la que entra un vuelo que cambia de destino en el aire. */
+  const flightFromVel = useRef(new THREE.Vector3());
+  /** Escala sin el encogido del aire: de aquí sale un vuelo encadenado. */
+  const baseScale = useRef(1);
+  /** Velocidad del bicho en mundo, suavizada, y su posición anterior. */
+  const vel = useRef(new THREE.Vector3());
+  const prevPos = useRef(new THREE.Vector3());
+  const hasPrev = useRef(false);
+  /** Scroll: último valor y velocidad suavizada en px/s. */
+  const lastScroll = useRef(0);
+  const scrollVel = useRef(0);
+  /** Sombra de contacto bajo las patas, en las perchas de la página. */
+  const shadow = useRef<THREE.Mesh>(null);
+  const shadowAmt = useRef(0);
+  const shadowUniforms = useMemo(() => ({ uOpacity: { value: 0 } }), []);
+  /**
+   * Volando a tu lado (`AIR_SPOT`): el hueco elegido en píxeles de ventana,
+   * el punto suavizado que sigue y cuándo se eligió.
+   */
+  const hover = useRef({ x: 0, y: 0, cx: 0, cy: 0, side: 1, at: -100, fresh: true });
+  /** Cajas del texto de la página, de la última medición (ver `readObstacles`). */
+  const obstacles = useRef<Float32Array>(new Float32Array(0));
 
   /** Paseo por la percha: tramo, reloj y qué hacer al acabar. */
   const stroll = useRef({
@@ -527,6 +617,16 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
   /** Botón invisible encima del bicho: es lo que se pulsa para que reaccione. */
   const hit = useRef<HTMLButtonElement | null>(null);
   const hitBox = useRef({ x: 0, y: 0, r: 0 });
+  /**
+   * Invitación a tocarlo: «agrégale que diga púlsame o algo más cool para
+   * que sepan que pueden interactuar con el dragón» (Matthew, 10 oct 2026).
+   * Una píldora sobre la cabeza cuando lleva un rato posado. Se retira para
+   * siempre la primera vez que alguien lo toca: ya sabe que se puede.
+   */
+  const hint = useRef<{ el: HTMLDivElement; text: HTMLSpanElement } | null>(null);
+  const hintState = useRef({ on: false, x: 0, y: 0, lang: "", done: false, half: 90 });
+  /** Desde cuándo está quieto en su percha, en reloj de la escena. */
+  const restSince = useRef(0);
 
   const gltf = useGLTF(MODEL_PATH);
 
@@ -723,6 +823,11 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
       axis: new THREE.Vector3(),
       screen: new THREE.Vector3(),
       probe: new THREE.Vector3(),
+      step: new THREE.Vector3(),
+      fwd: new THREE.Vector3(),
+      /** Rumbo del fotograma anterior y alabeo suavizado (ver «Alabeo»). */
+      prevYaw: { value: 0 },
+      bank: { value: 0 },
     };
   }, [gltf]);
 
@@ -759,6 +864,7 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
       const margin = Math.min(W * 0.16, 130);
       shiftCache = new Map();
       const obs = readObstacles();
+      obstacles.current = obs;
       const prev = new Map(spots.current.map((s) => [s.id, s]));
       const list: PerchSpot[] = [];
 
@@ -887,13 +993,51 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
     const play = (name: Shot, lead = 0) => {
       const cur = shot.current;
       const busy = cur.name !== "" && sim.current - cur.at < 2.1;
-      if (busy || flight.current.active || stroll.current.active) return;
+      // En el aire no: los clips de un golpe son de bicho posado
+      if (busy || flight.current.active || stroll.current.active || target.current === AIR_SPOT) {
+        return;
+      }
       shot.current = { name, at: sim.current - lead };
     };
-    const onHit = () => play(clicks.current++ % 2 === 0 ? "fuego" : "rugido");
+    const onHit = () => {
+      play(clicks.current++ % 2 === 0 ? "fuego" : "rugido");
+      if (!hintState.current.done) {
+        hintState.current.done = true;
+        try {
+          localStorage.setItem(HINT_KEY, "1");
+        } catch {
+          // Sin almacenamiento: vale para esta visita
+        }
+      }
+    };
     b.addEventListener("click", onHit);
     document.body.appendChild(b);
     hit.current = b;
+
+    // La invitación: píldora con una llama, encima de la cabeza
+    document.querySelectorAll("[data-dragon-hint]").forEach((n) => n.remove());
+    try {
+      hintState.current.done = localStorage.getItem(HINT_KEY) === "1";
+    } catch {
+      hintState.current.done = false;
+    }
+    const hintEl = document.createElement("div");
+    hintEl.dataset.dragonHint = "";
+    hintEl.className = "dragon-hint";
+    hintEl.setAttribute("aria-hidden", "true");
+    const bob = document.createElement("div");
+    bob.className = "dragon-hint-bob";
+    const pill = document.createElement("span");
+    pill.className = "dragon-hint-pill";
+    pill.innerHTML =
+      '<svg width="11" height="14" viewBox="0 0 11 14" aria-hidden="true"><path d="M5.6 0C6.3 2.6 9 4.2 9 7.6A3.6 3.6 0 0 1 1.9 8.3c0-1.3.6-2.2 1.4-3 .1 1 .6 1.7 1.3 2C4.3 5 4.6 2.4 5.6 0Z" fill="currentColor"/><path d="M5.5 14A5.5 5.5 0 0 1 0 8.5c0-1.6.6-3 1.6-4.1-.1.4-.1.8-.1 1.2A4 4 0 0 0 9.4 6.4c.9 1 1.6 2.4 1.6 3.9A3.7 3.7 0 0 1 5.5 14Z" fill="currentColor" opacity=".55"/></svg>';
+    const text = document.createElement("span");
+    pill.appendChild(text);
+    bob.appendChild(pill);
+    hintEl.appendChild(bob);
+    pill.addEventListener("click", onHit);
+    document.body.appendChild(hintEl);
+    hint.current = { el: hintEl, text };
 
     // Las perchas de foco son casillas: pulsarlas es marcar, no pedir fuego
     const down = (e: PointerEvent) => {
@@ -938,6 +1082,9 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
       b.removeEventListener("click", onHit);
       b.remove();
       hit.current = null;
+      pill.removeEventListener("click", onHit);
+      hintEl.remove();
+      hint.current = null;
       window.removeEventListener("pointerdown", down);
       window.removeEventListener("bouw:perch-focus", onFocus);
       window.removeEventListener("bouw:project-open", onOpen);
@@ -969,6 +1116,7 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
     const W = state.size.width;
     const H = state.size.height;
     const scrollY = window.scrollY;
+    const lightMode = document.documentElement.dataset.theme !== "dark";
 
     /* ---- Tamaño en pantalla, para buscar huecos ---- */
     const ppu =
@@ -1039,21 +1187,44 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
         const curY = cur ? cur.y - scrollY : NaN;
         if (
           (target.current === "hero" && heroAlive) ||
-          (cur && curY > H * VIEW_FROM && curY < H * VIEW_TO)
+          (cur && !cur.focusOnly && curY > H * SEEN_FROM && curY < H * SEEN_TO)
         ) {
           want = target.current;
         } else {
+          /*
+           * Primero las que se ven, aunque queden fuera de la franja: con la
+           * única percha visible pegada arriba y la siguiente un palmo por
+           * debajo del borde, elegía la de abajo y se posaba donde no se le
+           * veía. Si no hay ninguna a la vista, vuela a tu lado hasta que
+           * entre una (`AIR_SPOT`).
+           */
           for (const s of spots.current) {
+            if (!usable(s)) continue;
             const sy = s.y - scrollY;
-            if (!usable(s) || sy < H * VIEW_FROM) continue;
+            if (sy < H * SEEN_FROM || sy > H * SEEN_TO) continue;
             const gap = Math.abs(sy - H * READ_LINE);
             if (gap < best) {
               best = gap;
               want = s.id;
             }
           }
-          if (!want) want = target.current;
+          // Al cargar en la portada, espera a la W en vez de salir volando
+          if (!want) want = target.current === "" && scrollY < H * HERO_UNTIL ? "" : AIR_SPOT;
         }
+      }
+    }
+    // Volando, sigue hacia la que eligió mientras se vea (ver `COMMIT_FROM`)
+    if (
+      want &&
+      want !== target.current &&
+      flight.current.active &&
+      !focus.current &&
+      target.current !== "hero"
+    ) {
+      const cur = spots.current.find((s) => s.id === target.current);
+      const curY = cur ? cur.y - scrollY : NaN;
+      if (cur && !cur.blocked && curY > H * COMMIT_FROM && curY < H * COMMIT_TO) {
+        want = target.current;
       }
     }
     // Bajando rápido, espera: mientras la página se mueve y su percha sigue a
@@ -1064,11 +1235,15 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
       const curY = cur ? cur.y - scrollY : NaN;
       const curOnScreen =
         (target.current === "hero" && heroAlive) ||
-        (cur !== undefined && curY > H * 0.05 && curY < H * 1.15);
+        (cur !== undefined && curY > H * SEEN_FROM && curY < H * 1.15);
       if (moving && curOnScreen && !flight.current.active) want = target.current;
     }
     if (!want) {
       g.visible = false;
+      if (hintState.current.on && hint.current) {
+        hintState.current.on = false;
+        hint.current.el.classList.remove("is-on");
+      }
       return;
     }
 
@@ -1083,11 +1258,55 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
       return out.copy(cam.position).addScaledVector(ray, -cam.position.z / ray.z);
     };
     const st = stroll.current;
+    /**
+     * El hueco para volar a tu lado: en el margen del lado por el que llegó,
+     * a la altura que menos texto tape. El lado se queda; la altura se revisa
+     * cada `AIR_RECHECK`, porque la página sigue pasando por debajo.
+     */
+    const pickHover = () => {
+      const hv = hover.current;
+      const x = hv.side > 0 ? W - Math.max(W * 0.1, 110) : Math.max(W * 0.1, 110);
+      const box = dragonPx.current;
+      let bestY = H * 0.45;
+      let bestScore = Infinity;
+      for (const fy of [0.36, 0.5, 0.64]) {
+        const y = H * fy;
+        const score =
+          overlapRatio(obstacles.current, x + box.l, y + box.t + scrollY, x + box.r, y + scrollY) +
+          Math.abs(fy - 0.45) * 0.3;
+        if (score < bestScore) {
+          bestScore = score;
+          bestY = y;
+        }
+      }
+      hv.x = x;
+      hv.y = bestY;
+      hv.at = t;
+      if (hv.fresh) {
+        hv.cx = hv.x;
+        hv.cy = hv.y;
+        hv.fresh = false;
+      }
+    };
     const resolve = (id: string) => {
       if (id === "hero") {
         perch.matrix.decompose(anchor, anchorQuat, anchorScale);
         tgtQuat.copy(anchorQuat).multiply(PERCH_TURN);
         tgtScale = PERCH_SCALE * perch.scale;
+      } else if (id === AIR_SPOT) {
+        const hv = hover.current;
+        if (hv.fresh || t - hv.at > AIR_RECHECK) pickHover();
+        hv.cx += (hv.x - hv.cx) * (1 - Math.pow(0.3, wall));
+        hv.cy += (hv.y - hv.cy) * (1 - Math.pow(0.3, wall));
+        // Deriva lenta: un bicho que se sostiene en el aire nunca está clavado
+        toWorld(
+          hv.cx + Math.sin(t * 0.45) * W * 0.015,
+          hv.cy + Math.sin(t * 0.7 + 1) * H * 0.025,
+          anchor,
+        );
+        // De perfil hacia el centro de la pantalla, que se le vean las alas
+        tgtQuat.setFromEuler(model.euler.set(-0.06, (hv.side > 0 ? -1 : 1) * 1.25, 0, "YXZ"));
+        tgtScale = domScale;
       } else {
         const s = spots.current.find((p) => p.id === id);
         if (!s) return false;
@@ -1127,6 +1346,11 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
     const fl = flight.current;
     if (want !== target.current) {
       const first = target.current === "";
+      const wasHovering = target.current === AIR_SPOT;
+      if (want === AIR_SPOT) {
+        hover.current.fresh = true;
+        hover.current.side = dragonScreen.x > 0.5 || first ? 1 : -1;
+      }
       if (!resolve(want)) return;
       target.current = want;
       st.active = false;
@@ -1139,10 +1363,21 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
         flightFromQuat.current.copy(tgtQuat);
         flightFromScale.current = tgtScale;
         fl.active = true;
+        fl.inAir = false;
         fl.t = 0;
         fl.dur = ARRIVAL_TIME;
         flap.current = 0;
       } else {
+        /*
+         * Si ya iba volando, cambia de rumbo sin despegar otra vez: sale de
+         * donde está, con la velocidad que lleva, y el aleteo sigue su
+         * compás. Volver a empezar desde cero lo dejaba un instante posado y
+         * quieto en mitad del aire.
+         */
+        const midAir = fl.active || wasHovering;
+        fl.inAir = midAir;
+        if (midAir) flightFromVel.current.copy(vel.current);
+        else flightFromVel.current.set(0, 0, 0);
         const from = flightFrom.current.copy(g.position);
         // Si la percha de salida ya no se ve, sale desde el borde
         const { screen } = model;
@@ -1156,7 +1391,7 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
           from.copy(cam.position).addScaledVector(ray, (from.z - cam.position.z) / ray.z);
         }
         flightFromQuat.current.copy(g.quaternion);
-        flightFromScale.current = g.scale.x;
+        flightFromScale.current = baseScale.current;
         fl.active = true;
         fl.t = 0;
         fl.dur = THREE.MathUtils.clamp(
@@ -1165,13 +1400,15 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
           FLIGHT_MAX,
         );
         // Arranca con las alas arriba: el primer gesto es la batida hacia abajo
-        flap.current = 0;
+        if (!midAir) flap.current = 0;
       }
     } else if (!resolve(want)) {
       return;
     }
     g.visible = true;
-    const spot = target.current === "hero"
+    /** Volando a tu lado: no se posa, se sostiene en el aire. */
+    const hovering = target.current === AIR_SPOT && !reducedMotion;
+    const spot = target.current === "hero" || target.current === AIR_SPOT
       ? undefined
       : spots.current.find((s) => s.id === target.current);
 
@@ -1180,7 +1417,8 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
     if (fl.active) {
       fl.t += wall;
       u = Math.min(fl.t / fl.dur, 1);
-      const e = easeSine(u);
+      // Encadenado, sale lanzado (sin arrancar de cero) y frena al llegar
+      const e = fl.inAir ? 1 - Math.pow(1 - u, 2) : easeSine(u);
       const from = flightFrom.current;
       const { path, tangent, lift, basis, origin, pathQuat, heading } = model;
       /*
@@ -1193,8 +1431,18 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
       const dist = from.distanceTo(tgtPos);
       const rise = 1.0 + dist * 0.12;
       const swoop = (tgtPos.x > 0 ? -1 : 1) * (0.6 + dist * 0.18);
+      fl.swoop = Math.sign(swoop);
       path.v0.copy(from);
-      path.v1.copy(from).add(lift.set(swoop, rise, 0.2));
+      if (fl.inAir) {
+        // Primer tramo en la dirección que ya llevaba. Con `e` = 1 − (1 − u)²
+        // sale a 6 · (v1 − v0) / dur, así que v1 − v0 = vel · dur / 6.
+        // Acotado, para que un tirón del scroll no lo lance fuera de cuadro
+        lift.copy(flightFromVel.current).multiplyScalar(fl.dur / 6);
+        if (lift.length() > dist * 0.6 + 0.5) lift.setLength(dist * 0.6 + 0.5);
+        path.v1.copy(from).add(lift);
+      } else {
+        path.v1.copy(from).add(lift.set(swoop, rise, 0.2));
+      }
       path.v2.copy(tgtPos).add(lift.set(swoop, rise * 0.5, 0.15));
       path.v3.copy(tgtPos);
       path.getPoint(e, g.position);
@@ -1221,6 +1469,7 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
       g.scale.setScalar(THREE.MathUtils.lerp(flightFromScale.current, tgtScale, e));
       if (u >= 1) {
         fl.active = false;
+        fl.inAir = false;
         idleNext.current = t + IDLE_EVERY_MIN;
         // Toca la W: la letra acusa el peso
         if (target.current === "hero") perch.kick = -0.9 * perch.scale;
@@ -1293,18 +1542,73 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
       }
     }
 
+    /* ---- Velocidad, para encadenar vuelos ---- */
+    if (hasPrev.current && wall > 1e-4) {
+      model.step.subVectors(g.position, prevPos.current).divideScalar(wall);
+      vel.current.lerp(model.step, 1 - Math.pow(0.002, wall));
+    }
+    prevPos.current.copy(g.position);
+    hasPrev.current = true;
+
     /* ---- Fases del vuelo ---- */
-    const air = fl.active ? smooth(u, 0, TAKEOFF_END) * (1 - smooth(u, LAND_FROM, 1)) : 0;
-    const glide = fl.active ? smooth(u, GLIDE_FROM, GLIDE_FULL) : 0;
-    const flare = fl.active ? smooth(u, FLARE_FROM, FLARE_FULL) * (1 - smooth(u, 0.95, 1)) : 0;
+    // Un vuelo encadenado ya va en el aire: no hay despegue que mezclar. Y
+    // hacia el hueco de volar a tu lado no aterriza ni frena: sigue batiendo
+    const takeoff = fl.inAir ? 1 : smooth(u, 0, TAKEOFF_END);
+    const air = fl.active
+      ? takeoff * (hovering ? 1 : 1 - smooth(u, LAND_FROM, 1))
+      : hovering ? 1 : 0;
+    const glide = fl.active
+      ? smooth(u, GLIDE_FROM, GLIDE_FULL) * (hovering ? 1 - smooth(u, 0.78, 0.98) : 1)
+      : 0;
+    const flare = fl.active && !hovering
+      ? smooth(u, FLARE_FROM, FLARE_FULL) * (1 - smooth(u, 0.95, 1))
+      : 0;
     const rest = (1 - Math.max(air, flare)) * (1 - walkW);
+    baseScale.current = g.scale.x;
     /*
      * En el aire, más pequeño. Con las alas extendidas el bicho ocupa el
      * doble de ancho que posado con ellas recogidas, y en vuelo «se vuelve muy
      * grande hasta posarse» (Matthew, 4 oct 2026). Se encoge lo que crece.
      */
-    if (!reducedMotion) g.scale.multiplyScalar(1 - 0.38 * Math.max(air, flare * 0.7));
-    dragonScreen.moving = fl.active || st.active;
+    if (!reducedMotion) g.scale.multiplyScalar(1 - AIR_SHRINK * Math.max(air, flare * 0.7));
+    dragonScreen.moving = fl.active || st.active || hovering;
+
+    /*
+     * Alabeo: al girar en el aire se inclina hacia dentro de la curva, como
+     * un ave. Sale de lo que gira el rumbo en cada fotograma, no de una
+     * curva fija: los giros fuertes son el despegue y la llegada, cuando pasa
+     * de mirar a cámara a cruzar de perfil.
+     */
+    {
+      const fwd = model.fwd.set(0, 0, 1).applyQuaternion(g.quaternion);
+      const yaw = Math.atan2(fwd.x, fwd.z);
+      let dYaw = yaw - model.prevYaw.value;
+      if (dYaw > Math.PI) dYaw -= Math.PI * 2;
+      if (dYaw < -Math.PI) dYaw += Math.PI * 2;
+      model.prevYaw.value = yaw;
+      const rate = wall > 1e-4 ? dYaw / wall : 0;
+      // Sosteniéndose, un balanceo lento de ala a ala
+      const rock = hovering && !fl.active ? Math.sin(t * 0.6) * 0.1 : 0;
+      const want = reducedMotion
+        ? 0
+        : (THREE.MathUtils.clamp(-rate * 0.22, -BANK, BANK) + rock) * air;
+      model.bank.value += (want - model.bank.value) * (1 - Math.pow(0.01, wall));
+      if (Math.abs(model.bank.value) > 1e-4) g.rotateZ(model.bank.value);
+    }
+
+    /*
+     * Scroll. Posado, la percha se mueve con la página y el bicho con ella;
+     * quieto como un cromo pegado se leía como una pegatina. Así que acusa el
+     * movimiento: abre algo las alas para equilibrarse y echa el pecho contra
+     * el tirón.
+     */
+    const rawScroll = wall > 1e-4 ? (scrollY - lastScroll.current) / wall : 0;
+    lastScroll.current = scrollY;
+    scrollVel.current += (THREE.MathUtils.clamp(rawScroll, -8000, 8000) - scrollVel.current) *
+      (1 - Math.pow(0.0005, wall));
+    const sway = reducedMotion
+      ? 0
+      : THREE.MathUtils.clamp(scrollVel.current / SCROLL_FULL, -1, 1) * rest;
 
     /* ---- Por su cuenta, si el visitante se queda quieto ---- */
     const sc = shot.current;
@@ -1315,6 +1619,7 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
     const quiet = (performance.now() - activeAt.current) / 1000;
     if (
       !reducedMotion &&
+      !hovering &&
       quiet > IDLE_AFTER &&
       t > idleNext.current &&
       !fl.active &&
@@ -1377,7 +1682,12 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
     fireScale.current = THREE.MathUtils.clamp(g.scale.x / 0.45, 0.35, 1);
 
     /* ---- Clips ---- */
-    const beat = THREE.MathUtils.lerp(FLAP_CRUISE, FLAP_TAKEOFF, 1 - smooth(u, 0, 0.3));
+    // Encadenado o sosteniéndose, ritmo de crucero; sostenerse, algo más lento
+    const beat = hovering && !fl.active
+      ? FLAP_HOVER
+      : fl.inAir
+        ? FLAP_CRUISE
+        : THREE.MathUtils.lerp(FLAP_CRUISE, FLAP_TAKEOFF, 1 - smooth(u, 0, 0.3));
     flap.current = (flap.current + wall * beat * (1 - glide * 0.85)) % 1;
     const motion = reducedMotion ? 0 : 1;
     const wVuelo = air * (1 - glide) * (1 - flare) * motion;
@@ -1424,10 +1734,13 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
 
     const calm = rest * (shotLive ? 0.3 : 1);
     if (!reducedMotion) {
-      // Respira: el pecho sube y baja, y las alas acompañan
+      // Respira: el pecho sube y baja, y las alas acompañan. Con la página en
+      // marcha se agarra: alas a medio abrir y el pecho contra el tirón
       const breath = Math.sin(t * 1.7);
-      turn(bones.pecho, 1, 0, 0, -breath * 0.025 * calm);
-      const lift = (Math.sin(t * 1.7 + 0.6) * 0.025 + alert.current * 0.16) * calm;
+      turn(bones.pecho, 1, 0, 0, -breath * 0.025 * calm - sway * 0.09);
+      const lift =
+        (Math.sin(t * 1.7 + 0.6) * 0.025 + alert.current * 0.16) * calm +
+        Math.abs(sway) * 0.3;
       // El ala izquierda del modelo es la de +X: sube girando hacia +Y
       turn(bones["ala_hombro.L"], 0, 0, 1, lift);
       turn(bones["ala_hombro.R"], 0, 0, 1, -lift);
@@ -1435,10 +1748,11 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
       const n = model.tail.length;
       for (let i = 0; i < n; i++) {
         const k = (i + 1) / n;
-        const sway = Math.sin(t * 1.15 - i * 0.45) * 0.045 * k * calm;
+        const swing = Math.sin(t * 1.15 - i * 0.45) * 0.045 * k * calm;
         const wave = Math.sin(flap.current * Math.PI * 2 - i * 0.55) * 0.06 * k * air;
-        turn(model.tail[i], 0, 1, 0, sway);
-        turn(model.tail[i], 1, 0, 0, wave);
+        turn(model.tail[i], 0, 1, 0, swing);
+        // La cola hace de contrapeso cuando la página tira de él
+        turn(model.tail[i], 1, 0, 0, wave - sway * 0.05 * k);
       }
     }
 
@@ -1489,6 +1803,8 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
       ? 0.6
       : 0.45 + Math.sin(t * 1.3) * 0.12 + alert.current * 0.55 + blaze * 1.3 + roar * 1.6 + air * 0.2;
     uniforms.uMouth.value = blaze * flicker + roar * 0.35;
+    // Sobre el navy, las alas oscuras se perdían en el fondo: más borde cian
+    uniforms.uRimStrength.value = lightMode ? 0.32 : 0.58;
 
     // En el aire el cuerpo acusa la batida: sube con cada golpe de ala
     if (!reducedMotion) {
@@ -1522,6 +1838,29 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
     dragonScreen.live = 1;
     dragonScreen.target = target.current;
 
+    /*
+     * Sombra de contacto. Posado sobre un panel o un titular, sin sombra
+     * parecía recortado y pegado encima de la página; con una mancha suave
+     * bajo las patas se apoya. Solo en las perchas de la página (la W ya es
+     * 3D y tiene su luz) y se va al despegar.
+     */
+    const sh = shadow.current;
+    if (sh) {
+      const on = target.current !== "hero" && !hovering && !reducedMotion
+        ? (1 - air) * (1 - flare * 0.8)
+        : 0;
+      shadowAmt.current += (on - shadowAmt.current) * (1 - Math.pow(0.002, wall));
+      const mat = sh.material as THREE.ShaderMaterial;
+      mat.uniforms.uOpacity.value = shadowAmt.current * (lightMode ? 0.26 : 0.5);
+      sh.visible = shadowAmt.current > 0.01;
+      if (sh.visible) {
+        const wPx = dragonPx.current.w * 0.5 * (baseScale.current / domScale);
+        const wWorld = wPx / Math.max(ppu, 1);
+        sh.position.copy(anchor);
+        sh.scale.set(wWorld, wWorld * 0.16, 1);
+      }
+    }
+
     // El botón invisible sigue al bicho; solo se escribe si se ha movido
     const b = hit.current;
     if (b) {
@@ -1538,6 +1877,38 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
         box.x = hx;
         box.y = hy;
         b.style.transform = `translate3d(${hx - hr}px, ${hy - hr}px, 0)`;
+      }
+    }
+
+    /* ---- Invitación a tocarlo ---- */
+    const busyNow = fl.active || st.active || hovering || shotLive;
+    if (busyNow) restSince.current = t;
+    const hn = hint.current;
+    if (hn) {
+      const hs = hintState.current;
+      const lang = document.documentElement.lang === "en" ? "en" : "es";
+      if (lang !== hs.lang) {
+        hs.lang = lang;
+        hn.text.textContent = lang === "es" ? "Tócame… si te atreves" : "Poke me… if you dare";
+        // Se mide solo al cambiar el texto: leer el ancho en cada fotograma
+        // obligaba a recalcular el layout justo después de mover el botón
+        hs.half = hn.text.parentElement
+          ? hn.text.parentElement.offsetWidth * 0.5 + 8
+          : 90;
+      }
+      // Dentro de la ventana: en el teléfono, centrada sobre la cabeza, se salía
+      const hx = Math.round(THREE.MathUtils.clamp(dragonScreen.x * W, hs.half, W - hs.half));
+      const hy = Math.round((dragonScreen.y - dragonScreen.r * 1.05) * H);
+      // Sale cuando lleva un momento posado y no queda debajo de la barra
+      const on = !hs.done && !busyNow && t - restSince.current > HINT_AFTER && hy > 110;
+      if (on !== hs.on) {
+        hs.on = on;
+        hn.el.classList.toggle("is-on", on);
+      }
+      if (on && (hx !== hs.x || hy !== hs.y)) {
+        hs.x = hx;
+        hs.y = hy;
+        hn.el.style.transform = `translate3d(${hx}px, ${hy}px, 0)`;
       }
     }
 
@@ -1594,6 +1965,20 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
 
   return (
     <>
+      {/* Antes que el bicho y sin profundidad: queda debajo de las patas */}
+      <mesh ref={shadow} visible={false} renderOrder={-1} frustumCulled={false}>
+        <planeGeometry args={[1, 1]} />
+        <shaderMaterial
+          transparent
+          depthWrite={false}
+          depthTest={false}
+          toneMapped={false}
+          uniforms={shadowUniforms}
+          vertexShader={SHADOW_VERT}
+          fragmentShader={SHADOW_FRAG}
+        />
+      </mesh>
+
       <group ref={group} visible={false}>
         <primitive object={model.root} />
       </group>

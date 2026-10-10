@@ -85,7 +85,10 @@
 :root[data-theme="light"] {
   color-scheme: light;
   --color-navy-950: #f3f0ea;
-  --color-navy-900: #ebe6dd;
+  /* Lo que en oscuro sube un tono (tarjetas, pliegos) en claro es papel más
+     blanco que la página, no más gris: con el beige oscuro los formularios y
+     la calculadora se veían sucios (10 oct 2026) */
+  --color-navy-900: #fbfaf6;
   --color-navy-800: #ddd6ca;
   --color-navy-700: #c9c0b1;
   --color-navy-600: #1f5488;
@@ -102,7 +105,7 @@
   --color-plan-line: #0e8fa6;
   --page-rgb: 243, 240, 234;
   --veil-rgb: 243, 240, 234;
-  --sheet-rgb: 235, 230, 221;
+  --sheet-rgb: 251, 250, 246;
   --grid-rgb: 12, 31, 51;
   --halo-opacity: 0.3;
 }
@@ -530,6 +533,146 @@ body {
 }
 
 /*
+ * Proyectos: un mismo formato, un color cada uno.
+ *
+ * Matthew (10 oct 2026): las fichas «parece que no son hechas con el mismo
+ * formato», y no quiere que todas tengan los mismos colores, pero que Charms
+ * u otra salga más viva que las demás «se ve feo a la vista».
+ *
+ * Lo resuelven dos cosas:
+ *
+ * 1. Un solo chasis para todas: escenario de color, ventana con su barra y
+ *    pie con la cifra. La captura cambia; el marco no.
+ * 2. El color de cada una sale de OKLCH con la luz (L) y la intensidad (C)
+ *    fijas y solo el tono (H) propio, `--p-h`, que pone cada ficha. En OKLCH
+ *    dos colores con la misma L se ven igual de claros sea cual sea el tono
+ *    (en HSL el amarillo parece casi blanco y el azul casi negro a la misma
+ *    «luminosidad»), así que ninguno grita más que otro.
+ *
+ * Oscuro por defecto, claro debajo, como el resto de la hoja.
+ */
+.project {
+  --p-accent: oklch(0.8 0.115 var(--p-h));
+  --p-accent-soft: oklch(0.8 0.115 var(--p-h) / 0.12);
+  --p-line: oklch(0.8 0.115 var(--p-h) / 0.22);
+  --p-stage-a: oklch(0.36 0.075 var(--p-h));
+  --p-stage-b: oklch(0.2 0.045 var(--p-h));
+  --p-shadow: oklch(0.06 0.03 var(--p-h) / 0.75);
+  --p-glow: oklch(0.5 0.11 var(--p-h) / 0.16);
+  /* La ventana también toma el tono, muy apagado: así la barra no parece
+     de otro programa sobre cada escenario */
+  --p-window: oklch(0.17 0.025 var(--p-h));
+  --p-bar: oklch(0.235 0.032 var(--p-h));
+  --p-on-accent: #04101f;
+}
+
+:root[data-theme="light"] .project {
+  --p-accent: oklch(0.5 0.125 var(--p-h));
+  --p-accent-soft: oklch(0.5 0.125 var(--p-h) / 0.09);
+  --p-line: oklch(0.5 0.125 var(--p-h) / 0.2);
+  --p-stage-a: oklch(0.96 0.028 var(--p-h));
+  --p-stage-b: oklch(0.885 0.06 var(--p-h));
+  --p-shadow: oklch(0.32 0.07 var(--p-h) / 0.38);
+  --p-glow: oklch(0.86 0.07 var(--p-h) / 0.45);
+  --p-window: oklch(0.993 0.004 var(--p-h));
+  --p-bar: oklch(0.968 0.014 var(--p-h));
+  --p-on-accent: #fbfaf7;
+}
+
+/*
+ * El color de la ficha se nota también fuera del panel: una mancha suave de
+ * su tono detrás de la fila, del lado del panel. Bajando por la sección, la
+ * página va tomando el color de cada proyecto. Es un degradado quieto: se
+ * pinta una vez y no cuesta nada al hacer scroll.
+ */
+.project-glow {
+  position: absolute;
+  inset: -12% -8%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    46% 52% at var(--p-glow-x, 70%) 50%,
+    var(--p-glow),
+    transparent 72%
+  );
+}
+
+.p-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 28px;
+  background:
+    radial-gradient(90% 70% at 12% 0%, var(--p-stage-a), transparent 70%),
+    linear-gradient(155deg, var(--p-stage-a) 0%, var(--p-stage-b) 100%);
+  box-shadow: inset 0 0 0 1px var(--p-line);
+}
+
+/* Trama de puntos que se apaga hacia abajo: textura de plano, no de tarjeta */
+.p-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(var(--p-line) 1px, transparent 1.2px);
+  background-size: 20px 20px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 75%);
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 75%);
+}
+
+/*
+ * La ventana se ajusta al hueco sin recortar la captura: tan ancha como
+ * quepa, o tan alta como quepa, según su proporción (`--p-frame`). Para eso
+ * el hueco es un contenedor de tamaño y la ventana mide en `cqw`/`cqh`. La
+ * barra de la ventana mide 34 px y no cuenta para la proporción.
+ */
+.p-area {
+  container-type: size;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+}
+
+.p-window {
+  position: relative;
+  width: min(100cqw, calc((100cqh - 34px) * (var(--p-frame))));
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--p-window);
+  box-shadow:
+    0 0 0 1px var(--p-line),
+    0 18px 30px -18px var(--p-shadow),
+    0 50px 90px -40px var(--p-shadow);
+  transition: transform 800ms var(--ease-out-expo);
+}
+
+.group:hover .p-window {
+  transform: translateY(-6px);
+}
+
+.p-window-bar {
+  height: 34px;
+  background: var(--p-bar);
+}
+
+.p-media {
+  position: relative;
+  aspect-ratio: var(--p-frame);
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .p-window {
+    transition: none;
+  }
+
+  .group:hover .p-window {
+    transform: none;
+  }
+}
+
+/*
  * Lo que se mueve en los dibujos técnicos de Proyectos.
  *
  * Solo con el ratón encima de la ficha: en reposo la animación está en pausa
@@ -777,4 +920,97 @@ html[data-scrolling] body {
 }
 .group:hover .pv-lead {
   transform: scaleX(0.85);
+}
+
+/*
+ * Invitación a tocar al dragón (ver `hint` en `Dragon.tsx`).
+ *
+ * Tres capas: la de fuera la mueve el bucle de la escena (solo `transform`),
+ * la del medio flota arriba y abajo, y la píldora entra y sale. La píldora va
+ * en tinta sobre papel en los dos modos (`--color-ink` es oscuro en claro y
+ * claro en oscuro) con la llama en naranja, que es lo que pasa al tocarlo.
+ */
+.dragon-hint {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 31;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* Solo mientras se ve: una animación en bucle escondida seguiría pidiendo fotogramas */
+.dragon-hint.is-on .dragon-hint-bob {
+  animation: dragon-hint-bob 2.6s ease-in-out infinite;
+}
+
+.dragon-hint-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+  padding: 7px 13px 7px 10px;
+  border-radius: 999px;
+  background: var(--color-ink);
+  color: var(--color-navy-950);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1;
+  /* Filete del color de la página: separa la píldora de una captura oscura */
+  box-shadow:
+    0 0 0 1px rgba(var(--page-rgb), 0.4),
+    0 10px 28px -10px rgba(4, 16, 31, 0.55);
+  opacity: 0;
+  transform: translate(-50%, calc(-100% + 8px)) scale(0.9);
+  transform-origin: 50% 100%;
+  transition:
+    opacity 350ms ease,
+    transform 600ms var(--ease-out-expo);
+}
+
+.dragon-hint-pill svg {
+  color: var(--color-orange-brand);
+  flex: none;
+}
+
+/* La cola de la píldora, apuntando a la cabeza */
+.dragon-hint-pill::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  width: 9px;
+  height: 9px;
+  background: inherit;
+  transform: translateX(-50%) rotate(45deg);
+  border-radius: 2px;
+}
+
+.dragon-hint.is-on .dragon-hint-pill {
+  opacity: 1;
+  transform: translate(-50%, -100%) scale(1);
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+@keyframes dragon-hint-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dragon-hint.is-on .dragon-hint-bob {
+    animation: none;
+  }
+
+  .dragon-hint-pill {
+    transition: opacity 200ms ease;
+  }
 }

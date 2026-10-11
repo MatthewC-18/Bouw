@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { Project } from "@/lib/content";
+import { pickAsset, type Project } from "@/lib/content";
 import { useLang } from "@/lib/i18n";
 
 /**
@@ -71,6 +71,8 @@ export default function LiveSystem({ project, from, onClose }: Props) {
   }, [close]);
 
   if (!live) return null;
+  // Mientras carga: la captura del panel, o el póster de su video
+  const still = project.image ?? (project.video ? pickAsset(project.video.poster, lang) : null);
 
   return createPortal(
     <div
@@ -95,7 +97,13 @@ export default function LiveSystem({ project, from, onClose }: Props) {
         </span>
         <span className="hidden items-center gap-2 font-mono text-[10px] uppercase tracking-[0.24em] text-cyan-light sm:flex">
           <span className="live-dot h-1.5 w-1.5 rounded-full bg-cyan-light" aria-hidden />
-          {lang === "es" ? "En vivo" : "Live"}
+          {live.kind === "simulador"
+            ? lang === "es"
+              ? "Simulación"
+              : "Simulation"
+            : lang === "es"
+              ? "En vivo"
+              : "Live"}
         </span>
 
         <a
@@ -121,7 +129,7 @@ export default function LiveSystem({ project, from, onClose }: Props) {
 
       <div className="relative flex-1 overflow-hidden">
         {/* Mientras carga, la captura del panel: la ventana nunca se abre en negro */}
-        {project.image && (
+        {still && (
           <div
             aria-hidden
             className={`pointer-events-none absolute inset-0 transition-opacity duration-700 ${
@@ -129,7 +137,7 @@ export default function LiveSystem({ project, from, onClose }: Props) {
             }`}
           >
             <Image
-              src={project.image}
+              src={still}
               alt=""
               fill
               sizes="100vw"

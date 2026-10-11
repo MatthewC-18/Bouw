@@ -281,7 +281,13 @@ export type Project = {
    * El sistema funcionando, para abrirlo desde el panel a pantalla completa
    * (ver `LiveSystem`). Solo los que se pueden usar de verdad.
    */
-  live?: { url: string; label: string; hint?: Localized };
+  live?: {
+    url: string;
+    label: string;
+    hint?: Localized;
+    /** Una simulación, no el sistema del cliente: cambian los rótulos. */
+    kind?: "simulador";
+  };
   /**
    * Video en bucle, mudo. Gana a `image` si están los dos: la imagen queda de
    * póster mientras carga y para quien pide menos movimiento.
@@ -427,6 +433,20 @@ export const PROJECTS: Project[] = [
         label: { es: "Producto", en: "Product" },
       },
     ],
+    /*
+     * La línea simulada (`components/linea`): las mejoras del proyecto se
+     * activan delante de quien mira. Matthew, 10 oct 2026: «animaciones de
+     * una línea para explicar cómo funciona».
+     */
+    live: {
+      url: "/demo/linea",
+      label: "simulación · línea de producción",
+      kind: "simulador",
+      hint: {
+        es: "Simulación ilustrativa: activa las mejoras del proyecto y mira cómo se vacía la cola de la estación 2.",
+        en: "Illustrative simulation: switch on the project's improvements and watch station 2's queue empty.",
+      },
+    },
     caseHref: "/proyectos/mejora-continua",
   },
   {
@@ -483,6 +503,19 @@ export const PROJECTS: Project[] = [
       poster: {
         es: "/proyectos/contable/excel-es-poster.webp",
         en: "/proyectos/contable/excel-en-poster.webp",
+      },
+    },
+    /*
+     * La réplica del archivo, usable: registrar una venta descuenta el stock
+     * del kit y mueve el tablero (`components/contable`). Matthew, 4 oct
+     * 2026: «Video + réplica».
+     */
+    live: {
+      url: "/demo/programa-contable",
+      label: "Programa_contable.xlsm",
+      hint: {
+        es: "Es una réplica del archivo con datos de demostración: registra una venta y mira cómo se mueven el inventario y el tablero.",
+        en: "A replica of the file with demo data: record a sale and watch the inventory and the dashboard move.",
       },
     },
     caseHref: "/proyectos/mejora-continua#oficina",

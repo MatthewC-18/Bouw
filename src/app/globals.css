@@ -561,6 +561,7 @@ body {
   --p-glow: oklch(0.5 0.11 var(--p-h) / 0.16);
   /* La ventana también toma el tono, muy apagado: así la barra no parece
      de otro programa sobre cada escenario */
+  --p-good: #3ecf8e;
   --p-window: oklch(0.17 0.025 var(--p-h));
   --p-bar: oklch(0.235 0.032 var(--p-h));
   --p-on-accent: #04101f;
@@ -574,6 +575,7 @@ body {
   --p-stage-b: oklch(0.885 0.06 var(--p-h));
   --p-shadow: oklch(0.32 0.07 var(--p-h) / 0.38);
   --p-glow: oklch(0.86 0.07 var(--p-h) / 0.45);
+  --p-good: #17784f;
   --p-window: oklch(0.993 0.004 var(--p-h));
   --p-bar: oklch(0.968 0.014 var(--p-h));
   --p-on-accent: #fbfaf7;
@@ -1012,5 +1014,81 @@ html[data-scrolling] body {
 
   .dragon-hint-pill {
     transition: opacity 200ms ease;
+  }
+}
+
+/*
+ * Programa contable (réplica de Excel, `components/contable`).
+ *
+ * `xl-flash`: la celda que cambia por un recálculo se ilumina un momento; es
+ * lo que enseña que las hojas están conectadas. `xl-gridlines`: las líneas de
+ * celda de las hojas dibujadas (tablero, reportes). `xl-cell[data-sel]`: el
+ * borde verde de la celda activa.
+ */
+.xl-flash {
+  background: rgba(255, 214, 64, 0.55);
+  animation: xl-flash 1.4s ease-out forwards;
+}
+
+@keyframes xl-flash {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.xl-gridlines {
+  background-color: #fff;
+  background-image:
+    linear-gradient(to right, #ececec 1px, transparent 1px),
+    linear-gradient(to bottom, #ececec 1px, transparent 1px);
+  background-size:
+    calc(100% / 13) 100%,
+    100% 22px;
+}
+
+.xl-cell[data-sel] {
+  outline: 2px solid #217346;
+  outline-offset: 2px;
+  border-radius: 1px;
+}
+
+.xl-pop {
+  animation: xl-pop 180ms ease-out;
+}
+
+@keyframes xl-pop {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+  }
+}
+
+.xl-spin {
+  animation: xl-spin 600ms ease-in-out;
+}
+
+@keyframes xl-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.xl-status {
+  animation: xl-pop 240ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xl-flash,
+  .xl-pop,
+  .xl-spin,
+  .xl-status {
+    animation: none;
+  }
+
+  .xl-flash {
+    opacity: 0;
   }
 }

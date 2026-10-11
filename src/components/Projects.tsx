@@ -139,18 +139,27 @@ function Media({
   // obligaba a recomponer la captura filtrada en cada fotograma de scroll.
   const zoom = "transition-[scale] duration-[900ms] ease-out group-hover:scale-[1.03]";
 
+  const sim = project.live?.kind === "simulador";
   const status = live
-    ? lang === "es"
-      ? "En vivo"
-      : "Live"
+    ? sim
+      ? lang === "es"
+        ? "Simulador"
+        : "Simulator"
+      : lang === "es"
+        ? "En vivo"
+        : "Live"
     : video
       ? "Video"
       : t(KIND_LABEL[project.mediaKind]);
 
   const action = live
-    ? lang === "es"
-      ? "Abrir en vivo"
-      : "Open it live"
+    ? sim
+      ? lang === "es"
+        ? "Ver la línea en marcha"
+        : "See the line running"
+      : lang === "es"
+        ? "Abrir en vivo"
+        : "Open it live"
     : project.caseHref
       ? lang === "es"
         ? "Ver el caso"
@@ -252,7 +261,13 @@ function Media({
                   <svg width="10" height="12" viewBox="0 0 10 12" aria-hidden>
                     <path d="M0 0l10 6-10 6z" fill="currentColor" />
                   </svg>
-                  {lang === "es" ? "Abrir el sistema en vivo" : "Open the live system"}
+                  {sim
+                    ? lang === "es"
+                      ? "Ver la línea en marcha"
+                      : "See the line running"
+                    : lang === "es"
+                      ? "Abrir el sistema en vivo"
+                      : "Open the live system"}
                 </span>
               </span>
             )}

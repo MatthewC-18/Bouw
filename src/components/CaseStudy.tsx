@@ -9,6 +9,7 @@ import {
   type CaseStudy as Case,
 } from "@/lib/content";
 import { useLang } from "@/lib/i18n";
+import LineSim from "./linea/LineSim";
 import LoopVideo from "./LoopVideo";
 import ProjectVisual from "./ProjectVisual";
 import Reveal from "./Reveal";
@@ -429,6 +430,31 @@ function Wastes({ c }: { c: Case }) {
               <span className="pointer-events-none absolute right-0 top-0 h-8 w-8 border-r border-t border-white/20 transition-colors duration-500 group-hover:border-orange-light" />
             </Reveal>
           ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * La línea en marcha: el desperdicio de arriba, visto funcionando, y las
+ * mejoras del proyecto aplicadas delante de quien lee (ver `LineSim`).
+ */
+function LineRun({ c }: { c: Case }) {
+  const { lang } = useLang();
+  if (c.slug !== "mejora-continua") return null;
+
+  return (
+    <section id="linea" className="relative scroll-mt-24 pb-24 lg:pb-36">
+      <div className="mx-auto max-w-[1400px] px-6 lg:px-16">
+        <Reveal>
+          <Eyebrow dot="bg-orange-brand">{lang === "es" ? "Simulación" : "Simulation"}</Eyebrow>
+          <h2 className="mt-5 max-w-3xl font-display text-[clamp(2rem,4.2vw,3.4rem)] font-bold leading-[1] text-ink">
+            {lang === "es" ? "Cómo se optimiza una línea" : "How a line gets optimized"}
+          </h2>
+        </Reveal>
+        <div className="mt-12">
+          <LineSim />
         </div>
       </div>
     </section>
@@ -873,6 +899,7 @@ export default function CaseStudy({ slug }: { slug: string }) {
       <Results c={c} />
       <Summary c={c} />
       <Wastes c={c} />
+      <LineRun c={c} />
       <Dmaic c={c} />
       <Gallery c={c} />
       <Office c={c} />

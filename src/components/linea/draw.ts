@@ -352,19 +352,24 @@ export function drawLine(ctx: CanvasRenderingContext2D, W: number, H: number, s:
   }
 
   // Cambio de formato: aviso y cuenta atrás
-  if (stopped) {
-    const w = Math.min(360 * k, W * 0.5);
-    const x0 = W / 2 - w / 2;
-    const y0 = H * 0.04;
-    rr(ctx, x0, y0, w, 30 * k, 15 * k);
+  // En la ficha arriba a la izquierda va la etiqueta de la fase: el aviso se
+  // pega a la derecha, más pequeño, y en un lienzo estrecho no va (las
+  // estaciones ya se ponen naranjas)
+  if (stopped && (!mini || W >= 520)) {
+    const text = `${lab.setup} · ${L.setupLeft.toFixed(1)} min`;
+    ctx.font = `600 ${(mini ? 10.5 : 11.5) * k}px ${font}`;
+    const w = mini ? ctx.measureText(text).width + 26 * k : Math.min(360 * k, W * 0.5);
+    const h = (mini ? 24 : 30) * k;
+    const x0 = mini ? W - w - 10 * k : W / 2 - w / 2;
+    const y0 = mini ? 10 * k : H * 0.04;
+    rr(ctx, x0, y0, w, h, h / 2);
     ctx.fillStyle = c.orange;
     ctx.fill();
     ctx.fillStyle = "#fff";
-    ctx.font = `600 ${11.5 * k}px ${font}`;
     ctx.textAlign = "center";
-    ctx.fillText(`${lab.setup} · ${L.setupLeft.toFixed(1)} min`, W / 2, y0 + 19.5 * k);
+    ctx.fillText(text, x0 + w / 2, y0 + h * 0.62);
     const prog = 1 - L.setupLeft / Math.max(L.setupTotal, 0.01);
     ctx.fillStyle = "rgba(255,255,255,0.85)";
-    ctx.fillRect(x0 + 15 * k, y0 + 25 * k, (w - 30 * k) * prog, 2 * k);
+    ctx.fillRect(x0 + 12 * k, y0 + h - 5 * k, (w - 24 * k) * prog, 2 * k);
   }
 }

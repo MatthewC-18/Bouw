@@ -13,6 +13,7 @@ import { PROJECTS, pickAsset, type Project } from "@/lib/content";
 import { dragonScreen } from "@/lib/dragonScreen";
 import { useLang } from "@/lib/i18n";
 import LiveSystem from "./LiveSystem";
+import LinePeek from "./linea/LinePeek";
 import LoopVideo from "./LoopVideo";
 import ProjectVisual from "./ProjectVisual";
 import Reveal from "./Reveal";
@@ -33,63 +34,6 @@ const KIND_LABEL: Record<Project["mediaKind"], { es: string; en: string }> = {
   drawing: { es: "Plano", en: "Drawing" },
   floor: { es: "Planta", en: "Floor" },
 };
-
-/**
- * Material de planta.
- *
- * El video se grabó en vertical, con el teléfono, recorriendo la línea. En el
- * 4:3 del panel había que recortarle dos tercios o ampliarlo hasta que se
- * deshacía (la toma tiene 480 px de ancho). Así que va a su tamaño y el hueco
- * de al lado lo llenan dos fotos del mismo trabajo.
- */
-function FloorSheet({
-  project,
-  video,
-  zoom,
-}: {
-  project: Project;
-  video: { src: string; poster: string };
-  zoom: string;
-}) {
-  const { t, lang } = useLang();
-  const tiles = project.tiles ?? [];
-  const label =
-    "absolute inset-x-0 bottom-0 bg-gradient-to-t from-[rgba(4,16,31,0.8)] to-transparent px-3 pb-2 pt-7 font-mono text-[9px] uppercase tracking-[0.2em] text-[#e8eef6]";
-
-  return (
-    <div className="absolute inset-0 grid grid-cols-[minmax(0,0.92fr)_minmax(0,1fr)] gap-1.5 p-1.5">
-      <div className="relative overflow-hidden rounded-[9px]">
-        <LoopVideo
-          src={video.src}
-          poster={video.poster}
-          label={t(project.title)}
-          className={`absolute inset-0 h-full w-full object-cover ${zoom}`}
-        />
-        {/* Rótulos dentro de la ventana: el dragón puede taparlos (`data-dragon-ignore`) */}
-        <span className={label} data-dragon-ignore>
-          01 · {lang === "es" ? "Línea" : "Line"}
-        </span>
-      </div>
-
-      <div className="grid grid-rows-2 gap-1.5">
-        {tiles.map((tile, i) => (
-          <div key={tile.src} className="relative overflow-hidden rounded-[9px]">
-            <Image
-              src={tile.src}
-              alt={t(tile.alt)}
-              fill
-              sizes="(max-width: 1024px) 50vw, 30vw"
-              className={`object-cover ${zoom}`}
-            />
-            <span className={label} data-dragon-ignore>
-              {String(i + 2).padStart(2, "0")} · {t(tile.label)}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 /**
  * Panel de medios: el escenario.
@@ -148,9 +92,13 @@ function Media({
       : lang === "es"
         ? "En vivo"
         : "Live"
-    : video
-      ? "Video"
-      : t(KIND_LABEL[project.mediaKind]);
+    : project.mediaKind === "floor"
+      ? lang === "es"
+        ? "Caso"
+        : "Case study"
+      : video
+        ? "Video"
+        : t(KIND_LABEL[project.mediaKind]);
 
   const action = live
     ? sim
@@ -229,7 +177,24 @@ function Media({
 
           <div className="p-media">
             {project.mediaKind === "floor" && video ? (
-              <FloorSheet project={project} video={video} zoom={zoom} />
+              /*
+                El caso en la ficha (ver `LinePeek`): la línea pasa de antes a
+                después en bucle, con la planta, el producto y los resultados.
+                Las fotos solas «no me dicen nada de lo que pasa» (Matthew,
+                11 oct 2026).
+              */
+              <LinePeek
+                video={video}
+                photo={
+                  project.tiles?.[1]
+                    ? {
+                        src: project.tiles[1].src,
+                        alt: t(project.tiles[1].alt),
+                        label: t(project.tiles[1].label),
+                      }
+                    : undefined
+                }
+              />
             ) : video ? (
               <LoopVideo
                 src={video.src}

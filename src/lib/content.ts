@@ -401,7 +401,8 @@ export const PROJECTS: Project[] = [
       { value: "4", label: { es: "Operadores capacitados", en: "Operators trained" } },
     ],
     hue: 62,
-    frame: "4 / 3",
+    // Más ancho que 4:3: la línea del caso necesita largo (ver `LinePeek`)
+    frame: "16 / 11",
     feature: 1,
     has3D: false,
     /*
@@ -434,19 +435,9 @@ export const PROJECTS: Project[] = [
       },
     ],
     /*
-     * La línea simulada (`components/linea`): las mejoras del proyecto se
-     * activan delante de quien mira. Matthew, 10 oct 2026: «animaciones de
-     * una línea para explicar cómo funciona».
+     * La ficha enseña el caso en pequeño (`LinePeek`) y lleva al caso, que
+     * tiene la simulación completa. `/demo/linea` sigue existiendo.
      */
-    live: {
-      url: "/demo/linea",
-      label: "simulación · línea de producción",
-      kind: "simulador",
-      hint: {
-        es: "Simulación ilustrativa: activa las mejoras del proyecto y mira cómo se vacía la cola de la estación 2.",
-        en: "Illustrative simulation: switch on the project's improvements and watch station 2's queue empty.",
-      },
-    },
     caseHref: "/proyectos/mejora-continua",
   },
   {

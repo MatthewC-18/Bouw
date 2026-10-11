@@ -927,10 +927,13 @@ html[data-scrolling] body {
 /*
  * Invitación a tocar al dragón (ver `hint` en `Dragon.tsx`).
  *
- * Tres capas: la de fuera la mueve el bucle de la escena (solo `transform`),
- * la del medio flota arriba y abajo, y la píldora entra y sale. La píldora va
- * en tinta sobre papel en los dos modos (`--color-ink` es oscuro en claro y
- * claro en oscuro) con la llama en naranja, que es lo que pasa al tocarlo.
+ * Como un punto interactivo de producto: un aro cian que late alrededor del
+ * bicho —lo que se ve de lejos— y encima una etiqueta oscura y sobria con lo
+ * que pasa al tocarlo. La etiqueta va oscura en los dos modos: sobre el papel
+ * crema se lee como una pieza de interfaz, no como un bocadillo.
+ *
+ * La capa de fuera la mueve el bucle de la escena (solo `transform`), la del
+ * medio flota y la etiqueta entra y sale.
  */
 .dragon-hint {
   position: fixed;
@@ -943,7 +946,7 @@ html[data-scrolling] body {
 
 /* Solo mientras se ve: una animación en bucle escondida seguiría pidiendo fotogramas */
 .dragon-hint.is-on .dragon-hint-bob {
-  animation: dragon-hint-bob 2.6s ease-in-out infinite;
+  animation: dragon-hint-bob 2.8s ease-in-out infinite;
 }
 
 .dragon-hint-pill {
@@ -952,20 +955,19 @@ html[data-scrolling] body {
   align-items: center;
   gap: 7px;
   white-space: nowrap;
-  padding: 7px 13px 7px 10px;
+  padding: 7px 14px 7px 11px;
   border-radius: 999px;
-  background: var(--color-ink);
-  color: var(--color-navy-950);
+  border: 1px solid rgba(79, 214, 232, 0.45);
+  background: rgba(4, 16, 31, 0.92);
+  color: #e8eef6;
   font-family: var(--font-sans);
   font-size: 12.5px;
-  font-weight: 600;
   line-height: 1;
-  /* Filete del color de la página: separa la píldora de una captura oscura */
   box-shadow:
-    0 0 0 1px rgba(var(--page-rgb), 0.4),
-    0 10px 28px -10px rgba(4, 16, 31, 0.55);
+    0 0 0 4px rgba(79, 214, 232, 0.08),
+    0 12px 30px -12px rgba(4, 16, 31, 0.7);
   opacity: 0;
-  transform: translate(-50%, calc(-100% + 8px)) scale(0.9);
+  transform: translate(-50%, calc(-100% + 8px)) scale(0.92);
   transform-origin: 50% 100%;
   transition:
     opacity 350ms ease,
@@ -973,21 +975,36 @@ html[data-scrolling] body {
 }
 
 .dragon-hint-pill svg {
-  color: var(--color-orange-brand);
   flex: none;
+  color: #4fd6e8;
 }
 
-/* La cola de la píldora, apuntando a la cabeza */
+.dragon-hint-main {
+  font-weight: 600;
+}
+
+.dragon-hint-sub {
+  color: #93a7bf;
+}
+
+.dragon-hint-sub::before {
+  content: "·";
+  margin: 0 6px 0 1px;
+  color: #4fd6e8;
+}
+
+/* La cola, apuntando al bicho */
 .dragon-hint-pill::after {
   content: "";
   position: absolute;
   left: 50%;
-  bottom: -4px;
+  bottom: -5px;
   width: 9px;
   height: 9px;
-  background: inherit;
+  background: rgba(4, 16, 31, 0.92);
+  border-right: 1px solid rgba(79, 214, 232, 0.45);
+  border-bottom: 1px solid rgba(79, 214, 232, 0.45);
   transform: translateX(-50%) rotate(45deg);
-  border-radius: 2px;
 }
 
 .dragon-hint.is-on .dragon-hint-pill {
@@ -995,6 +1012,10 @@ html[data-scrolling] body {
   transform: translate(-50%, -100%) scale(1);
   pointer-events: auto;
   cursor: pointer;
+}
+
+.dragon-hint.is-on .dragon-hint-pill:hover {
+  border-color: #4fd6e8;
 }
 
 @keyframes dragon-hint-bob {
@@ -1007,9 +1028,63 @@ html[data-scrolling] body {
   }
 }
 
+/* El aro: dos ondas que salen del bicho, desfasadas */
+.dragon-hint-ring {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 29;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 400ms ease;
+  will-change: transform;
+}
+
+.dragon-hint-ring.is-on {
+  opacity: 1;
+}
+
+.dragon-hint-ring span {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(79, 214, 232, 0.75);
+  opacity: 0;
+}
+
+.dragon-hint-ring.is-on span {
+  animation: dragon-ring 2.4s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
+}
+
+.dragon-hint-ring.is-on span:last-child {
+  animation-delay: 1.2s;
+}
+
+@keyframes dragon-ring {
+  0% {
+    transform: scale(0.55);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .dragon-hint.is-on .dragon-hint-bob {
+  .dragon-hint.is-on .dragon-hint-bob,
+  .dragon-hint-ring.is-on span {
     animation: none;
+  }
+
+  .dragon-hint-ring.is-on span:first-child {
+    opacity: 0.6;
+    transform: scale(1);
   }
 
   .dragon-hint-pill {

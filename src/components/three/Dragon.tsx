@@ -204,7 +204,7 @@ const TURN_TIME = 0.5;
 
 /** La invitación a tocarlo: segundos posado antes de salir, y dónde se recuerda que ya lo tocaron. */
 const HINT_AFTER = 1.4;
-const HINT_KEY = "bouw-dragon-tocado";
+const HINT_KEY = "bouw-dragon-tocado-2";
 
 /** Segundos sin tocar nada antes de que haga algo por su cuenta. */
 const IDLE_AFTER = 7;
@@ -623,8 +623,24 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
    * Una píldora sobre la cabeza cuando lleva un rato posado. Se retira para
    * siempre la primera vez que alguien lo toca: ya sabe que se puede.
    */
-  const hint = useRef<{ el: HTMLDivElement; text: HTMLSpanElement } | null>(null);
-  const hintState = useRef({ on: false, x: 0, y: 0, lang: "", done: false, half: 90 });
+  const hint = useRef<{
+    el: HTMLDivElement;
+    text: HTMLSpanElement;
+    sub: HTMLSpanElement;
+    ring: HTMLDivElement;
+  } | null>(null);
+  const hintState = useRef({
+    on: false,
+    x: 0,
+    y: 0,
+    rx: 0,
+    ry: 0,
+    rr: 0,
+    lang: "",
+    done: false,
+    half: 90,
+    touch: false,
+  });
   /** Desde cuándo está quieto en su percha, en reloj de la escena. */
   const restSince = useRef(0);
 
@@ -1014,7 +1030,13 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
     document.body.appendChild(b);
     hit.current = b;
 
-    // La invitación: píldora con una llama, encima de la cabeza
+    /*
+     * La invitación. «Tócame… si te atreves» no se veía profesional ni
+     * llamativa (Matthew, 11 oct 2026). Ahora son dos piezas, como un punto
+     * interactivo de producto: un aro que late alrededor del bicho, que es lo
+     * que se ve de lejos, y encima una etiqueta sobria que dice qué pasa al
+     * tocarlo: «Haz clic · lanza fuego».
+     */
     document.querySelectorAll("[data-dragon-hint]").forEach((n) => n.remove());
     try {
       hintState.current.done = localStorage.getItem(HINT_KEY) === "1";
@@ -1029,15 +1051,28 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
     bob.className = "dragon-hint-bob";
     const pill = document.createElement("span");
     pill.className = "dragon-hint-pill";
+    // Un cursor que pulsa: dice «esto se toca» sin palabras
     pill.innerHTML =
-      '<svg width="11" height="14" viewBox="0 0 11 14" aria-hidden="true"><path d="M5.6 0C6.3 2.6 9 4.2 9 7.6A3.6 3.6 0 0 1 1.9 8.3c0-1.3.6-2.2 1.4-3 .1 1 .6 1.7 1.3 2C4.3 5 4.6 2.4 5.6 0Z" fill="currentColor"/><path d="M5.5 14A5.5 5.5 0 0 1 0 8.5c0-1.6.6-3 1.6-4.1-.1.4-.1.8-.1 1.2A4 4 0 0 0 9.4 6.4c.9 1 1.6 2.4 1.6 3.9A3.7 3.7 0 0 1 5.5 14Z" fill="currentColor" opacity=".55"/></svg>';
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 9l10.5 3.6-4.6 1.7-1.7 4.6L9 9z"/><path d="M5.5 5.5 4 4M10 3.5V2M3.5 10H2M14.5 5.5 16 4"/></svg>';
     const text = document.createElement("span");
+    text.className = "dragon-hint-main";
+    const sub = document.createElement("span");
+    sub.className = "dragon-hint-sub";
     pill.appendChild(text);
+    pill.appendChild(sub);
     bob.appendChild(pill);
     hintEl.appendChild(bob);
     pill.addEventListener("click", onHit);
     document.body.appendChild(hintEl);
-    hint.current = { el: hintEl, text };
+    // El aro, aparte: va centrado en el bicho, no encima de la cabeza
+    const ring = document.createElement("div");
+    ring.dataset.dragonHint = "";
+    ring.className = "dragon-hint-ring";
+    ring.setAttribute("aria-hidden", "true");
+    ring.innerHTML = "<span></span><span></span>";
+    document.body.appendChild(ring);
+    hintState.current.touch = window.matchMedia("(pointer: coarse)").matches;
+    hint.current = { el: hintEl, text, sub, ring };
 
     // Las perchas de foco son casillas: pulsarlas es marcar, no pedir fuego
     const down = (e: PointerEvent) => {
@@ -1084,6 +1119,7 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
       hit.current = null;
       pill.removeEventListener("click", onHit);
       hintEl.remove();
+      ring.remove();
       hint.current = null;
       window.removeEventListener("pointerdown", down);
       window.removeEventListener("bouw:perch-focus", onFocus);
@@ -1243,6 +1279,7 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
       if (hintState.current.on && hint.current) {
         hintState.current.on = false;
         hint.current.el.classList.remove("is-on");
+        hint.current.ring.classList.remove("is-on");
       }
       return;
     }
@@ -1889,7 +1926,9 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
       const lang = document.documentElement.lang === "en" ? "en" : "es";
       if (lang !== hs.lang) {
         hs.lang = lang;
-        hn.text.textContent = lang === "es" ? "Tócame… si te atreves" : "Poke me… if you dare";
+        hn.text.textContent =
+          lang === "es" ? (hs.touch ? "Tócalo" : "Haz clic") : hs.touch ? "Tap it" : "Click it";
+        hn.sub.textContent = lang === "es" ? "lanza fuego" : "breathes fire";
         // Se mide solo al cambiar el texto: leer el ancho en cada fotograma
         // obligaba a recalcular el layout justo después de mover el botón
         hs.half = hn.text.parentElement
@@ -1904,11 +1943,26 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
       if (on !== hs.on) {
         hs.on = on;
         hn.el.classList.toggle("is-on", on);
+        hn.ring.classList.toggle("is-on", on);
       }
       if (on && (hx !== hs.x || hy !== hs.y)) {
         hs.x = hx;
         hs.y = hy;
         hn.el.style.transform = `translate3d(${hx}px, ${hy}px, 0)`;
+      }
+      // El aro: centrado en el cuerpo, del tamaño del bicho
+      const rx = Math.round(dragonScreen.x * W);
+      const ry = Math.round(dragonScreen.y * H);
+      const rr = Math.round(Math.max(dragonScreen.r * H * 1.15, 34));
+      if (on && (rx !== hs.rx || ry !== hs.ry || rr !== hs.rr)) {
+        hs.rx = rx;
+        hs.ry = ry;
+        if (rr !== hs.rr) {
+          hs.rr = rr;
+          hn.ring.style.width = `${rr * 2}px`;
+          hn.ring.style.height = `${rr * 2}px`;
+        }
+        hn.ring.style.transform = `translate3d(${rx - rr}px, ${ry - rr}px, 0)`;
       }
     }
 

@@ -100,6 +100,11 @@ const VIEW_TO = 0.95;
 const SEEN_FROM = 0.24;
 const SEEN_TO = 0.98;
 /**
+ * Posado, se queda en su percha mientras esta siga por debajo de la barra:
+ * sube con la página y se mete bajo ella como el resto del contenido.
+ */
+const STAY_FROM = 0.1;
+/**
  * Sin ninguna percha a la vista no se adelanta a una que aún no ha entrado:
  * vuela a tu lado, en el aire, hasta que aparece una. Es una percha más con
  * este nombre, sin elemento.
@@ -1202,6 +1207,21 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
         best = -Infinity;
       } else {
         focus.current = "";
+      }
+      /*
+       * Se queda donde está. Antes, al parar el scroll, se cambiaba a la
+       * percha que quedara más cerca del centro de la ventana aunque la suya
+       * siguiera a la vista, y cada vez bajaba volando hacia ella: «que se
+       * quede ahí y no baje» (Matthew, 14 oct 2026). Ahora solo se va cuando
+       * su percha se mete bajo la barra o sale por abajo.
+       */
+      if (best !== -Infinity && target.current !== "hero" && target.current !== AIR_SPOT) {
+        const cur = spots.current.find((s) => s.id === target.current);
+        const curY = cur ? cur.y - scrollY : NaN;
+        if (cur && usable(cur) && curY > H * STAY_FROM && curY < H * VIEW_TO) {
+          want = cur.id;
+          best = -Infinity;
+        }
       }
       for (const s of spots.current) {
         if (!usable(s) || best === -Infinity) continue;

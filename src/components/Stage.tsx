@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { CSSProperties, KeyboardEvent, ReactNode, Ref } from "react";
 
 /**
@@ -30,6 +31,7 @@ export default function Stage({
   feature,
   foot,
   action,
+  actionHref,
   arrow = "→",
   perchId,
   ledgeId,
@@ -52,6 +54,11 @@ export default function Stage({
   /** O, en su lugar, una frase con su título. */
   foot?: { title: string; body: string };
   action: string;
+  /**
+   * Si la acción lleva a otra página y el panel no es un enlace entero
+   * (porque dentro hay botones), la acción es el enlace.
+   */
+  actionHref?: string;
   arrow?: string;
   /** Percha del dragón: la esquina superior del panel que mira al texto. */
   perchId: string;
@@ -150,15 +157,27 @@ export default function Stage({
             </p>
           </div>
         )}
-        <span className="ml-auto flex shrink-0 items-center gap-2 pb-1 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-dim transition-colors duration-500 group-hover:text-(--p-accent)">
-          {action}
-          <span
-            aria-hidden
-            className="transition-transform duration-500 group-hover:translate-x-1"
+        {actionHref ? (
+          <Link
+            href={actionHref}
+            className="group/act ml-auto flex shrink-0 items-center gap-2 pb-1 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-dim transition-colors duration-500 hover:text-(--p-accent)"
           >
-            {arrow}
+            {action}
+            <span aria-hidden className="transition-transform duration-500 group-hover/act:translate-x-1">
+              {arrow}
+            </span>
+          </Link>
+        ) : (
+          <span className="ml-auto flex shrink-0 items-center gap-2 pb-1 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-dim transition-colors duration-500 group-hover:text-(--p-accent)">
+            {action}
+            <span
+              aria-hidden
+              className="transition-transform duration-500 group-hover:translate-x-1"
+            >
+              {arrow}
+            </span>
           </span>
-        </span>
+        )}
       </div>
 
       {/*

@@ -21,7 +21,14 @@ const DWELL = 6;
  * problema elegido. Es el mismo panel; solo cambia su `order` en la rejilla.
  * Por eso ahí no pasa solo: el panel saltaría de sitio mientras se lee.
  */
-export default function PainSwitch({ pains }: { pains: Pain[] }) {
+export default function PainSwitch({
+  pains,
+  perch,
+}: {
+  pains: Pain[];
+  /** Percha del dragón en la esquina del panel de la solución. */
+  perch?: string;
+}) {
   const { t, lang } = useLang();
   const [on, setOn] = useState(0);
   const [auto, setAuto] = useState(true);
@@ -140,6 +147,8 @@ export default function PainSwitch({ pains }: { pains: Pain[] }) {
         {/* La solución del problema elegido */}
         <div
           id={panelId}
+          data-perch={perch}
+          data-perch-corner="right"
           role="region"
           aria-labelledby={`${uid}-tab-${on}`}
           aria-live={auto ? "off" : "polite"}

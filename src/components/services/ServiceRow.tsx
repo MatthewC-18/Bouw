@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useState, type CSSProperties } from "react";
 import { setBrief } from "@/lib/brief";
-import { COMPLIANCE, LEAN, PROJECTS, pickAsset, type Service } from "@/lib/content";
+import { COMPLIANCE, LEAN, PROJECTS, type Service } from "@/lib/content";
 import { useLang } from "@/lib/i18n";
-import LinePeek from "../linea/LinePeek";
+import FlowTwin from "../linea/FlowTwin";
 import LoopVideo from "../LoopVideo";
 import Reveal from "../Reveal";
 import Stage from "../Stage";
@@ -21,9 +21,9 @@ import PainSwitch from "./PainSwitch";
  * continua». Misma fila que un proyecto (panel de un lado, texto del otro,
  * el lado alternando) y debajo lo propio de un servicio:
  *
- * 1. Arriba, el panel con algo que se mueve. En Lean, la línea del caso
- *    pasando de antes a después: es la simulación de flujos de la que habla
- *    la tarjeta, funcionando. En cumplimiento, un tablero de auditoría de
+ * 1. Arriba, el panel con algo que se mueve. En Lean, la simulación de
+ *    flujos de la que habla la tarjeta, funcionando: el escenario actual y
+ *    el propuesto a la vez, con sus indicadores (`FlowTwin`). En cumplimiento, un tablero de auditoría de
  *    muestra que se va cerrando hasta quedar listo para inspección.
  * 2. Al lado, el titular y lo que lo respalda: las cifras medidas en el caso
  *    (Lean) o los cuatro entregables (cumplimiento).
@@ -50,41 +50,29 @@ export default function ServiceRow({ service, i }: { service: Service; i: number
     ? "lg:col-start-8 lg:col-span-5 lg:row-start-1"
     : "lg:col-start-1 lg:col-span-5 lg:row-start-1";
 
-  // Lean usa la planta, el producto y el caso del proyecto de mejora continua
+  // Las cifras de Lean son las del caso de mejora continua, y ahí lleva
   const floor = PROJECTS.find((p) => p.slug === LEAN.from);
   const caseHref = floor?.caseHref ?? "/proyectos/mejora-continua";
-  const video = floor?.video
-    ? { src: pickAsset(floor.video.src, lang), poster: pickAsset(floor.video.poster, lang) }
-    : null;
-  const tile = floor?.tiles?.[1];
 
+  // En Lean el panel no es un enlace: dentro hay interruptores. Lleva al
+  // caso la acción del pie
   const stage = lean ? (
-    <Link
-      href={`${caseHref}#linea`}
-      aria-label={t(LEAN.highlight.title)}
-      className="block"
+    <Stage
+      index={service.index}
+      category={lang === "es" ? "Simulación · pruébala" : "Simulation · try it"}
+      status={lang === "es" ? "Simulador" : "Simulator"}
+      pulse
+      chip={lang === "es" ? "modelo de la línea · 4 estaciones" : "line model · 4 stations"}
+      frame="16 / 11"
+      foot={{ title: t(LEAN.highlight.title), body: t(LEAN.highlight.body) }}
+      action={t(LEAN.highlight.action)}
+      actionHref={`${caseHref}#linea`}
+      perchId={`proyecto-${service.slug}`}
+      ledgeId={`pie-${service.slug}`}
+      perchCorner={corner}
     >
-      <Stage
-        index={service.index}
-        category={lang === "es" ? "Simulación · línea del caso" : "Simulation · the case's line"}
-        status={lang === "es" ? "Simulador" : "Simulator"}
-        pulse
-        chip={lang === "es" ? "modelo de la línea · 4 estaciones" : "line model · 4 stations"}
-        frame="16 / 11"
-        foot={{ title: t(LEAN.highlight.title), body: t(LEAN.highlight.body) }}
-        action={t(LEAN.highlight.action)}
-        perchId={`proyecto-${service.slug}`}
-        ledgeId={`pie-${service.slug}`}
-        perchCorner={corner}
-      >
-        {video && (
-          <LinePeek
-            video={video}
-            photo={tile ? { src: tile.src, alt: t(tile.alt), label: t(tile.label) } : undefined}
-          />
-        )}
-      </Stage>
-    </Link>
+      <FlowTwin />
+    </Stage>
   ) : (
     <Stage
       index={service.index}
@@ -213,7 +201,12 @@ export default function ServiceRow({ service, i }: { service: Service; i: number
         <Reveal
           className={`min-w-0 lg:col-span-8 lg:row-start-1 ${mediaFirst ? "lg:col-start-5" : "lg:col-start-1"}`}
         >
-          <figure className="relative overflow-hidden rounded-[24px] bg-[#0b1626] shadow-[0_40px_80px_-40px_var(--p-shadow)] ring-1 ring-(--p-line)">
+          {/* Percha: sin ella, en el tramo largo del servicio el dragón
+              volaba a tu lado y parecía bajar contigo */}
+          <figure
+            data-perch={`video-${service.slug}`}
+            data-perch-corner={mediaFirst ? "left" : "right"}
+            className="relative overflow-hidden rounded-[24px] bg-[#0b1626] shadow-[0_40px_80px_-40px_var(--p-shadow)] ring-1 ring-(--p-line)">
             <LoopVideo
               src={service.film.src}
               poster={service.film.poster}
@@ -254,7 +247,7 @@ export default function ServiceRow({ service, i }: { service: Service; i: number
 
       {/* Problema contra solución */}
       <Reveal className="mt-20 lg:mt-24">
-        <PainSwitch pains={service.pains} />
+        <PainSwitch pains={service.pains} perch={`problemas-${service.slug}`} />
       </Reveal>
 
       {/* La llamada: se lleva el servicio al formulario */}

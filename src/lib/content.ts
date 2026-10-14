@@ -567,48 +567,393 @@ export const PROJECTS: Project[] = [
       },
     },
   },
-  {
-    slug: "dispositivos-medicos",
-    index: "05",
-    year: "2025",
-    title: {
-      es: "Dispositivo médico",
-      en: "Medical device",
-    },
-    client: {
-      es: "Cliente del sector salud",
-      en: "Healthcare sector client",
-    },
-    category: {
-      es: "Diseño y validación de producto",
-      en: "Product design and validation",
-    },
-    summary: {
-      es: "Del concepto al prototipo validado, con la documentación técnica que exige el sector.",
-      en: "From concept to validated prototype, with the technical file the sector demands.",
-    },
-    description: {
-      es: "Diseño del dispositivo, definición de materiales y tolerancias, prototipado y campaña de pruebas. El expediente técnico se armó en paralelo al desarrollo, no después, para que la validación no fuera un cuello de botella al final.",
-      en: "Device design, material and tolerance definition, prototyping and a test campaign. The technical file was built alongside development, not after, so validation never became a bottleneck at the end.",
-    },
-    outcome: {
-      es: "Prototipo validado y expediente técnico listo para el proceso regulatorio del cliente.",
-      en: "Validated prototype and a technical file ready for the client's regulatory process.",
-    },
-    tags: ["CAD", "Tolerancias", "Prototipado", "Validación", "ISO 13485"],
-    metrics: [
-      { value: "±0.01", label: { es: "Tolerancia crítica (mm)", en: "Critical tolerance (mm)" } },
-      { value: "3", label: { es: "Iteraciones de prototipo", en: "Prototype iterations" } },
-      { value: "100%", label: { es: "Requisitos trazados", en: "Requirements traced" } },
-    ],
-    hue: 290,
-    frame: "4 / 3",
-    feature: 0,
-    has3D: false,
-    mediaKind: "drawing",
-    mediaChip: "PLANO · REV C · 1:1",
-    visual: "device",
+];
+
+/* ------------------------------------------------------------------ */
+/* Servicios dentro de la lista                                        */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Matthew, 13 oct 2026: donde estaba «Dispositivo médico» va el servicio de
+ * cumplimiento normativo y BPM, y en el lugar de «Mejora continua» el de
+ * Lean, layout y procesos. Los textos de titular, problemas, entregables y
+ * llamada son los suyos, en minúscula de frase; lo demás está escrito para
+ * que se entienda qué cambia en la planta.
+ *
+ * Van en la misma lista que los proyectos y con el mismo chasis (escenario,
+ * ventana, pie), cada uno con su tono. Las cifras de Lean son las del caso;
+ * el tablero de auditoría es una muestra y lo dice.
+ */
+
+export type ServiceIcon =
+  | "audit"
+  | "trace"
+  | "repeat"
+  | "hold"
+  | "search"
+  | "files"
+  | "capa"
+  | "training"
+  | "route"
+  | "timer"
+  | "stock"
+  | "variance"
+  | "calendar"
+  | "arrow";
+
+export type Pain = {
+  icon: ServiceIcon;
+  problem: Localized;
+  solution: Localized;
+  /** Cómo se ve la solución en la planta, en una frase. */
+  how: Localized;
+};
+
+export type Service = {
+  id: "lean" | "cumplimiento";
+  /** También es el sufijo de las perchas del dragón. */
+  slug: string;
+  index: string;
+  hue: number;
+  badge: Localized;
+  title: Localized;
+  subtitle: Localized;
+  pains: Pain[];
+  /**
+   * La planta antes y después, en video: una ilustración isométrica que un
+   * barrido verde pasa del estado de hoy al ordenado (Matthew, 13 oct 2026:
+   * «algo así, que se vea pro, que ya hemos trabajado con empresas»).
+   */
+  film: {
+    src: string;
+    poster: string;
+    label: Localized;
+    before: Localized;
+    after: Localized;
+  };
+  cta: {
+    label: Localized;
+    note: Localized;
+    icon: ServiceIcon;
+    /** La línea que llega al formulario de contacto al pulsarla. */
+    brief: Localized;
+  };
+};
+
+export const LEAN: Service & {
+  /** El proyecto del que salen la planta, el producto y el caso. */
+  from: string;
+  highlight: { title: Localized; body: Localized; action: Localized };
+  stats: { value: string; label: Localized }[];
+} = {
+  id: "lean",
+  slug: "lean",
+  index: "02",
+  hue: 62,
+  from: "mejora-continua",
+  badge: {
+    es: "Lean manufacturing & ingeniería de planta",
+    en: "Lean manufacturing & plant engineering",
   },
+  title: {
+    es: "Elimina cuellos de botella y maximiza cada metro cuadrado de tu planta",
+    en: "Remove bottlenecks and get the most out of every square meter of your plant",
+  },
+  subtitle: {
+    es: "Convertimos operaciones lentas y congestionadas en flujos de producción esbeltos, ágiles y altamente rentables.",
+    en: "We turn slow, congested operations into lean, agile and highly profitable production flows.",
+  },
+  pains: [
+    {
+      icon: "route",
+      problem: { es: "Recorridos kilométricos y desorden", en: "Endless walking and clutter" },
+      solution: {
+        es: "Rediseño de layout y estaciones de trabajo optimizadas",
+        en: "Layout redesign and optimized workstations",
+      },
+      how: {
+        es: "Medimos cuánto camina cada pieza y cada operador, y acercamos lo que se usa junto.",
+        en: "We measure how far every part and every operator travels, and bring together what is used together.",
+      },
+    },
+    {
+      icon: "timer",
+      problem: { es: "Setups y cambios de formato lentos", en: "Slow setups and changeovers" },
+      solution: {
+        es: "Metodología SMED para liberar la maquinaria rápido",
+        en: "SMED to free up machines quickly",
+      },
+      how: {
+        es: "Separamos lo que se puede preparar con la máquina en marcha de lo que obliga a pararla, y acortamos lo segundo.",
+        en: "We split what can be prepared while the machine runs from what forces it to stop, and shorten the latter.",
+      },
+    },
+    {
+      icon: "stock",
+      problem: {
+        es: "Acumulación de inventario en proceso (WIP)",
+        en: "Work in process (WIP) piling up",
+      },
+      solution: {
+        es: "Mapeo de cadena de valor (VSM) y nivelación de flujo",
+        en: "Value stream mapping (VSM) and flow leveling",
+      },
+      how: {
+        es: "El mapa enseña dónde se apilan las piezas y por qué. Después se ajusta el ritmo de cada estación al de la línea.",
+        en: "The map shows where parts pile up and why. Then each station's pace is matched to the line's.",
+      },
+    },
+    {
+      icon: "variance",
+      problem: { es: "Alta variabilidad operativa", en: "High operational variability" },
+      solution: {
+        es: "Estandarización de procesos, 5S y capacitación en piso",
+        en: "Standard work, 5S and training on the floor",
+      },
+      how: {
+        es: "Un mismo método en todos los turnos, cada estación en orden y la gente entrenada en su puesto.",
+        en: "One method across every shift, every station in order and people trained at their own post.",
+      },
+    },
+  ],
+  film: {
+    src: "/servicios/lean.mp4",
+    poster: "/servicios/lean-poster.webp",
+    label: {
+      es: "Planta en corte isométrico: del piso congestionado a una línea Lean ordenada",
+      en: "Isometric plant cutaway: from a congested floor to an organized Lean line",
+    },
+    before: {
+      es: "Recorridos que se cruzan, piezas apiladas en los pasillos y una máquina que frena a todas.",
+      en: "Paths that cross, parts piled in the aisles and one machine holding everyone back.",
+    },
+    after: {
+      es: "Un solo flujo, cada cosa en su sitio y el mapa de valor con su tablero vigilando la línea.",
+      en: "One flow, everything in its place and the value stream map with its dashboard watching the line.",
+    },
+  },
+  highlight: {
+    title: {
+      es: "Simulación de flujos & visión analítica",
+      en: "Flow simulation & analytics",
+    },
+    body: {
+      es: "Con los datos de tu operación armamos un modelo de la línea y probamos ahí cada cambio de layout o de proceso. Sabes cuánto mejora el flujo antes de mover un solo equipo, sin parar la producción para hacer pruebas.",
+      en: "We build a model of your line from your operating data and try every layout or process change there first. You know how much the flow improves before a single machine moves, without stopping production to test.",
+    },
+    action: { es: "Probar la simulación", en: "Try the simulation" },
+  },
+  stats: [
+    { value: "−15 %", label: { es: "Tiempo de preparación", en: "Setup time" } },
+    { value: "−20 %", label: { es: "Reprocesos", en: "Rework" } },
+    {
+      value: "4",
+      label: {
+        es: "Operadores capacitados, con estándar y control en piso",
+        en: "Operators trained, with standard work and control on the floor",
+      },
+    },
+  ],
+  cta: {
+    label: { es: "Optimiza tu línea de producción", en: "Optimize your production line" },
+    note: {
+      es: "Agenda una evaluación técnica de tus procesos",
+      en: "Book a technical assessment of your processes",
+    },
+    icon: "arrow",
+    brief: {
+      es: "Quiero una evaluación técnica de mi línea de producción (layout, setups, inventario en proceso).",
+      en: "I'd like a technical assessment of my production line (layout, setups, work in process).",
+    },
+  },
+};
+
+export const COMPLIANCE: Service & {
+  deliverables: { icon: ServiceIcon; title: Localized; body: Localized }[];
+  /** El tablero de muestra: de dónde parte y qué se va cerrando. */
+  board: {
+    title: Localized;
+    scope: Localized;
+    before: Localized;
+    after: Localized;
+    start: number;
+    items: { label: Localized; before: Localized; gain: number }[];
+    pending: { label: Localized; status: Localized };
+  };
+} = {
+  id: "cumplimiento",
+  slug: "cumplimiento",
+  index: "05",
+  hue: 290,
+  badge: { es: "Cumplimiento normativo & BPM", en: "Regulatory compliance & GMP" },
+  title: {
+    es: "Pasa cualquier auditoría a la primera y elimina el riesgo operativo en tu planta",
+    en: "Pass any audit the first time and remove operational risk from your plant",
+  },
+  subtitle: {
+    es: "Transformamos la documentación dispersa en un sistema de calidad sólido, trazable y 100 % preparado para inspecciones de autoridades o clientes.",
+    en: "We turn scattered paperwork into a solid, traceable quality system, 100% ready for inspections by authorities or customers.",
+  },
+  pains: [
+    {
+      icon: "audit",
+      problem: { es: "Incertidumbre en auditorías", en: "Uncertainty before audits" },
+      solution: {
+        es: "Expedientes estandarizados y carpetas de inspección listas 24/7",
+        en: "Standardized records and inspection folders ready 24/7",
+      },
+      how: {
+        es: "Cada registro tiene su sitio y su responsable. Si llega un inspector sin aviso, la carpeta ya está armada.",
+        en: "Every record has its place and its owner. If an inspector shows up unannounced, the folder is already put together.",
+      },
+    },
+    {
+      icon: "trace",
+      problem: { es: "Pérdida de trazabilidad", en: "Lost traceability" },
+      solution: {
+        es: "Control de lotes y genealogía de producción rastreable en minutos",
+        en: "Lot control and production genealogy you can trace in minutes",
+      },
+      how: {
+        es: "Desde un producto terminado llegas a sus materias primas, sus equipos y quién lo hizo, sin revolver archivos.",
+        en: "From a finished product you reach its raw materials, its equipment and who made it, without digging through files.",
+      },
+    },
+    {
+      icon: "repeat",
+      problem: { es: "Reincidencia de desviaciones", en: "Recurring deviations" },
+      solution: {
+        es: "Sistema CAPA estructurado con análisis de causa raíz (8D)",
+        en: "A structured CAPA system with root cause analysis (8D)",
+      },
+      how: {
+        es: "Cada desviación se cierra con su causa, su acción y la prueba de que funcionó, para que no vuelva el mes siguiente.",
+        en: "Each deviation is closed with its cause, its action and proof that it worked, so it doesn't come back next month.",
+      },
+    },
+    {
+      icon: "hold",
+      problem: { es: "Burocracia y lotes retenidos", en: "Red tape and lots on hold" },
+      solution: {
+        es: "Flujos documentales ágiles y liberación eficiente",
+        en: "Lean document flows and efficient release",
+      },
+      how: {
+        es: "Revisiones en paralelo y una sola firma por paso, para que ningún lote espere a que aparezca un papel.",
+        en: "Reviews in parallel and one signature per step, so no lot waits for a missing piece of paper.",
+      },
+    },
+  ],
+  film: {
+    src: "/servicios/cumplimiento.mp4",
+    poster: "/servicios/cumplimiento-poster.webp",
+    label: {
+      es: "Área de calidad en corte isométrico: de papeles sueltos y un lote retenido a un sistema ordenado",
+      en: "Isometric quality area cutaway: from loose paperwork and a held lot to an organized system",
+    },
+    before: {
+      es: "Papeles sueltos, archivadores desbordados, la alarma encendida y un lote retenido.",
+      en: "Loose paperwork, overflowing cabinets, the alarm on and a lot on hold.",
+    },
+    after: {
+      es: "Expedientes en orden, la trazabilidad en pantalla, la lista en verde y el lote liberado.",
+      en: "Records in order, traceability on screen, the checklist green and the lot released.",
+    },
+  },
+  deliverables: [
+    {
+      icon: "search",
+      title: { es: "Auditorías internas & gap analysis", en: "Internal audits & gap analysis" },
+      body: {
+        es: "Evaluación preventiva frente a BPM, ISO y normas sanitarias.",
+        en: "A preventive assessment against GMP, ISO and health regulations.",
+      },
+    },
+    {
+      icon: "files",
+      title: { es: "Estructuración de expedientes de lote", en: "Batch record structure" },
+      body: {
+        es: "Batch records estandarizados y trazabilidad integral.",
+        en: "Standardized batch records and end-to-end traceability.",
+      },
+    },
+    {
+      icon: "capa",
+      title: { es: "Gestión CAPA & control de desviaciones", en: "CAPA & deviation control" },
+      body: {
+        es: "Cierre definitivo de no conformidades mediante causa raíz.",
+        en: "Nonconformities closed for good through root cause analysis.",
+      },
+    },
+    {
+      icon: "training",
+      title: { es: "Capacitación en integridad de datos", en: "Data integrity training" },
+      body: {
+        es: "Entrenamiento práctico al personal operativo en buenas prácticas.",
+        en: "Hands-on training in good practices for operating staff.",
+      },
+    },
+  ],
+  board: {
+    title: { es: "Nivel de cumplimiento", en: "Compliance level" },
+    scope: { es: "Muestra · auditoría interna BPM", en: "Sample · internal GMP audit" },
+    before: { es: "En preparación", en: "Getting ready" },
+    after: { es: "Listo para inspección", en: "Ready for inspection" },
+    start: 46,
+    items: [
+      {
+        label: { es: "Trazabilidad de lote", en: "Lot traceability" },
+        before: { es: "Incompleta", en: "Incomplete" },
+        gain: 14,
+      },
+      {
+        label: { es: "CAPAs cerradas", en: "CAPAs closed" },
+        before: { es: "3 abiertas", en: "3 open" },
+        gain: 13,
+      },
+      {
+        label: { es: "Expedientes digitalizados", en: "Records digitized" },
+        before: { es: "En papel", en: "On paper" },
+        gain: 13,
+      },
+      {
+        label: { es: "Integridad de datos", en: "Data integrity" },
+        before: { es: "Sin capacitar", en: "Not trained" },
+        gain: 12,
+      },
+    ],
+    pending: {
+      label: { es: "Simulacro de inspección", en: "Mock inspection" },
+      status: { es: "Programado", en: "Scheduled" },
+    },
+  },
+  cta: {
+    label: {
+      es: "Agenda un diagnóstico de calidad gratis",
+      en: "Book a free quality diagnosis",
+    },
+    note: {
+      es: "Prepara tu planta antes de tu próxima inspección",
+      en: "Get your plant ready before your next inspection",
+    },
+    icon: "calendar",
+    brief: {
+      es: "Quiero agendar el diagnóstico de calidad gratis (cumplimiento normativo y BPM).",
+      en: "I'd like to book the free quality diagnosis (regulatory compliance and GMP).",
+    },
+  },
+};
+
+/**
+ * El orden de la lista. Los proyectos por su `slug` en `PROJECTS`; los
+ * servicios por su `id`.
+ */
+export const SHOWCASE: ({ project: string } | { service: Service["id"] })[] = [
+  { project: "anatris" },
+  { service: "lean" },
+  { project: "programa-contable" },
+  { project: "charms" },
+  { service: "cumplimiento" },
 ];
 /* ------------------------------------------------------------------ */
 /* Casos completos                                                     */

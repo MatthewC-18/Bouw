@@ -69,6 +69,10 @@ export const metadata: Metadata = {
     // Lo que se contrata, dicho como lo dice el cliente
     "automatización de procesos industriales",
     "mejora continua y lean manufacturing",
+    "rediseño de layout y SMED",
+    "buenas prácticas de manufactura BPM",
+    "cumplimiento normativo y auditorías de calidad",
+    "sistema CAPA y análisis de causa raíz",
     "validación de procesos",
     "sistemas de gestión de calidad",
     "ISO 9001 implementación",

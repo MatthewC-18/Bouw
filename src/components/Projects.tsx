@@ -7,9 +7,8 @@ import {
   useRef,
   useState,
   type CSSProperties,
-  type KeyboardEvent,
 } from "react";
-import { PROJECTS, pickAsset, type Project } from "@/lib/content";
+import { COMPLIANCE, LEAN, PROJECTS, SHOWCASE, pickAsset, type Project } from "@/lib/content";
 import { dragonScreen } from "@/lib/dragonScreen";
 import { useLang } from "@/lib/i18n";
 import LiveSystem from "./LiveSystem";
@@ -17,6 +16,8 @@ import LinePeek from "./linea/LinePeek";
 import LoopVideo from "./LoopVideo";
 import ProjectVisual from "./ProjectVisual";
 import Reveal from "./Reveal";
+import ServiceRow from "./services/ServiceRow";
+import Stage from "./Stage";
 
 /*
  * Cada ficha lleva su color (`project.hue`) y todas el mismo chasis. Los
@@ -35,22 +36,7 @@ const KIND_LABEL: Record<Project["mediaKind"], { es: string; en: string }> = {
   floor: { es: "Planta", en: "Floor" },
 };
 
-/**
- * Panel de medios: el escenario.
- *
- * Las piezas vienen de mundos distintos: una interfaz oscura, una web de
- * colores pastel, una hoja de cálculo, fotos de planta y un plano. Antes cada
- * una iba como venía y la fila parecía de cinco portafolios distintos. Ahora
- * todas pasan por el mismo molde, de arriba abajo:
- *
- * 1. Cabecera: número, tipo de material y estado.
- * 2. La ventana, con su barra y la dirección o el nombre del archivo. La
- *    captura entra entera, a su proporción (`project.frame`): ni se recorta
- *    ni se le pone un paspartú distinto a cada una.
- * 3. Pie: la cifra que resume el proyecto y lo que pasa al tocarlo.
- *
- * Todo sobre un escenario del color del proyecto.
- */
+/** Panel de medios de un proyecto, sobre el chasis común (`Stage`). */
 function Media({
   project,
   perchId,
@@ -117,169 +103,93 @@ function Media({
         : "Hover";
 
   return (
-    <div
-      className={`p-stage aspect-[10/11] sm:aspect-[6/5] lg:aspect-[5/4] ${live ? "cursor-pointer" : ""}`}
-      data-perch={perchId}
-      data-perch-corner={perchCorner}
-      {...(live
-        ? {
-            "data-perch-open": "",
-            role: "button",
-            tabIndex: 0,
-            "aria-label":
-              lang === "es"
-                ? `Abrir ${t(project.title)} en vivo`
-                : `Open ${t(project.title)} live`,
-            onClick: open,
-            onKeyDown: (e: KeyboardEvent) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                open();
-              }
-            },
-          }
-        : {})}
+    <Stage
+      index={project.index}
+      category={t(project.category)}
+      status={status}
+      pulse={live}
+      chip={project.mediaChip}
+      frame={project.frame}
+      windowRef={windowRef}
+      feature={feature ? { value: feature.value, label: t(feature.label) } : undefined}
+      action={action}
+      arrow={live ? "↗" : "→"}
+      perchId={perchId}
+      ledgeId={`pie-${project.slug}`}
+      perchCorner={perchCorner}
+      press={
+        live
+          ? {
+              label:
+                lang === "es"
+                  ? `Abrir ${t(project.title)} en vivo`
+                  : `Open ${t(project.title)} live`,
+              onPress: open,
+            }
+          : undefined
+      }
     >
-      {/* Cabecera */}
-      <div className="relative flex items-center gap-3 px-5 pb-3 pt-4 font-mono text-[10px] uppercase tracking-[0.24em] sm:px-7 sm:pt-6">
-        <span className="font-semibold text-(--p-accent)">{project.index}</span>
-        <span className="h-px w-6 bg-(--p-line)" aria-hidden />
-        {/* `min-w-0` o el rótulo no se corta: ensancha el panel y la fila
-            entera se sale de la pantalla en el teléfono */}
-        <span className="min-w-0 truncate text-ink-dim">{t(project.category)}</span>
-        <span className="ml-auto flex shrink-0 items-center gap-2 text-(--p-accent)">
-          <span
-            className={`h-1.5 w-1.5 rounded-full bg-(--p-accent) ${live ? "live-dot" : ""}`}
-            aria-hidden
-          />
-          {status}
-        </span>
-      </div>
-
-      {/* La ventana */}
-      <div className="p-area relative flex-1 px-5 sm:px-7">
-        <div
-          ref={windowRef}
-          className="p-window"
-          style={{ "--p-frame": project.frame } as CSSProperties}
-        >
-          <div className="p-window-bar flex items-center gap-3 px-3.5">
-            <span className="flex gap-1.5" aria-hidden>
-              <span className="h-2 w-2 rounded-full bg-(--p-line)" />
-              <span className="h-2 w-2 rounded-full bg-(--p-line)" />
-              <span className="h-2 w-2 rounded-full bg-(--p-line)" />
-            </span>
-            <span className="mx-auto max-w-[70%] truncate rounded-md bg-(--p-window) px-3 py-0.5 font-mono text-[10px] tracking-wide text-ink-dim">
-              {project.mediaChip}
-            </span>
-            <span className="w-[42px]" aria-hidden />
-          </div>
-
-          <div className="p-media">
-            {project.mediaKind === "floor" && video ? (
-              /*
-                El caso en la ficha (ver `LinePeek`): la línea pasa de antes a
-                después en bucle, con la planta, el producto y los resultados.
-                Las fotos solas «no me dicen nada de lo que pasa» (Matthew,
-                11 oct 2026).
-              */
-              <LinePeek
-                video={video}
-                photo={
-                  project.tiles?.[1]
-                    ? {
-                        src: project.tiles[1].src,
-                        alt: t(project.tiles[1].alt),
-                        label: t(project.tiles[1].label),
-                      }
-                    : undefined
+      {project.mediaKind === "floor" && video ? (
+        /*
+          El caso en la ficha (ver `LinePeek`): la línea pasa de antes a
+          después en bucle, con la planta, el producto y los resultados.
+          Las fotos solas «no me dicen nada de lo que pasa» (Matthew,
+          11 oct 2026).
+        */
+        <LinePeek
+          video={video}
+          photo={
+            project.tiles?.[1]
+              ? {
+                  src: project.tiles[1].src,
+                  alt: t(project.tiles[1].alt),
+                  label: t(project.tiles[1].label),
                 }
-              />
-            ) : video ? (
-              <LoopVideo
-                src={video.src}
-                poster={video.poster}
-                label={t(project.title)}
-                className={`absolute inset-0 h-full w-full object-cover ${zoom}`}
-              />
-            ) : project.image ? (
-              <Image
-                src={project.image}
-                alt={project.imageAlt ? t(project.imageAlt) : t(project.title)}
-                fill
-                sizes="(max-width: 1024px) 100vw, 55vw"
-                className={`object-cover object-top ${zoom}`}
-              />
-            ) : (
-              <div className={`absolute inset-0 ${zoom}`}>
-                <ProjectVisual kind={project.visual ?? "device"} />
-              </div>
-            )}
-
-            {/* Sistema en vivo: la invitación aparece al pasar el ratón */}
-            {live && (
-              <span
-                data-dragon-ignore
-                className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[rgba(4,16,31,0.28)] opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-              >
-                <span className="flex items-center gap-3 rounded-full bg-(--p-accent) px-5 py-2.5 text-sm font-semibold text-(--p-on-accent) shadow-[0_12px_40px_-12px_rgba(0,0,0,0.6)]">
-                  <svg width="10" height="12" viewBox="0 0 10 12" aria-hidden>
-                    <path d="M0 0l10 6-10 6z" fill="currentColor" />
-                  </svg>
-                  {sim
-                    ? lang === "es"
-                      ? "Ver la línea en marcha"
-                      : "See the line running"
-                    : lang === "es"
-                      ? "Abrir el sistema en vivo"
-                      : "Open the live system"}
-                </span>
-              </span>
-            )}
-          </div>
+              : undefined
+          }
+        />
+      ) : video ? (
+        <LoopVideo
+          src={video.src}
+          poster={video.poster}
+          label={t(project.title)}
+          className={`absolute inset-0 h-full w-full object-cover ${zoom}`}
+        />
+      ) : project.image ? (
+        <Image
+          src={project.image}
+          alt={project.imageAlt ? t(project.imageAlt) : t(project.title)}
+          fill
+          sizes="(max-width: 1024px) 100vw, 55vw"
+          className={`object-cover object-top ${zoom}`}
+        />
+      ) : (
+        <div className={`absolute inset-0 ${zoom}`}>
+          <ProjectVisual kind={project.visual ?? "device"} />
         </div>
-      </div>
+      )}
 
-      {/*
-        Pie: la cifra y lo que pasa al tocar, y entre las dos, sitio para el
-        dragón. Con la ficha centrada en pantalla el borde de arriba del
-        escenario queda pegado a la barra y el bicho no cabe encima; aquí
-        abajo sí (ver la repisa al final).
-      */}
-      <div className="relative flex min-h-[4.5rem] items-end gap-4 px-5 pb-4 pt-3 sm:min-h-[5.5rem] sm:px-7 sm:pb-6 lg:min-h-[8.75rem]">
-        {feature && (
-          <div className="flex items-baseline gap-3">
-            <span className="font-display text-[1.6rem] font-bold leading-none text-(--p-accent) sm:text-[2rem] lg:text-[2.5rem]">
-              {feature.value}
-            </span>
-            <span className="max-w-[11rem] text-[12px] leading-snug text-ink-soft">
-              {t(feature.label)}
-            </span>
-          </div>
-        )}
-        <span className="ml-auto flex shrink-0 items-center gap-2 pb-1 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-dim transition-colors duration-500 group-hover:text-(--p-accent)">
-          {action}
-          <span
-            aria-hidden
-            className="transition-transform duration-500 group-hover:translate-x-1"
-          >
-            {live ? "↗" : "→"}
+      {/* Sistema en vivo: la invitación aparece al pasar el ratón */}
+      {live && (
+        <span
+          data-dragon-ignore
+          className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[rgba(4,16,31,0.28)] opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+        >
+          <span className="flex items-center gap-3 rounded-full bg-(--p-accent) px-5 py-2.5 text-sm font-semibold text-(--p-on-accent) shadow-[0_12px_40px_-12px_rgba(0,0,0,0.6)]">
+            <svg width="10" height="12" viewBox="0 0 10 12" aria-hidden>
+              <path d="M0 0l10 6-10 6z" fill="currentColor" />
+            </svg>
+            {sim
+              ? lang === "es"
+                ? "Ver la línea en marcha"
+                : "See the line running"
+              : lang === "es"
+                ? "Abrir el sistema en vivo"
+                : "Open the live system"}
           </span>
         </span>
-      </div>
-
-      {/*
-        Repisa: segunda percha del panel, en el pie. El dragón busca a lo
-        largo de ella el tramo sin texto, que es el hueco entre la cifra y la
-        acción, y se queda de pie delante de la ventana.
-      */}
-      <span
-        aria-hidden
-        data-perch={`pie-${project.slug}`}
-        data-perch-corner={perchCorner}
-        className="pointer-events-none absolute inset-x-0 bottom-4 h-px sm:bottom-5"
-      />
-    </div>
+      )}
+    </Stage>
   );
 }
 
@@ -547,9 +457,19 @@ export default function Projects() {
         </Reveal>
 
         <div className="mt-24 space-y-32 lg:mt-32 lg:space-y-48">
-          {PROJECTS.map((p, i) => (
-            <ProjectRow key={p.slug} project={p} i={i} />
-          ))}
+          {/* Proyectos y servicios en una sola lista, alternando el lado */}
+          {SHOWCASE.map((row, i) => {
+            if ("service" in row)
+              return (
+                <ServiceRow
+                  key={row.service}
+                  service={row.service === "lean" ? LEAN : COMPLIANCE}
+                  i={i}
+                />
+              );
+            const p = PROJECTS.find((x) => x.slug === row.project);
+            return p ? <ProjectRow key={p.slug} project={p} i={i} /> : null;
+          })}
         </div>
       </div>
     </section>

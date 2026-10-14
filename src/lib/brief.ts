@@ -29,13 +29,18 @@ export type HoursCount = {
 };
 
 export type Brief = {
+  /**
+   * El servicio que pidió desde su llamada (Lean o cumplimiento), con la
+   * frase que abre el mensaje. Viene ya en los dos idiomas.
+   */
+  service: { es: string; en: string } | null;
   /** Ids de los síntomas marcados. */
   symptoms: string[];
   /** La última cuenta que salió, si llegó a hacer alguna. */
   count: HoursCount | null;
 };
 
-let brief: Brief = { symptoms: [], count: null };
+let brief: Brief = { service: null, symptoms: [], count: null };
 
 const listeners = new Set<() => void>();
 
@@ -55,7 +60,7 @@ export function getBrief() {
  * siempre el mismo objeto vacío, así el HTML de partida coincide con el
  * primer render del cliente.
  */
-const EMPTY: Brief = { symptoms: [], count: null };
+const EMPTY: Brief = { service: null, symptoms: [], count: null };
 export function getBriefServer() {
   return EMPTY;
 }

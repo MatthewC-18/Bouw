@@ -31,7 +31,10 @@ const LABEL =
 function draftFrom(brief: Brief, t: (v: Localized) => string, lang: Lang) {
   const lines: string[] = [];
 
+  if (brief.service) lines.push(t(brief.service));
+
   if (brief.symptoms.length > 0) {
+    if (lines.length) lines.push("");
     lines.push(
       lang === "es"
         ? "Marqué en el diagnóstico:"
@@ -118,7 +121,7 @@ export default function Contact() {
   ) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
   const clearDraft = () => {
-    setBrief({ symptoms: [], count: null });
+    setBrief({ service: null, symptoms: [], count: null });
     lastDraft.current = "";
     setForm((f) => ({ ...f, message: "" }));
   };
@@ -156,7 +159,7 @@ export default function Contact() {
   const canSend = form.name.trim() !== "" && form.message.trim() !== "";
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email.trim());
   const canSubmit = canSend && emailOk && consent && status !== "sending";
-  const carried = brief.symptoms.length > 0 || brief.count !== null;
+  const carried = brief.service !== null || brief.symptoms.length > 0 || brief.count !== null;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();

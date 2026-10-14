@@ -1167,3 +1167,55 @@ html[data-scrolling] body {
     opacity: 0;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Servicios: problema contra solución (`PainSwitch`)                  */
+/* ------------------------------------------------------------------ */
+
+/* Cuánto falta para pasar al siguiente problema */
+.pain-progress {
+  transform-origin: 0 50%;
+  animation: pain-progress linear forwards;
+}
+@keyframes pain-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* La solución entra; el problema de hoy se tacha */
+.pain-in {
+  animation: pain-in 520ms var(--ease-out-expo) both;
+}
+@keyframes pain-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* Tachado con `text-decoration`: si el problema parte en dos líneas, tacha las dos */
+.pain-strike {
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: var(--color-orange-brand);
+  animation: pain-strike 700ms 260ms ease-out both;
+}
+@keyframes pain-strike {
+  from {
+    text-decoration-color: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pain-in,
+  .pain-strike {
+    animation: none;
+  }
+}

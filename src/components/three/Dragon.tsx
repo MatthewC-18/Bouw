@@ -100,10 +100,25 @@ const VIEW_TO = 0.95;
 const SEEN_FROM = 0.24;
 const SEEN_TO = 0.98;
 /**
- * Posado, se queda en su percha mientras esta siga por debajo de la barra:
- * sube con la página y se mete bajo ella como el resto del contenido.
+ * Quieto, se queda en su percha mientras esta siga por debajo de la barra,
+ * en vez de cambiarse a otra más cerca del centro.
  */
 const STAY_FROM = 0.1;
+/**
+ * Con el scroll en marcha no va posado. Una percha se mueve con la página y
+ * el bicho encima, en su pose de posado, se desliza como una pegatina: «no es
+ * como que se queda sino que baja con la página en esa pose y se ve mal»
+ * (Matthew, 14 oct 2026). Así que al empezar a bajar despega y se sostiene en
+ * el aire donde estaba, batiendo alas, mientras la página pasa por debajo; y
+ * cuando el visitante para, se posa en la percha que tenga a la vista.
+ *
+ * `LIFT_PX`: lo que hay que bajar seguido para que despegue (un toque de la
+ * rueda no lo mueve). `SETTLE`: segundos sin scroll para darlo por parado.
+ * `LIFT_TIME`: el salto del despegue, corto, que no es un viaje.
+ */
+const LIFT_PX = 60;
+const SETTLE = 0.45;
+const LIFT_TIME = 0.8;
 /**
  * Sin ninguna percha a la vista no se adelanta a una que aún no ha entrado:
  * vuela a tu lado, en el aire, hasta que aparece una. Es una percha más con
@@ -575,7 +590,12 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
    * Volando a tu lado (`AIR_SPOT`): el hueco elegido en píxeles de ventana,
    * el punto suavizado que sigue y cuándo se eligió.
    */
-  const hover = useRef({ x: 0, y: 0, cx: 0, cy: 0, side: 1, at: -100, fresh: true });
+  const hover = useRef({ x: 0, y: 0, cx: 0, cy: 0, side: 1, at: -100, fresh: true, hold: false });
+  /**
+   * El gesto de scroll en curso: cuándo se movió la página por última vez
+   * (reloj de la escena), cuánto lleva recorrido y el último valor visto.
+   */
+  const gesture = useRef({ at: -100, run: 0, seen: -1 });
   /** Cajas del texto de la página, de la última medición (ver `readObstacles`). */
   const obstacles = useRef<Float32Array>(new Float32Array(0));
 
@@ -1189,6 +1209,17 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
     const m = measured.current;
     if (Math.abs(dragonPx.current.w - m.w) > m.w * 0.1 + 1) remeasure.current();
 
+    /* ---- El gesto de scroll ---- */
+    const gs = gesture.current;
+    if (gs.seen >= 0 && scrollY !== gs.seen) {
+      gs.at = t;
+      gs.run += Math.abs(scrollY - gs.seen);
+    }
+    gs.seen = scrollY;
+    if (t - gs.at > SETTLE) gs.run = 0;
+    const scrolling = !reducedMotion && gs.run > LIFT_PX;
+    if (!scrolling) hover.current.hold = false;
+
     /* ---- Qué percha manda ---- */
     const heroAlive = perch.ready && perch.live > 0.05;
     let want = "";
@@ -1207,6 +1238,11 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
         best = -Infinity;
       } else {
         focus.current = "";
+      }
+      // Con la página en marcha, en el aire donde estaba (ver `LIFT_PX`)
+      if (best !== -Infinity && scrolling) {
+        want = AIR_SPOT;
+        best = -Infinity;
       }
       /*
        * Se queda donde está. Antes, al parar el scroll, se cambiaba a la
@@ -1275,6 +1311,7 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
       want !== target.current &&
       flight.current.active &&
       !focus.current &&
+      !scrolling &&
       target.current !== "hero"
     ) {
       const cur = spots.current.find((s) => s.id === target.current);
@@ -1282,17 +1319,6 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
       if (cur && !cur.blocked && curY > H * COMMIT_FROM && curY < H * COMMIT_TO) {
         want = target.current;
       }
-    }
-    // Bajando rápido, espera: mientras la página se mueve y su percha sigue a
-    // la vista, no cambia de percha; despega cuando el visitante para
-    if (want && want !== target.current && target.current && !reducedMotion) {
-      const moving = document.documentElement.hasAttribute("data-scrolling");
-      const cur = spots.current.find((s) => s.id === target.current);
-      const curY = cur ? cur.y - scrollY : NaN;
-      const curOnScreen =
-        (target.current === "hero" && heroAlive) ||
-        (cur !== undefined && curY > H * SEEN_FROM && curY < H * 1.15);
-      if (moving && curOnScreen && !flight.current.active) want = target.current;
     }
     if (!want) {
       g.visible = false;
@@ -1352,7 +1378,8 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
         tgtScale = PERCH_SCALE * perch.scale;
       } else if (id === AIR_SPOT) {
         const hv = hover.current;
-        if (hv.fresh || t - hv.at > AIR_RECHECK) pickHover();
+        // Sosteniéndose durante el scroll no busca otro hueco: se queda
+        if (!hv.hold && (hv.fresh || t - hv.at > AIR_RECHECK)) pickHover();
         hv.cx += (hv.x - hv.cx) * (1 - Math.pow(0.3, wall));
         hv.cy += (hv.y - hv.cy) * (1 - Math.pow(0.3, wall));
         // Deriva lenta: un bicho que se sostiene en el aire nunca está clavado
@@ -1405,8 +1432,22 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
       const first = target.current === "";
       const wasHovering = target.current === AIR_SPOT;
       if (want === AIR_SPOT) {
-        hover.current.fresh = true;
-        hover.current.side = dragonScreen.x > 0.5 || first ? 1 : -1;
+        const hv = hover.current;
+        hv.fresh = true;
+        hv.side = dragonScreen.x > 0.5 || first ? 1 : -1;
+        if (scrolling && !first) {
+          // Donde estaba, un poco más arriba: el salto del despegue
+          const m = Math.min(W * 0.1, 110);
+          hv.x = hv.cx = THREE.MathUtils.clamp(dragonScreen.x * W, m, W - m);
+          hv.y = hv.cy = THREE.MathUtils.clamp(
+            dragonScreen.y * H + dragonPx.current.h * 0.2,
+            H * 0.3,
+            H * 0.78,
+          );
+          hv.at = t;
+          hv.fresh = false;
+          hv.hold = true;
+        }
       }
       if (!resolve(want)) return;
       target.current = want;
@@ -1451,11 +1492,13 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
         flightFromScale.current = baseScale.current;
         fl.active = true;
         fl.t = 0;
-        fl.dur = THREE.MathUtils.clamp(
-          FLIGHT_MIN + from.distanceTo(tgtPos) * 0.12,
-          FLIGHT_MIN,
-          FLIGHT_MAX,
-        );
+        fl.dur = hover.current.hold && want === AIR_SPOT
+          ? LIFT_TIME
+          : THREE.MathUtils.clamp(
+              FLIGHT_MIN + from.distanceTo(tgtPos) * 0.12,
+              FLIGHT_MIN,
+              FLIGHT_MAX,
+            );
         // Arranca con las alas arriba: el primer gesto es la batida hacia abajo
         if (!midAir) flap.current = 0;
       }

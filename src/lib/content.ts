@@ -582,7 +582,7 @@ export const PROJECTS: Project[] = [
  *
  * Van en la misma lista que los proyectos y con el mismo chasis (escenario,
  * ventana, pie), cada uno con su tono. Las cifras de Lean son las del caso;
- * el tablero de auditoría es una muestra y lo dice.
+ * el simulacro de auditoría es una autoevaluación y lo dice.
  */
 
 export type ServiceIcon =
@@ -625,8 +625,9 @@ export type Service = {
    * «algo así, que se vea pro, que ya hemos trabajado con empresas»).
    */
   film: {
-    src: string;
-    poster: string;
+    /** Uno por idioma si el video lleva rótulos (ver `bouw-medios/remotion`). */
+    src: Asset;
+    poster: Asset;
     label: Localized;
     before: Localized;
     after: Localized;
@@ -716,12 +717,17 @@ export const LEAN: Service & {
       },
     },
   ],
+  /*
+   * Hecho con Remotion (14 oct 2026): las dos ilustraciones isométricas con
+   * lo que frena señalado, el barrido a la planta ordenada y los resultados
+   * del caso. Rótulos en cada idioma.
+   */
   film: {
-    src: "/servicios/lean.mp4",
-    poster: "/servicios/lean-poster.webp",
+    src: { es: "/servicios/lean-es.mp4", en: "/servicios/lean-en.mp4" },
+    poster: { es: "/servicios/lean-es-poster.webp", en: "/servicios/lean-en-poster.webp" },
     label: {
-      es: "Planta en corte isométrico: del piso congestionado a una línea Lean ordenada",
-      en: "Isometric plant cutaway: from a congested floor to an organized Lean line",
+      es: "Planta en corte isométrico: del piso congestionado a una línea Lean ordenada, con lo que frena y los resultados señalados",
+      en: "Isometric plant cutaway: from a congested floor to an organized Lean line, with the bottlenecks and the results pointed out",
     },
     before: {
       es: "Recorridos que se cruzan, piezas apiladas en los pasillos y una máquina que frena a todas.",
@@ -770,15 +776,27 @@ export const LEAN: Service & {
 
 export const COMPLIANCE: Service & {
   deliverables: { icon: ServiceIcon; title: Localized; body: Localized }[];
-  /** El tablero de muestra: de dónde parte y qué se va cerrando. */
-  board: {
-    title: Localized;
-    scope: Localized;
-    before: Localized;
-    after: Localized;
-    start: number;
-    items: { label: Localized; before: Localized; gain: number }[];
-    pending: { label: Localized; status: Localized };
+  /**
+   * El simulacro de auditoría (`AuditCheck`): el visitante marca lo que su
+   * planta ya cumple y ve su preparación y lo primero que encontraría un
+   * inspector. Es una autoevaluación: los pesos son nuestros, no de una norma.
+   */
+  audit: {
+    intro: Localized;
+    score: Localized;
+    finding: Localized;
+    clean: Localized;
+    levels: { low: Localized; mid: Localized; high: Localized };
+    /** Marcadas al llegar, para que el tablero ya cuente algo. */
+    start: string[];
+    items: {
+      id: string;
+      short: Localized;
+      long: Localized;
+      /** Lo que encontraría un inspector si falta. */
+      finding: Localized;
+      weight: number;
+    }[];
   };
 } = {
   id: "cumplimiento",
@@ -894,38 +912,106 @@ export const COMPLIANCE: Service & {
       },
     },
   ],
-  board: {
-    title: { es: "Nivel de cumplimiento", en: "Compliance level" },
-    scope: { es: "Muestra · auditoría interna BPM", en: "Sample · internal GMP audit" },
-    before: { es: "En preparación", en: "Getting ready" },
-    after: { es: "Listo para inspección", en: "Ready for inspection" },
-    start: 46,
+  audit: {
+    intro: {
+      es: "Simulacro de auditoría: marca lo que tu planta ya cumple",
+      en: "Mock audit: tick what your plant already does",
+    },
+    score: { es: "Preparación", en: "Readiness" },
+    finding: {
+      es: "Lo primero que vería un inspector",
+      en: "The first thing an inspector would see",
+    },
+    clean: {
+      es: "Nada a la vista: tu planta pasaría la revisión.",
+      en: "Nothing in sight: your plant would pass the review.",
+    },
+    levels: {
+      low: { es: "No lista", en: "Not ready" },
+      mid: { es: "En riesgo", en: "At risk" },
+      high: { es: "Lista para inspección", en: "Ready for inspection" },
+    },
+    start: ["registros", "personal"],
     items: [
       {
-        label: { es: "Trazabilidad de lote", en: "Lot traceability" },
-        before: { es: "Incompleta", en: "Incomplete" },
-        gain: 14,
+        id: "trazabilidad",
+        short: { es: "Trazabilidad", en: "Traceability" },
+        long: {
+          es: "Cada lote se rastrea hasta su materia prima en minutos",
+          en: "Every lot traces back to its raw materials in minutes",
+        },
+        finding: {
+          es: "Un lote que no se puede rastrear hasta su materia prima.",
+          en: "A lot that can't be traced back to its raw materials.",
+        },
+        weight: 22,
       },
       {
-        label: { es: "CAPAs cerradas", en: "CAPAs closed" },
-        before: { es: "3 abiertas", en: "3 open" },
-        gain: 13,
+        id: "capa",
+        short: { es: "CAPA", en: "CAPA" },
+        long: {
+          es: "Cada desviación se cierra con causa raíz y se verifica",
+          en: "Every deviation is closed with a root cause and verified",
+        },
+        finding: {
+          es: "La misma desviación abierta otra vez, sin causa raíz.",
+          en: "The same deviation open again, with no root cause.",
+        },
+        weight: 20,
       },
       {
-        label: { es: "Expedientes digitalizados", en: "Records digitized" },
-        before: { es: "En papel", en: "On paper" },
-        gain: 13,
+        id: "registros",
+        short: { es: "Registros de lote", en: "Batch records" },
+        long: {
+          es: "Los registros de lote están completos y firmados",
+          en: "Batch records are complete and signed",
+        },
+        finding: {
+          es: "Registros de lote incompletos o sin firma.",
+          en: "Batch records that are incomplete or unsigned.",
+        },
+        weight: 20,
       },
       {
-        label: { es: "Integridad de datos", en: "Data integrity" },
-        before: { es: "Sin capacitar", en: "Not trained" },
-        gain: 12,
+        id: "digital",
+        short: { es: "Expedientes digitales", en: "Digital records" },
+        long: {
+          es: "Los expedientes están en digital, con respaldo",
+          en: "Records are digital, with a backup",
+        },
+        finding: {
+          es: "Expedientes en papel que nadie encuentra a tiempo.",
+          en: "Paper records nobody can find in time.",
+        },
+        weight: 13,
+      },
+      {
+        id: "personal",
+        short: { es: "Integridad de datos", en: "Data integrity" },
+        long: {
+          es: "El personal está capacitado en integridad de datos",
+          en: "Staff are trained in data integrity",
+        },
+        finding: {
+          es: "Datos corregidos a mano, sin quién ni cuándo.",
+          en: "Data corrected by hand, with no who or when.",
+        },
+        weight: 13,
+      },
+      {
+        id: "liberacion",
+        short: { es: "Liberación", en: "Release" },
+        long: {
+          es: "Los lotes se liberan sin esperar papeles",
+          en: "Lots are released without waiting on paperwork",
+        },
+        finding: {
+          es: "Lotes retenidos esperando una firma.",
+          en: "Lots on hold waiting for a signature.",
+        },
+        weight: 12,
       },
     ],
-    pending: {
-      label: { es: "Simulacro de inspección", en: "Mock inspection" },
-      status: { es: "Programado", en: "Scheduled" },
-    },
   },
   cta: {
     label: {

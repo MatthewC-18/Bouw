@@ -304,8 +304,28 @@ function GpuWarmup() {
   useEffect(() => {
     let alive = true;
     const id = window.setTimeout(async () => {
+      /*
+       * `compileAsync` a mano. El de three.js pregunta en un temporizador por
+       * el programa de cada material, y si entretanto se rehízo (cambio de
+       * idioma, escena que se monta otra vez) el programa ya no existe y
+       * lanza «reading 'isReady'» fuera de cualquier `try`. Aquí un material
+       * sin programa se da por listo: lo compilará al dibujarse, como antes.
+       */
       try {
-        await gl.compileAsync(scene, camera);
+        const pending = gl.compile(scene, camera);
+        await new Promise<void>((done) => {
+          const check = () => {
+            if (!alive) return done();
+            for (const m of pending) {
+              const program = (gl.properties.get(m) as { currentProgram?: { isReady(): boolean } })
+                .currentProgram;
+              if (!program || program.isReady()) pending.delete(m);
+            }
+            if (pending.size === 0) done();
+            else window.setTimeout(check, 10);
+          };
+          check();
+        });
       } catch {
         // Un material que no compile aquí lo hará al dibujarse, como antes
       }

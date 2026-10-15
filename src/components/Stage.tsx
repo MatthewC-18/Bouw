@@ -32,6 +32,7 @@ export default function Stage({
   foot,
   action,
   actionHref,
+  onAction,
   arrow = "→",
   perchId,
   ledgeId,
@@ -59,6 +60,8 @@ export default function Stage({
    * (porque dentro hay botones), la acción es el enlace.
    */
   actionHref?: string;
+  /** O hace algo en la misma página (con el mismo aspecto). */
+  onAction?: () => void;
   arrow?: string;
   /** Percha del dragón: la esquina superior del panel que mira al texto. */
   perchId: string;
@@ -167,6 +170,17 @@ export default function Stage({
               {arrow}
             </span>
           </Link>
+        ) : onAction ? (
+          <button
+            type="button"
+            onClick={onAction}
+            className="group/act ml-auto flex shrink-0 items-center gap-2 pb-1 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-dim transition-colors duration-500 hover:text-(--p-accent)"
+          >
+            {action}
+            <span aria-hidden className="transition-transform duration-500 group-hover/act:translate-x-1">
+              {arrow}
+            </span>
+          </button>
         ) : (
           <span className="ml-auto flex shrink-0 items-center gap-2 pb-1 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-dim transition-colors duration-500 group-hover:text-(--p-accent)">
             {action}

@@ -1,15 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type CSSProperties } from "react";
+import { useRef, type CSSProperties } from "react";
 import { setBrief } from "@/lib/brief";
-import { COMPLIANCE, LEAN, PROJECTS, type Service } from "@/lib/content";
+import { COMPLIANCE, LEAN, PROJECTS, pickAsset, type Localized, type Service } from "@/lib/content";
 import { useLang } from "@/lib/i18n";
 import FlowTwin from "../linea/FlowTwin";
 import LoopVideo from "../LoopVideo";
 import Reveal from "../Reveal";
 import Stage from "../Stage";
-import AuditBoard from "./AuditBoard";
+import AuditCheck from "./AuditCheck";
 import { ICONS } from "./icons";
 import PainSwitch from "./PainSwitch";
 
@@ -23,8 +23,9 @@ import PainSwitch from "./PainSwitch";
  *
  * 1. Arriba, el panel con algo que se mueve. En Lean, la simulación de
  *    flujos de la que habla la tarjeta, funcionando: el escenario actual y
- *    el propuesto a la vez, con sus indicadores (`FlowTwin`). En cumplimiento, un tablero de auditoría de
- *    muestra que se va cerrando hasta quedar listo para inspección.
+ *    las mejoras que el visitante enciende (`FlowTwin`). En cumplimiento, un
+ *    simulacro de auditoría: marca lo que su planta cumple y ve qué vería un
+ *    inspector (`AuditCheck`).
  * 2. Al lado, el titular y lo que lo respalda: las cifras medidas en el caso
  *    (Lean) o los cuatro entregables (cumplimiento).
  * 3. La planta antes y después, en video, con lo que cambia dicho al lado.
@@ -36,10 +37,11 @@ export default function ServiceRow({ service, i }: { service: Service; i: number
   const mediaFirst = i % 2 === 1;
   const corner = mediaFirst ? "right" : "left";
   const lean = service.id === "lean";
-  const [run, setRun] = useState(0);
+  // El resultado del simulacro de auditoría, si el visitante marcó algo
+  const auditLine = useRef<Localized | null>(null);
 
   const ask = () => {
-    setBrief({ service: service.cta.brief });
+    setBrief({ service: auditLine.current ?? service.cta.brief });
     document.getElementById("contacto")?.scrollIntoView({ behavior: "smooth" });
   };
 
@@ -76,25 +78,30 @@ export default function ServiceRow({ service, i }: { service: Service; i: number
   ) : (
     <Stage
       index={service.index}
-      category={lang === "es" ? "Auditoría · BPM" : "Audit · GMP"}
-      status={lang === "es" ? "Muestra" : "Sample"}
-      chip={lang === "es" ? "estado-de-auditoria · muestra" : "audit-status · sample"}
+      category={lang === "es" ? "Autoevaluación · BPM" : "Self-check · GMP"}
+      status={lang === "es" ? "Simulacro" : "Mock audit"}
+      pulse
+      chip={lang === "es" ? "simulacro-de-auditoria · tu planta" : "mock-audit · your plant"}
       frame="4 / 3"
-      feature={{
-        value: "98 %",
-        label: lang === "es" ? "Preparación, en el tablero de muestra" : "Readiness, on the sample board",
+      foot={{
+        title: lang === "es" ? "Simulacro de auditoría" : "Mock audit",
+        body:
+          lang === "es"
+            ? "Marca lo que tu planta ya cumple y mira qué encontraría hoy un inspector. Tu resultado viaja con la solicitud de diagnóstico."
+            : "Tick what your plant already does and see what an inspector would find today. Your result travels with the diagnosis request.",
       }}
-      action={lang === "es" ? "Contarlo otra vez" : "Run it again"}
-      arrow="↻"
+      action={lang === "es" ? "Agendar diagnóstico" : "Book the diagnosis"}
+      onAction={ask}
       perchId={`proyecto-${service.slug}`}
       ledgeId={`pie-${service.slug}`}
       perchCorner={corner}
-      press={{
-        label: lang === "es" ? "Volver a contar el tablero de auditoría" : "Run the audit board again",
-        onPress: () => setRun((r) => r + 1),
-      }}
     >
-      <AuditBoard key={run} board={COMPLIANCE.board} />
+      <AuditCheck
+        audit={COMPLIANCE.audit}
+        onResult={(line) => {
+          auditLine.current = line;
+        }}
+      />
     </Stage>
   );
 
@@ -208,8 +215,8 @@ export default function ServiceRow({ service, i }: { service: Service; i: number
             data-perch-corner={mediaFirst ? "left" : "right"}
             className="relative overflow-hidden rounded-[24px] bg-[#0b1626] shadow-[0_40px_80px_-40px_var(--p-shadow)] ring-1 ring-(--p-line)">
             <LoopVideo
-              src={service.film.src}
-              poster={service.film.poster}
+              src={pickAsset(service.film.src, lang)}
+              poster={pickAsset(service.film.poster, lang)}
               label={t(service.film.label)}
               className="block aspect-video w-full rounded-[24px] object-cover"
             />

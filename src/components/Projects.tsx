@@ -420,7 +420,7 @@ export default function Projects() {
       decorativo: el velo es un `::before` posicionado y un hijo sin
       posicionar quedaría debajo de él.
     */
-    <section id="proyectos" className="veil relative py-28 lg:py-40">
+    <section id="proyectos" className="veil relative py-24 lg:py-28">
       <div className="relative mx-auto max-w-[1560px] px-6 lg:px-16">
         <Reveal>
           {/* Ancla de etapa: ver `stageAnchors` en `SceneRoot` */}
@@ -456,8 +456,13 @@ export default function Projects() {
           </div>
         </Reveal>
 
-        <div className="mt-24 space-y-32 lg:mt-32 lg:space-y-48">
-          {/* Proyectos y servicios en una sola lista, alternando el lado */}
+        {/*
+          Proyectos y servicios en una sola lista, alternando el lado. Entre
+          fila y fila, aire, pero no media pantalla vacía: cada ficha ya se
+          separa por su color (Matthew, 18 oct 2026: «compactemos la parte de
+          proyectos»).
+        */}
+        <div className="mt-16 space-y-24 lg:mt-20 lg:space-y-32">
           {SHOWCASE.map((row, i) => {
             if ("service" in row)
               return (

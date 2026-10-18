@@ -28,9 +28,9 @@ import PainSwitch from "./PainSwitch";
  *    inspector (`AuditCheck`).
  * 2. Al lado, el titular y lo que lo respalda: las cifras medidas en el caso
  *    (Lean) o los cuatro entregables (cumplimiento).
- * 3. La planta antes y después, en video, con lo que cambia dicho al lado.
- * 4. Debajo, el problema de hoy contra la solución, uno a uno.
- * 5. Y la llamada, que se lleva al formulario el servicio que se pidió.
+ * 3. Debajo, en una sola fila: la planta antes y después, en video, y al
+ *    lado el problema de hoy contra la solución, uno a uno.
+ * 4. Y la llamada, que se lleva al formulario el servicio que se pidió.
  */
 export default function ServiceRow({ service, i }: { service: Service; i: number }) {
   const { t, lang } = useLang();
@@ -201,77 +201,82 @@ export default function ServiceRow({ service, i }: { service: Service; i: number
       </div>
 
       {/*
-        La planta antes y después. Del lado contrario al panel de arriba, para
-        que la lectura zigzaguee.
+        La planta antes y después y, al lado, el problema contra la solución
+        con la llamada. Antes eran tres bandas una debajo de otra (video,
+        problemas, botón) y cada servicio ocupaba más de dos pantallas
+        (Matthew, 18 oct 2026: «compactemos la parte de proyectos»). El video
+        va del lado contrario al panel de arriba, para que la lectura
+        zigzaguee; lo que antes se contaba al lado del video (hoy y con Bouw)
+        ya lo señala el propio video, y queda como pie.
       */}
-      <div className="mt-20 grid grid-cols-[minmax(0,1fr)] items-end gap-8 lg:mt-28 lg:grid-cols-12 lg:gap-14">
+      <div className="mt-12 grid grid-cols-[minmax(0,1fr)] items-center gap-10 lg:mt-16 lg:grid-cols-12 lg:gap-14">
         <Reveal
-          className={`min-w-0 lg:col-span-8 lg:row-start-1 ${mediaFirst ? "lg:col-start-5" : "lg:col-start-1"}`}
+          className={`min-w-0 lg:col-span-7 lg:row-start-1 ${mediaFirst ? "lg:col-start-6" : "lg:col-start-1"}`}
         >
           {/* Percha: sin ella, en el tramo largo del servicio el dragón
               volaba a tu lado y parecía bajar contigo */}
           <figure
             data-perch={`video-${service.slug}`}
             data-perch-corner={mediaFirst ? "left" : "right"}
-            className="relative overflow-hidden rounded-[24px] bg-[#0b1626] shadow-[0_40px_80px_-40px_var(--p-shadow)] ring-1 ring-(--p-line)">
-            <LoopVideo
-              src={pickAsset(service.film.src, lang)}
-              poster={pickAsset(service.film.poster, lang)}
-              label={t(service.film.label)}
-              className="block aspect-video w-full rounded-[24px] object-cover"
-            />
+          >
+            <div className="relative overflow-hidden rounded-[24px] bg-[#0b1626] shadow-[0_40px_80px_-40px_var(--p-shadow)] ring-1 ring-(--p-line)">
+              <LoopVideo
+                src={pickAsset(service.film.src, lang)}
+                poster={pickAsset(service.film.poster, lang)}
+                label={t(service.film.label)}
+                className="block aspect-video w-full rounded-[24px] object-cover"
+              />
+            </div>
+            <figcaption className="mt-4 grid gap-x-8 gap-y-2 text-[14px] leading-snug sm:grid-cols-2">
+              <p className="flex gap-3">
+                <span className="mt-0.5 w-[3px] shrink-0 self-stretch rounded-full bg-orange-brand" aria-hidden />
+                <span>
+                  <span className="mr-2 font-mono text-[10px] uppercase tracking-[0.2em] text-orange-light">
+                    {lang === "es" ? "Hoy" : "Today"}
+                  </span>
+                  <span className="text-ink-soft">{t(service.film.before)}</span>
+                </span>
+              </p>
+              <p className="flex gap-3">
+                <span className="mt-0.5 w-[3px] shrink-0 self-stretch rounded-full bg-(--p-good)" aria-hidden />
+                <span>
+                  <span className="mr-2 font-mono text-[10px] uppercase tracking-[0.2em] text-(--p-good)">
+                    {lang === "es" ? "Con Bouw" : "With Bouw"}
+                  </span>
+                  <span className="text-ink">{t(service.film.after)}</span>
+                </span>
+              </p>
+            </figcaption>
           </figure>
         </Reveal>
+
         <Reveal
           delay={60}
-          className={`lg:col-span-4 lg:row-start-1 ${mediaFirst ? "lg:col-start-1" : "lg:col-start-9"}`}
+          className={`min-w-0 lg:col-span-5 lg:row-start-1 ${mediaFirst ? "lg:col-start-1" : "lg:col-start-8"}`}
         >
-          <p className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-ink-dim">
-            {lang === "es" ? "Así cambia la planta" : "How the plant changes"}
-          </p>
-          <div className="mt-6 space-y-6">
-            <div className="flex gap-4">
-              <span className="mt-1 h-[calc(100%-0.5rem)] w-[3px] shrink-0 rounded-full bg-orange-brand" aria-hidden />
-              <div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-orange-light">
-                  {lang === "es" ? "Hoy" : "Today"}
-                </p>
-                <p className="mt-1.5 text-[16px] leading-relaxed text-ink-soft">{t(service.film.before)}</p>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <span className="mt-1 h-[calc(100%-0.5rem)] w-[3px] shrink-0 rounded-full bg-(--p-good)" aria-hidden />
-              <div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-(--p-good)">
-                  {lang === "es" ? "Con Bouw" : "With Bouw"}
-                </p>
-                <p className="mt-1.5 text-[16px] leading-relaxed text-ink">{t(service.film.after)}</p>
-              </div>
-            </div>
+          {/*
+            Problema contra solución. Sin percha propia: al lado del video ya
+            hay una, y posado aquí el dragón tapaba una de las pestañas.
+          */}
+          <PainSwitch pains={service.pains} />
+
+          {/* La llamada: se lleva el servicio al formulario */}
+          <div className="mt-6 flex flex-col items-start gap-3">
+            <button
+              type="button"
+              onClick={ask}
+              className="group/cta inline-flex items-center gap-3 rounded-full text-left bg-(--p-accent) px-6 py-4 text-[15px] font-semibold text-(--p-on-accent) shadow-[0_18px_40px_-18px_var(--p-shadow)] transition-[filter,translate] duration-300 hover:-translate-y-0.5 hover:brightness-110"
+            >
+              {service.cta.icon !== "arrow" && <CtaIcon aria-hidden className="h-[18px] w-[18px]" strokeWidth={2} />}
+              {t(service.cta.label)}
+              <span aria-hidden className="transition-transform duration-500 group-hover/cta:translate-x-1">
+                →
+              </span>
+            </button>
+            <p className="text-[13px] leading-snug text-ink-dim">{t(service.cta.note)}</p>
           </div>
         </Reveal>
       </div>
-
-      {/* Problema contra solución */}
-      <Reveal className="mt-20 lg:mt-24">
-        <PainSwitch pains={service.pains} perch={`problemas-${service.slug}`} />
-      </Reveal>
-
-      {/* La llamada: se lleva el servicio al formulario */}
-      <Reveal className="mt-10 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
-        <button
-          type="button"
-          onClick={ask}
-          className="group/cta inline-flex items-center gap-3 rounded-full text-left bg-(--p-accent) px-6 py-4 text-[15px] font-semibold text-(--p-on-accent) shadow-[0_18px_40px_-18px_var(--p-shadow)] transition-[filter,translate] duration-300 hover:-translate-y-0.5 hover:brightness-110"
-        >
-          {service.cta.icon !== "arrow" && <CtaIcon aria-hidden className="h-[18px] w-[18px]" strokeWidth={2} />}
-          {t(service.cta.label)}
-          <span aria-hidden className="transition-transform duration-500 group-hover/cta:translate-x-1">
-            →
-          </span>
-        </button>
-        <p className="text-[14px] leading-snug text-ink-dim">{t(service.cta.note)}</p>
-      </Reveal>
     </article>
   );
 }

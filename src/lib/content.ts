@@ -210,22 +210,6 @@ export const BREAKS: { mark: string; title: Localized; body: Localized }[] = [
       en: "You can open two of them right now. The rest run inside our clients' operations.",
     },
   },
-  {
-    mark: "02",
-    title: { es: "Lo que sigue es una calculadora.", en: "What follows is a calculator." },
-    body: {
-      es: "Y muchas veces te dirá que no vale la pena automatizar.",
-      en: "And it will often tell you automation isn't worth it.",
-    },
-  },
-  {
-    mark: "03",
-    title: { es: "Nueve horas al día en común.", en: "Nine shared hours a day." },
-    body: {
-      es: "Quito y Monterrey comparten nueve horas de trabajo, así que siempre hay alguien para responderte.",
-      en: "Quito and Monterrey share nine working hours, so someone is always there to answer.",
-    },
-  },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -1785,6 +1769,11 @@ export const ABOUT = {
   body: {
     es: "BOUW nace de un equipo de ingeniería con más de 7 años de experiencia combinada entre Ecuador y México. Nos enfocamos en la mejora de procesos, la calidad y la consultoría técnica: ayudamos a nuestros clientes a traer sus diseños a la realidad y a ahorrar tiempo en el camino.",
     en: "BOUW comes from an engineering team with 7+ years of combined experience across Ecuador and Mexico. We focus on process improvement, quality and technical consulting: we help clients bring their designs into reality and save time getting there.",
+  } satisfies Localized,
+  /** Venía de un capítulo a pantalla completa; ahora encabeza las sedes. */
+  overlap: {
+    es: "Nueve horas al día en común: siempre hay alguien para responderte.",
+    en: "Nine shared hours a day: someone is always there to answer.",
   } satisfies Localized,
 };
 

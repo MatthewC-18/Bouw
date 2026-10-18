@@ -187,7 +187,7 @@ export default function Contact() {
         naranja y cián a plena luz. Es la sección que decide si alguien
         escribe, y era la menos legible de la página.
       */
-      className="veil relative border-t border-white/[0.06] py-28 lg:py-40"
+      className="veil relative border-t border-white/[0.06] py-20 lg:py-28"
     >
       <div className="pointer-events-none absolute left-1/2 top-0 h-px w-2/3 -translate-x-1/2 bg-gradient-to-r from-transparent via-cyan-brand/60 to-transparent" />
 
@@ -197,39 +197,19 @@ export default function Contact() {
         esto el velo se pone delante del texto en vez de detrás.
       */}
       <div className="relative mx-auto max-w-6xl px-6 lg:px-10">
-        {/* Se enciende cuando el dragón escupe fuego al final del recorrido */}
-        <FireCta />
+        {/*
+          Compacta (Matthew, 15 oct 2026: «sigue bajando mucho»): el titular
+          que enciende el dragón y los datos a la izquierda, el formulario al
+          lado. Antes iba el titular a todo el ancho y debajo otro encabezado
+          («Contacto · Cuéntanos qué quieres mejorar») que repetía lo mismo y
+          volvía a dar el correo.
+        */}
+        <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-start lg:gap-16">
+          <div>
+            {/* Se enciende cuando el dragón escupe fuego al final del recorrido */}
+            <FireCta />
 
-        <div className="grid gap-14 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
-          <Reveal>
-            <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-cyan-light">
-              {t(CONTACT.eyebrow)}
-            </p>
-            {/*
-              Titular de segundo nivel a propósito: el de la sección es
-              "Contáctanos", justo encima. Dos titulares grandes seguidos que
-              dicen casi lo mismo se leían como dos secciones pegadas.
-            */}
-            <h3 className="mt-4 font-display text-[clamp(1.4rem,2.4vw,1.9rem)] font-bold leading-[1.15] text-ink">
-              {t(CONTACT.title)}
-            </h3>
-            <p className="mt-4 max-w-md text-[17px] leading-relaxed text-ink-soft">
-              {t(CONTACT.subtitle)}
-            </p>
-
-            <dl className="mt-10 space-y-6">
-              <div>
-                <dt className={LABEL}>{lang === "es" ? "Correo" : "Email"}</dt>
-                <dd>
-                  <a
-                    href={`mailto:${COMPANY.email}`}
-                    data-cursor="link"
-                    className="text-lg text-ink transition-colors hover:text-cyan-light"
-                  >
-                    {COMPANY.email}
-                  </a>
-                </dd>
-              </div>
+            <dl className="mt-10 grid gap-6 sm:grid-cols-2">
               <div>
                 <dt className={LABEL}>
                   {lang === "es" ? "Teléfono / WhatsApp" : "Phone / WhatsApp"}
@@ -253,7 +233,10 @@ export default function Contact() {
                 </dd>
               </div>
             </dl>
-          </Reveal>
+            <p className="mt-6 max-w-md text-[15px] leading-relaxed text-ink-dim">
+              {t(CONTACT.subtitle)}
+            </p>
+          </div>
 
           <Reveal delay={120}>
             {status === "sent" ? (

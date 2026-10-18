@@ -117,6 +117,8 @@ const STAY_FROM = 0.1;
  * `LIFT_TIME`: el salto del despegue, corto, que no es un viaje.
  */
 const LIFT_PX = 60;
+/** Radio base del botón invisible que viaja encima del bicho, en px. */
+const HIT_BASE = 50;
 const SETTLE = 0.45;
 const LIFT_TIME = 0.8;
 /**
@@ -1018,14 +1020,16 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
       position: "fixed",
       left: "0",
       top: "0",
-      width: "0",
-      height: "0",
+      // Tamaño fijo: el del bicho se da con `scale` (ver más abajo)
+      width: `${HIT_BASE * 2}px`,
+      height: `${HIT_BASE * 2}px`,
       padding: "0",
       border: "0",
       borderRadius: "50%",
       background: "transparent",
       cursor: "pointer",
       zIndex: "31",
+      transformOrigin: "0 0",
       transform: "translate3d(-9999px, 0, 0)",
       // Capa propia: se mueve con el bicho en cada fotograma de scroll
       willChange: "transform",
@@ -1961,22 +1965,25 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
       }
     }
 
-    // El botón invisible sigue al bicho; solo se escribe si se ha movido
+    /*
+     * El botón invisible sigue al bicho; solo se escribe si se ha movido.
+     * Su tamaño va por `scale` y no por `width`/`height`: volando, el radio
+     * cambia con cada batida y cambiar el ancho de un elemento obliga a
+     * recalcular la página en cada fotograma. Sosteniéndose en el aire con
+     * la página bajando, la escena perdía un tercio de los fotogramas («se
+     * pone lento», Matthew, 15 oct 2026).
+     */
     const b = hit.current;
     if (b) {
       const hx = Math.round(dragonScreen.x * W);
       const hy = Math.round(dragonScreen.y * H);
-      const hr = Math.round(Math.max(dragonScreen.r * H * 0.9, 22));
+      const hr = Math.round(Math.max(dragonScreen.r * H * 0.9, 22) / 4) * 4;
       const box = hitBox.current;
-      if (hr !== box.r) {
-        box.r = hr;
-        b.style.width = `${hr * 2}px`;
-        b.style.height = `${hr * 2}px`;
-      }
-      if (hx !== box.x || hy !== box.y) {
+      if (hx !== box.x || hy !== box.y || hr !== box.r) {
         box.x = hx;
         box.y = hy;
-        b.style.transform = `translate3d(${hx - hr}px, ${hy - hr}px, 0)`;
+        box.r = hr;
+        b.style.transform = `translate3d(${hx - hr}px, ${hy - hr}px, 0) scale(${hr / HIT_BASE})`;
       }
     }
 

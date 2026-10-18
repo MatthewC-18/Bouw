@@ -99,7 +99,7 @@ export default function Diagnosis() {
   return (
     <section
       id="servicios"
-      className="veil relative border-y border-white/[0.06] py-28 lg:py-40"
+      className="veil relative border-y border-white/[0.06] py-20 lg:py-28"
     >
       <div className="relative mx-auto max-w-6xl px-6 lg:px-10">
         <Reveal className="max-w-2xl">
@@ -116,7 +116,7 @@ export default function Diagnosis() {
           </p>
         </Reveal>
 
-        <div className="mt-16 grid gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+        <div className="mt-10 grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
           {/* Los síntomas: filas con filete, no tarjetas */}
           <ul className="border-t border-white/10">
             {SYMPTOMS.map((s) => {
@@ -125,7 +125,7 @@ export default function Diagnosis() {
                 <li key={s.id} className="border-b border-white/10">
                   <label
                     data-cursor="link"
-                    className="flex cursor-pointer items-start gap-4 py-5 transition-colors duration-200 hover:bg-white/[0.02]"
+                    className="flex cursor-pointer items-start gap-4 py-3.5 transition-colors duration-200 hover:bg-white/[0.02]"
                   >
                     <input
                       type="checkbox"

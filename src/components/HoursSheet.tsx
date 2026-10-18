@@ -166,35 +166,34 @@ export default function HoursSheet() {
       <div className="sheet-rule h-px w-full" />
 
       <div className="ledger-columns relative z-10">
-        <div className="mx-auto max-w-[1560px] px-6 py-20 lg:px-16 lg:py-28">
-          <div className="grid gap-8 lg:grid-cols-12">
-            <div className="lg:col-span-2">
-              <span className="font-display text-[clamp(3rem,7vw,6rem)] font-bold leading-none text-plan-ink/14">
-                04
-              </span>
-            </div>
-
-            <div className="lg:col-span-7">
+        {/*
+          Compacta (Matthew, 15 oct 2026: «sigue bajando mucho»): la fila de
+          la hoja a la izquierda y el resultado al lado, en vez de uno debajo
+          del otro, y el número de pliego dentro del antetítulo.
+        */}
+        <div className="mx-auto max-w-[1560px] px-6 py-14 lg:px-16 lg:py-20">
+          <div className="grid gap-6 lg:grid-cols-12 lg:items-end">
+            <div className="lg:col-span-8">
               <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-plan-ink/55">
-                {t(HOURS.eyebrow)}
+                04 · {t(HOURS.eyebrow)}
               </p>
-              <h2 className="mt-5 font-display text-[clamp(2rem,5vw,4rem)] font-bold leading-[0.98]">
+              <h2 className="mt-4 font-display text-[clamp(2rem,4vw,3.25rem)] font-bold leading-[1]">
                 <span data-perch="calculadora" data-perch-corner="right">
                   {t(HOURS.title)}
                 </span>
               </h2>
             </div>
 
-            <div className="lg:col-span-3 lg:pt-2">
+            <div className="lg:col-span-4">
               <p className="sheet-dim text-sm leading-relaxed">
                 {t(HOURS.subtitle)}
               </p>
             </div>
           </div>
 
-          {/* La fila de la hoja */}
-          <div className="mt-20 grid gap-x-10 gap-y-10 lg:mt-24 lg:grid-cols-12">
-            <div className="lg:col-span-12">
+          <div className="mt-10 grid gap-12 lg:mt-12 lg:grid-cols-12 lg:gap-12">
+            {/* La fila de la hoja */}
+            <div className="lg:col-span-7">
               <label className={LABEL} htmlFor="h-task">
                 {t(HOURS.task)}
               </label>
@@ -209,88 +208,85 @@ export default function HoursSheet() {
                 placeholder={t(HOURS.taskPlaceholder)}
                 className={`${FIELD} mt-3 text-xl`}
               />
+
+              <div className="mt-8 grid grid-cols-2 gap-x-8 gap-y-8">
+                {(
+                  [
+                    ["h-week", HOURS.perWeek, perWeek, setPerWeek, "1"],
+                    ["h-min", HOURS.minutes, minutes, setMinutes, "5"],
+                    ["h-people", HOURS.people, people, setPeople, "1"],
+                    ["h-rate", HOURS.rate, rate, setRate, "0.5"],
+                  ] as const
+                ).map(([id, label, value, set, step]) => (
+                  <div key={id}>
+                    <label className={LABEL} htmlFor={id}>
+                      {t(label)}
+                    </label>
+                    <input
+                      id={id}
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      step={step}
+                      value={value}
+                      onChange={(e) => {
+                        set(e.target.value);
+                        setTaken(false);
+                        setTouched(true);
+                      }}
+                      placeholder="0"
+                      className={`${FIELD} mt-3 text-2xl`}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/*
+                La aritmética a la vista.
+
+                No es decoración: es lo que permite discutir el resultado. Un
+                número solo se acepta o se ignora; un número con su operación
+                delante se puede corregir, y corregirlo es exactamente la
+                conversación que queremos tener.
+              */}
+              <p className="mt-8 font-mono text-[13px] leading-relaxed tracking-wide text-plan-ink/70">
+                <span className="tabular-nums">{fmt.format(n.perWeek)}</span>{" "}
+                {unitWeek} ×{" "}
+                <span className="tabular-nums">{fmt.format(n.minutes)}</span> min ×{" "}
+                <span className="tabular-nums">{fmt.format(n.people)}</span>{" "}
+                {unitPeople} × {WEEKS_PER_YEAR} {unitWeeks} ={" "}
+                <span className="tabular-nums text-plan-ink">
+                  {fmt.format(hours)} h
+                </span>
+              </p>
+              <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.24em] text-plan-ink/40">
+                {t(HOURS.assumption)}
+              </p>
             </div>
 
-            {(
-              [
-                ["h-week", HOURS.perWeek, perWeek, setPerWeek, "1"],
-                ["h-min", HOURS.minutes, minutes, setMinutes, "5"],
-                ["h-people", HOURS.people, people, setPeople, "1"],
-                ["h-rate", HOURS.rate, rate, setRate, "0.5"],
-              ] as const
-            ).map(([id, label, value, set, step]) => (
-              <div key={id} className="lg:col-span-3">
-                <label className={LABEL} htmlFor={id}>
-                  {t(label)}
-                </label>
-                <input
-                  id={id}
-                  type="number"
-                  inputMode="decimal"
-                  min={0}
-                  step={step}
-                  value={value}
-                  onChange={(e) => {
-                    set(e.target.value);
-                    setTaken(false);
-                    setTouched(true);
-                  }}
-                  placeholder="0"
-                  className={`${FIELD} mt-3 text-2xl`}
-                />
-              </div>
-            ))}
-          </div>
-
-          {/*
-            La aritmética a la vista.
-
-            No es decoración: es lo que permite discutir el resultado. Un
-            número solo se acepta o se ignora; un número con su operación
-            delante se puede corregir, y corregirlo es exactamente la
-            conversación que queremos tener.
-          */}
-          <p className="mt-14 font-mono text-[13px] leading-relaxed tracking-wide text-plan-ink/70">
-            <span className="tabular-nums">{fmt.format(n.perWeek)}</span>{" "}
-            {unitWeek} ×{" "}
-            <span className="tabular-nums">{fmt.format(n.minutes)}</span> min ×{" "}
-            <span className="tabular-nums">{fmt.format(n.people)}</span>{" "}
-            {unitPeople} × {WEEKS_PER_YEAR} {unitWeeks} ={" "}
-            <span className="tabular-nums text-plan-ink">
-              {fmt.format(hours)} h
-            </span>
-          </p>
-          <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.24em] text-plan-ink/40">
-            {t(HOURS.assumption)}
-          </p>
-
-          {/* El resultado */}
-          <div className="mt-14 grid gap-12 lg:grid-cols-12 lg:gap-10">
-            <div className="lg:col-span-5">
+            {/* El resultado, al lado de la cuenta */}
+            <div className="lg:col-span-5 lg:border-l lg:border-plan-line/25 lg:pl-12">
               <p className={LABEL}>{t(HOURS.resultLabel)}</p>
               <p className="mt-3 flex items-baseline gap-3">
-                <span className="font-display text-[clamp(3rem,8vw,5.5rem)] font-bold leading-[0.85] tabular-nums text-plan-ink">
+                <span className="font-display text-[clamp(3rem,7vw,5rem)] font-bold leading-[0.85] tabular-nums text-plan-ink">
                   {fmt.format(hours)}
                 </span>
                 <span className="font-mono text-sm uppercase tracking-[0.2em] text-plan-ink/50">
                   {lang === "es" ? "horas" : "hours"}
                 </span>
+                {n.rate > 0 && (
+                  <span className="ml-auto text-right">
+                    <span className={LABEL}>{t(HOURS.costLabel)}</span>
+                    <span className="block font-display text-2xl font-bold tabular-nums text-plan-ink/80">
+                      ${fmt.format(cost)}
+                    </span>
+                  </span>
+                )}
               </p>
 
-              {n.rate > 0 && (
-                <p className="mt-8">
-                  <span className={LABEL}>{t(HOURS.costLabel)}</span>
-                  <span className="mt-2 block font-display text-3xl font-bold tabular-nums text-plan-ink/80">
-                    ${fmt.format(cost)}
-                  </span>
-                </p>
-              )}
-            </div>
-
-            <div className="lg:col-span-7">
-              <p className={LABEL}>{t(HOURS.verdictLabel)}</p>
+              <p className={`${LABEL} mt-8`}>{t(HOURS.verdictLabel)}</p>
               <h3
-                className={`mt-3 font-display text-[clamp(1.5rem,3.4vw,2.5rem)] font-bold leading-[1.05] ${tone}`}
+                className={`mt-3 font-display text-[clamp(1.5rem,2.8vw,2.2rem)] font-bold leading-[1.05] ${tone}`}
               >
                 {t(verdict.title)}
               </h3>
@@ -308,7 +304,7 @@ export default function HoursSheet() {
                   type="button"
                   onClick={carry}
                   data-cursor="link"
-                  className="mt-8 border border-plan-line/50 px-6 py-3.5 text-sm font-semibold text-plan-ink transition-colors duration-300 hover:bg-plan-line hover:text-navy-950"
+                  className="mt-7 border border-plan-line/50 px-6 py-3.5 text-sm font-semibold text-plan-ink transition-colors duration-300 hover:bg-plan-line hover:text-navy-950"
                 >
                   {taken ? t(HOURS.taken) : t(HOURS.cta)}
                 </button>

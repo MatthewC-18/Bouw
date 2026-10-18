@@ -31,11 +31,15 @@ export default function Home() {
         <Hero />
         <SceneBreak {...BREAKS[0]} />
         <Projects />
+        {/*
+          Después de Proyectos, sin capítulos a pantalla completa: eran dos
+          pantallas con una frase cada una y la página seguía y seguía
+          («siento que sigue bajando mucho y el usuario se va a cansar»,
+          Matthew, 15 oct 2026). La frase de las sedes vive ahora en Nosotros.
+        */}
         <Diagnosis />
-        <SceneBreak {...BREAKS[1]} align="right" />
         <HoursSheet />
         <About />
-        <SceneBreak {...BREAKS[2]} />
         <Contact />
       </main>
       <Footer />

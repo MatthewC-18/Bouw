@@ -59,7 +59,7 @@ export default function FireCta() {
   const heading = lang === "es" ? "Contáctanos" : "Get in touch";
 
   return (
-    <div ref={root} className="relative mb-16 lg:mb-24">
+    <div ref={root} className="relative">
       {/* Brasa detrás del titular: crece cuando prende */}
       <div
         aria-hidden
@@ -83,7 +83,7 @@ export default function FireCta() {
           {lang === "es" ? "Último paso" : "Last step"}
         </span>
 
-        <h2 className="mt-5 font-display text-[clamp(2.8rem,9vw,7rem)] font-bold leading-[0.9]">
+        <h2 className="mt-5 font-display text-[clamp(2.6rem,5.6vw,4.75rem)] font-bold leading-[0.9]">
           {/*
             Percha de contacto: el dragón se posa al principio de la palabra,
             la recorre andando y al final escupe fuego sobre ella. Tocar la

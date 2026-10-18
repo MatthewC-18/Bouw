@@ -26,26 +26,56 @@ export default function About() {
       <div className="sheet-rule h-px w-full" />
 
       <div className="ledger-columns relative z-10">
-        <div className="relative mx-auto max-w-[1560px] px-6 py-20 lg:px-16 lg:py-28">
-          <div className="relative grid gap-8 lg:grid-cols-12">
-            <div className="lg:col-span-2">
-              <span className="font-display text-[clamp(3rem,7vw,6rem)] font-bold leading-none text-plan-ink/14">
-                05
-              </span>
-            </div>
-
+        {/*
+          Compacta (Matthew, 15 oct 2026: «sigue bajando mucho»): texto y
+          sedes a la izquierda, condiciones a la derecha. Antes las sedes iban
+          debajo de todo, con un número enorme, y la sección ocupaba pantalla
+          y media.
+        */}
+        <div className="relative mx-auto max-w-[1560px] px-6 py-14 lg:px-16 lg:py-20">
+          <div className="relative grid gap-12 lg:grid-cols-12 lg:gap-12">
             <div className="lg:col-span-7">
               <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-plan-ink/55">
-                {t(ABOUT.eyebrow)}
+                05 · {t(ABOUT.eyebrow)}
               </p>
-              <h2 className="mt-5 font-display text-[clamp(2rem,5vw,4rem)] font-bold leading-[0.98]">
+              <h2 className="mt-4 font-display text-[clamp(2rem,4vw,3.25rem)] font-bold leading-[1]">
                 <span data-perch="nosotros" data-perch-corner="right">
                   {t(ABOUT.title)}
                 </span>
               </h2>
-              <p className="sheet-dim mt-8 max-w-xl text-lg leading-relaxed">
+              <p className="sheet-dim mt-6 max-w-xl text-lg leading-relaxed">
                 {t(ABOUT.body)}
               </p>
+
+              {/* Sedes: aire y tamaño, sin filetes por fila */}
+              <p className="mt-10 font-mono text-[10px] uppercase tracking-[0.3em] text-plan-ink/45">
+                {lang === "es" ? "Sedes" : "Offices"}
+              </p>
+              <p className="sheet-dim mt-2 text-sm leading-relaxed">{t(ABOUT.overlap)}</p>
+
+              <div className="mt-6 grid grid-cols-2 gap-8 sm:grid-cols-3">
+                {OFFICES.map((o) => (
+                  <div key={o.city}>
+                    <h3 className="font-display text-[clamp(1.75rem,3vw,2.5rem)] font-bold leading-[0.95]">
+                      {o.city}
+                    </h3>
+                    <p className="sheet-dim mt-2 text-base">{t(o.country)}</p>
+                    <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.2em] text-plan-ink/50">
+                      {o.tz} · {lang === "es" ? "desde" : "since"} {o.since}
+                    </p>
+                  </div>
+                ))}
+                <div className="col-span-2 sm:col-span-1">
+                  <span className="font-display text-[clamp(1.75rem,3vw,2.5rem)] font-bold leading-[0.95] text-plan-ink">
+                    {COMPANY.yearsExperience}+
+                  </span>
+                  <p className="sheet-dim mt-2 text-sm leading-snug">
+                    {lang === "es"
+                      ? "años de experiencia combinada del equipo entre Ecuador y México."
+                      : "years of combined team experience across Ecuador and Mexico."}
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/*
@@ -58,16 +88,16 @@ export default function About() {
               pasos que ocupaban el pliego anterior: la información se queda,
               el recorrido ilustrado se va.
             */}
-            <div className="lg:col-span-3 lg:pt-2">
+            <div className="lg:col-span-5 lg:border-l lg:border-plan-line/25 lg:pl-12">
               <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-plan-ink/45">
                 {t(COMMITMENTS.title)}
               </p>
-              <dl className="mt-7 space-y-7">
+              <dl className="mt-6 grid gap-x-8 gap-y-6 sm:grid-cols-2">
                 {COMMITMENTS.items.map((c) => (
                   <div key={c.term.es}>
-                    <dt className="flex items-baseline justify-between gap-3 font-display text-base font-bold">
+                    <dt className="font-display text-base font-bold">
                       {t(c.term)}
-                      <span className="shrink-0 font-mono text-[11px] font-normal tracking-wider text-plan-line/80">
+                      <span className="mt-0.5 block font-mono text-[11px] font-normal tracking-wider text-plan-line/80">
                         {t(c.spec)}
                       </span>
                     </dt>
@@ -77,41 +107,6 @@ export default function About() {
                   </div>
                 ))}
               </dl>
-            </div>
-          </div>
-
-          {/* Sedes: aire y tamaño, sin filetes por fila */}
-          <div className="mt-24 lg:mt-32">
-            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-plan-ink/45">
-              {lang === "es" ? "Sedes" : "Offices"}
-            </p>
-
-            <div className="mt-8 grid gap-14 sm:grid-cols-2">
-              {OFFICES.map((o) => (
-                <div key={o.city}>
-                  <h3 className="font-display text-[clamp(2.25rem,5vw,3.75rem)] font-bold leading-[0.9]">
-                    {o.city}
-                  </h3>
-                  <p className="sheet-dim mt-3 text-base">{t(o.country)}</p>
-                  <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.2em] text-plan-ink/50">
-                    {o.tz} · {lang === "es" ? "desde" : "since"} {o.since}
-                  </p>
-                  <p className="mt-1.5 font-mono text-[11px] tracking-wider text-plan-ink/50">
-                    {o.coords}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-20 flex items-baseline gap-5">
-              <span className="font-display text-[clamp(3.5rem,9vw,7rem)] font-bold leading-[0.8] text-plan-ink">
-                {COMPANY.yearsExperience}+
-              </span>
-              <span className="sheet-dim max-w-xs text-sm leading-relaxed">
-                {lang === "es"
-                  ? "años de experiencia combinada del equipo entre Ecuador y México."
-                  : "years of combined team experience across Ecuador and Mexico."}
-              </span>
             </div>
           </div>
         </div>

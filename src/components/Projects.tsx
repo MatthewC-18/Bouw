@@ -302,7 +302,7 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
             )}
           </div>
 
-          <h3 className="mt-5 font-display text-[clamp(2rem,4.5vw,3.4rem)] font-bold leading-[0.98] text-ink">
+          <h3 className="mt-4 font-display text-[clamp(2rem,3.8vw,3rem)] font-bold leading-[0.98] text-ink">
             {/*
               Segunda percha del proyecto: cuando el borde del panel ya se fue
               por arriba, el dragón salta al nombre y sigue acompañando.
@@ -321,15 +321,15 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
             {t(project.client)}
           </p>
 
-          <p className="mt-6 text-lg leading-snug text-ink">
+          <p className="mt-5 text-lg leading-snug text-ink">
             {t(project.summary)}
           </p>
 
-          <p className="mt-4 text-[17px] leading-relaxed text-ink-soft">
+          <p className="mt-3 text-[16px] leading-relaxed text-ink-soft">
             {t(project.description)}
           </p>
 
-          <div className="mt-6 flex gap-3 border-l-2 border-(--p-accent) pl-4">
+          <div className="mt-5 flex gap-3 border-l-2 border-(--p-accent) pl-4">
             <span className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-(--p-accent)">
               {lang === "es" ? "Resultado" : "Outcome"}
             </span>
@@ -338,7 +338,7 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
             </p>
           </div>
 
-          <dl className="mt-8 grid grid-cols-3 gap-4 border-t border-white/[0.08] pt-6">
+          <dl className="mt-6 grid grid-cols-3 gap-4 border-t border-white/[0.08] pt-5">
             {project.metrics.map((m) => (
               <div key={m.value + t(m.label)}>
                 <dt className="font-display text-[1.75rem] font-bold leading-none text-ink transition-colors duration-500 group-hover:text-(--p-accent)">
@@ -351,7 +351,7 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
             ))}
           </dl>
 
-          <ul className="mt-6 flex flex-wrap gap-2">
+          <ul className="mt-5 flex flex-wrap gap-2">
             {project.tags.map((tag) => (
               <li
                 key={tag}
@@ -365,7 +365,7 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
           {project.caseHref && (
             <Link
               href={project.caseHref}
-              className="group/case mt-8 mr-6 inline-flex items-center gap-4 rounded-full border border-(--p-accent) bg-(--p-accent-soft) px-5 py-3 text-sm font-semibold text-ink transition-colors duration-300 hover:bg-(--p-accent) hover:text-(--p-on-accent)"
+              className="group/case mt-6 mr-6 inline-flex items-center gap-4 rounded-full border border-(--p-accent) bg-(--p-accent-soft) px-5 py-3 text-sm font-semibold text-ink transition-colors duration-300 hover:bg-(--p-accent) hover:text-(--p-on-accent)"
             >
               {project.caseLabel
                 ? t(project.caseLabel)
@@ -387,7 +387,7 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
               target="_blank"
               rel="noreferrer noopener"
               data-cursor="link"
-              className="group/link mt-8 inline-flex items-center gap-3 text-sm font-semibold text-(--p-accent)"
+              className="group/link mt-6 inline-flex items-center gap-3 text-sm font-semibold text-(--p-accent)"
             >
               <span className="relative">
                 {project.href.replace("https://", "")}

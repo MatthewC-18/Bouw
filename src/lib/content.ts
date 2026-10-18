@@ -319,15 +319,20 @@ export const PROJECTS: Project[] = [
       { value: "79", label: { es: "Tests con sens/spec", en: "Tests with sens/spec" } },
     ],
     hue: 225,
-    frame: "1200 / 630",
+    frame: "9 / 5",
     feature: 1,
     has3D: true,
     mediaKind: "screen",
     mediaChip: "anatris.vercel.app",
-    image: "/proyectos/anatris.png",
+    /*
+     * El modelo 3D con el deltoides elegido y su ficha clínica al lado, en
+     * vez de la portada: «quiero que ya se vea el cuerpo, así llama más la
+     * atención» (Matthew, 18 oct 2026). Capturado de la app en producción.
+     */
+    image: "/proyectos/anatris-cuerpo.webp",
     imageAlt: {
-      es: "Pantalla de Anatris mostrando un rango de movimiento de 116 grados",
-      en: "Anatris screen showing a 116-degree range of motion",
+      es: "Anatris: el hombro en 3D con el deltoides marcado y su origen e inserción en la ficha clínica",
+      en: "Anatris: the shoulder in 3D with the deltoid highlighted and its origin and insertion in the clinical panel",
     },
     /*
      * `anatris.app` no resuelve en DNS (comprobado el 3 oct 2026 con 8.8.8.8):
@@ -604,6 +609,14 @@ export type Service = {
   subtitle: Localized;
   pains: Pain[];
   /**
+   * Las palabras con que el cliente busca el servicio, en grande junto al
+   * titular (Matthew, 18 oct 2026: «el chiste es vender directo con las
+   * palabras que ellos busquen, porque no van a leer todo»). Solo términos
+   * que ya nombra la ficha: nada que el servicio no haga. Las tres primeras
+   * van más grandes.
+   */
+  keywords: { es: string[]; en: string[] };
+  /**
    * La planta antes y después, en video: una ilustración isométrica que un
    * barrido verde pasa del estado de hoy al ordenado (Matthew, 13 oct 2026:
    * «algo así, que se vea pro, que ya hemos trabajado con empresas»).
@@ -647,6 +660,10 @@ export const LEAN: Service & {
   subtitle: {
     es: "Convertimos operaciones lentas y congestionadas en flujos de producción esbeltos, ágiles y altamente rentables.",
     en: "We turn slow, congested operations into lean, agile and highly profitable production flows.",
+  },
+  keywords: {
+    es: ["Lean", "SMED", "VSM", "5S", "Layout de planta", "Cuellos de botella", "WIP", "Trabajo estándar", "Nivelación de flujo"],
+    en: ["Lean", "SMED", "VSM", "5S", "Plant layout", "Bottlenecks", "WIP", "Standard work", "Flow leveling"],
   },
   pains: [
     {
@@ -780,6 +797,12 @@ export const COMPLIANCE: Service & {
       /** Lo que encontraría un inspector si falta. */
       finding: Localized;
       weight: number;
+      /**
+       * Cómo lo clasificaría un inspector si falta: crítico, mayor o menor,
+       * como se clasifican los hallazgos de una inspección de BPM. La
+       * clasificación de cada punto es nuestra, igual que los pesos.
+       */
+      severity: "critical" | "major" | "minor";
     }[];
   };
 } = {
@@ -795,6 +818,10 @@ export const COMPLIANCE: Service & {
   subtitle: {
     es: "Transformamos la documentación dispersa en un sistema de calidad sólido, trazable y 100 % preparado para inspecciones de autoridades o clientes.",
     en: "We turn scattered paperwork into a solid, traceable quality system, 100% ready for inspections by authorities or customers.",
+  },
+  keywords: {
+    es: ["BPM", "ISO", "CAPA", "Trazabilidad", "Batch records", "8D", "Causa raíz", "Auditorías internas", "Gap analysis", "Integridad de datos", "Liberación de lotes"],
+    en: ["GMP", "ISO", "CAPA", "Traceability", "Batch records", "8D", "Root cause", "Internal audits", "Gap analysis", "Data integrity", "Lot release"],
   },
   pains: [
     {
@@ -934,6 +961,7 @@ export const COMPLIANCE: Service & {
           en: "A lot that can't be traced back to its raw materials.",
         },
         weight: 22,
+        severity: "critical",
       },
       {
         id: "capa",
@@ -947,6 +975,7 @@ export const COMPLIANCE: Service & {
           en: "The same deviation open again, with no root cause.",
         },
         weight: 20,
+        severity: "major",
       },
       {
         id: "registros",
@@ -960,6 +989,7 @@ export const COMPLIANCE: Service & {
           en: "Batch records that are incomplete or unsigned.",
         },
         weight: 20,
+        severity: "major",
       },
       {
         id: "digital",
@@ -973,6 +1003,7 @@ export const COMPLIANCE: Service & {
           en: "Paper records nobody can find in time.",
         },
         weight: 13,
+        severity: "minor",
       },
       {
         id: "personal",
@@ -986,6 +1017,7 @@ export const COMPLIANCE: Service & {
           en: "Data corrected by hand, with no who or when.",
         },
         weight: 13,
+        severity: "major",
       },
       {
         id: "liberacion",
@@ -999,6 +1031,7 @@ export const COMPLIANCE: Service & {
           en: "Lots on hold waiting for a signature.",
         },
         weight: 12,
+        severity: "minor",
       },
     ],
   },

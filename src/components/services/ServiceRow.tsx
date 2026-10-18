@@ -11,6 +11,7 @@ import Reveal from "../Reveal";
 import Stage from "../Stage";
 import AuditCheck from "./AuditCheck";
 import { ICONS } from "./icons";
+import KeywordSearch from "./KeywordSearch";
 import PainSwitch from "./PainSwitch";
 
 /**
@@ -66,6 +67,8 @@ export default function ServiceRow({ service, i }: { service: Service; i: number
       pulse
       chip={lang === "es" ? "modelo de la línea · 4 estaciones" : "line model · 4 stations"}
       frame="16 / 11"
+      frameLg="16 / 9"
+      tall
       foot={{ title: t(LEAN.highlight.title), body: t(LEAN.highlight.body) }}
       action={t(LEAN.highlight.action)}
       actionHref={`${caseHref}#linea`}
@@ -83,6 +86,8 @@ export default function ServiceRow({ service, i }: { service: Service; i: number
       pulse
       chip={lang === "es" ? "simulacro-de-auditoria · tu planta" : "mock-audit · your plant"}
       frame="4 / 3"
+      frameLg="16 / 9"
+      tall
       foot={{
         title: lang === "es" ? "Simulacro de auditoría" : "Mock audit",
         body:
@@ -137,7 +142,7 @@ export default function ServiceRow({ service, i }: { service: Service; i: number
             {t(service.badge)}
           </span>
 
-          <h3 className="mt-6 font-display text-[clamp(1.85rem,3.3vw,2.75rem)] font-bold leading-[1.04] text-ink">
+          <h3 className="mt-5 font-display text-[clamp(1.7rem,2.7vw,2.3rem)] font-bold leading-[1.06] text-ink">
             {/* Segunda percha: el dragón salta al titular cuando el panel se va */}
             <span
               className="relative inline-block"
@@ -148,11 +153,16 @@ export default function ServiceRow({ service, i }: { service: Service; i: number
             </span>
           </h3>
 
-          <p className="mt-5 text-lg leading-snug text-ink-soft">{t(service.subtitle)}</p>
+          <p className="mt-4 text-[16px] leading-snug text-ink-soft">{t(service.subtitle)}</p>
 
-          {lean ? (
+          {/* Lo que el cliente busca, en grande: se vende antes de leer */}
+          <div className="mt-6">
+            <KeywordSearch words={service.keywords[lang]} />
+          </div>
+
+          {lean && (
             <>
-              <dl className="mt-8 grid grid-cols-3 gap-4 border-t border-(--p-line) pt-6">
+              <dl className="mt-6 grid grid-cols-3 gap-4 border-t border-(--p-line) pt-5">
                 {LEAN.stats.map((s) => (
                   <div key={s.value}>
                     <dt className="font-display text-[1.75rem] font-bold leading-none text-(--p-accent) sm:text-[2.1rem]">
@@ -174,29 +184,13 @@ export default function ServiceRow({ service, i }: { service: Service; i: number
                 </span>
               </Link>
             </>
-          ) : (
-            <div className="mt-8 border-t border-(--p-line) pt-6">
-              <p className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-ink-dim">
-                {lang === "es" ? "Método Bouw · entregables clave" : "The Bouw method · key deliverables"}
-              </p>
-              <ul className="mt-5 grid gap-x-6 gap-y-5 sm:grid-cols-2">
-                {COMPLIANCE.deliverables.map((d) => {
-                  const Glyph = ICONS[d.icon];
-                  return (
-                    <li key={t(d.title)} className="flex gap-3">
-                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-(--p-accent-soft) text-(--p-accent) ring-1 ring-(--p-line)">
-                        <Glyph aria-hidden className="h-[18px] w-[18px]" strokeWidth={1.8} />
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-[14.5px] font-bold leading-snug text-ink">{t(d.title)}</p>
-                        <p className="mt-1 text-[13px] leading-snug text-ink-dim">{t(d.body)}</p>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
           )}
+          {/*
+            Los cuatro entregables de cumplimiento ya no van aquí con su
+            párrafo: sus nombres están entre las palabras clave, en grande
+            (auditorías internas, gap analysis, batch records, CAPA,
+            integridad de datos).
+          */}
         </Reveal>
       </div>
 

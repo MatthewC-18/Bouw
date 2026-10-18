@@ -27,6 +27,8 @@ export default function Stage({
   pulse = false,
   chip,
   frame,
+  frameLg,
+  tall = false,
   windowRef,
   feature,
   foot,
@@ -49,6 +51,14 @@ export default function Stage({
   chip: string;
   /** Proporción de lo que va dentro, como `aspect-ratio`. */
   frame: string;
+  /** La proporción en escritorio, si cambia. */
+  frameLg?: string;
+  /**
+   * Escenario más alto en escritorio (4/3 en vez de 3/2): para los tableros
+   * de los servicios, que necesitan sitio para leerse. Su fila no crece por
+   * ello: ahí manda el alto del texto de al lado.
+   */
+  tall?: boolean;
   windowRef?: Ref<HTMLDivElement>;
   /** La cifra del pie. */
   feature?: { value: string; label: string };
@@ -74,7 +84,9 @@ export default function Stage({
 }) {
   return (
     <div
-      className={`p-stage aspect-[10/11] sm:aspect-[6/5] lg:aspect-[5/4] ${press ? "cursor-pointer" : ""}`}
+      // Más apaisado que antes (5/4): «achica el panel de cada proyecto»
+      // (Matthew, 18 oct 2026). La ventana gana ancho y la ficha pierde alto
+      className={`p-stage aspect-[10/11] sm:aspect-[6/5] ${tall ? "lg:aspect-[4/3]" : "lg:aspect-[3/2]"} ${press ? "cursor-pointer" : ""}`}
       data-perch={perchId}
       data-perch-corner={perchCorner}
       {...(press
@@ -94,7 +106,7 @@ export default function Stage({
         : {})}
     >
       {/* Cabecera */}
-      <div className="relative flex items-center gap-3 px-5 pb-3 pt-4 font-mono text-[10px] uppercase tracking-[0.24em] sm:px-7 sm:pt-6">
+      <div className="relative flex items-center gap-3 px-5 pb-3 pt-4 font-mono text-[10px] uppercase tracking-[0.24em] sm:px-7 sm:pt-5">
         <span className="font-semibold text-(--p-accent)">{index}</span>
         <span className="h-px w-6 bg-(--p-line)" aria-hidden />
         {/* `min-w-0` o el rótulo no se corta: ensancha el panel y la fila
@@ -114,7 +126,7 @@ export default function Stage({
         <div
           ref={windowRef}
           className="p-window"
-          style={{ "--p-frame": frame } as CSSProperties}
+          style={{ "--p-frame-sm": frame, "--p-frame-lg": frameLg ?? frame } as CSSProperties}
         >
           <div className="p-window-bar flex items-center gap-3 px-3.5">
             <span className="flex gap-1.5" aria-hidden>
@@ -138,7 +150,7 @@ export default function Stage({
         escenario queda pegado a la barra y el bicho no cabe encima; aquí
         abajo sí (ver la repisa al final).
       */}
-      <div className="relative flex min-h-[4.5rem] items-end gap-4 px-5 pb-4 pt-3 sm:min-h-[5.5rem] sm:px-7 sm:pb-6 lg:min-h-[8.75rem]">
+      <div className="relative flex min-h-[4.5rem] items-end gap-4 px-5 pb-4 pt-3 sm:min-h-[5.5rem] sm:px-7 sm:pb-5 lg:min-h-[6.25rem]">
         {feature && (
           <div className="flex items-baseline gap-3">
             <span className="whitespace-nowrap font-display text-[1.6rem] font-bold leading-none text-(--p-accent) sm:text-[2rem] lg:text-[2.5rem]">

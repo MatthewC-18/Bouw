@@ -562,6 +562,8 @@ body {
   /* La ventana también toma el tono, muy apagado: así la barra no parece
      de otro programa sobre cada escenario */
   --p-good: #3ecf8e;
+  /* Lo que está mal (un hallazgo crítico del simulacro de auditoría) */
+  --p-bad: #ff7a6e;
   --p-window: oklch(0.17 0.025 var(--p-h));
   --p-bar: oklch(0.235 0.032 var(--p-h));
   --p-on-accent: #04101f;
@@ -576,6 +578,7 @@ body {
   --p-shadow: oklch(0.32 0.07 var(--p-h) / 0.38);
   --p-glow: oklch(0.86 0.07 var(--p-h) / 0.45);
   --p-good: #17784f;
+  --p-bad: #c2362b;
   --p-window: oklch(0.993 0.004 var(--p-h));
   --p-bar: oklch(0.968 0.014 var(--p-h));
   --p-on-accent: #fbfaf7;
@@ -636,7 +639,12 @@ body {
   min-height: 0;
 }
 
+/*
+ * La proporción puede cambiar en escritorio (`--p-frame-lg`): un tablero que
+ * en el teléfono va casi cuadrado para que quepa, en escritorio se abre.
+ */
 .p-window {
+  --p-frame: var(--p-frame-sm);
   position: relative;
   width: min(100cqw, calc((100cqh - 34px) * (var(--p-frame))));
   overflow: hidden;
@@ -651,6 +659,12 @@ body {
 
 .group:hover .p-window {
   transform: translateY(-6px);
+}
+
+@media (min-width: 1024px) {
+  .p-window {
+    --p-frame: var(--p-frame-lg, var(--p-frame-sm));
+  }
 }
 
 .p-window-bar {
@@ -1217,6 +1231,49 @@ html[data-scrolling] body {
   .pain-in,
   .pain-strike {
     animation: none;
+  }
+}
+
+/*
+ * Las palabras clave de cada servicio (`KeywordSearch`): el cursor del
+ * buscador parpadea y la palabra que se busca se subraya a rotulador, una
+ * franja del color de la ficha que crece de izquierda a derecha por detrás
+ * de la mitad baja de las letras.
+ */
+.kw-caret {
+  animation: kw-caret 1s steps(1) infinite;
+}
+@keyframes kw-caret {
+  50% {
+    opacity: 0;
+  }
+}
+.kw-word {
+  background-image: linear-gradient(var(--p-accent-soft), var(--p-accent-soft));
+  background-repeat: no-repeat;
+  background-position: 0 88%;
+  background-size: 0% 42%;
+  transition:
+    color 300ms,
+    background-size 520ms var(--ease-out-expo);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.kw-on {
+  background-size: 100% 42%;
+}
+:root:not([data-theme="light"]) .kw-word {
+  background-image: linear-gradient(
+    oklch(0.8 0.115 var(--p-h) / 0.24),
+    oklch(0.8 0.115 var(--p-h) / 0.24)
+  );
+}
+@media (prefers-reduced-motion: reduce) {
+  .kw-caret {
+    animation: none;
+  }
+  .kw-word {
+    transition: none;
   }
 }
 

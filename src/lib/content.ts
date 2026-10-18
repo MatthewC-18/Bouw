@@ -846,12 +846,17 @@ export const COMPLIANCE: Service & {
       },
     },
   ],
+  /*
+   * Hecho con Remotion como el de Lean (18 oct 2026): las dos ilustraciones
+   * animadas por Veo, lo que frena señalado, el barrido y lo que cambia.
+   * Rótulos en cada idioma.
+   */
   film: {
-    src: "/servicios/cumplimiento.mp4",
-    poster: "/servicios/cumplimiento-poster.webp",
+    src: { es: "/servicios/cumplimiento-es.mp4", en: "/servicios/cumplimiento-en.mp4" },
+    poster: { es: "/servicios/cumplimiento-es-poster.webp", en: "/servicios/cumplimiento-en-poster.webp" },
     label: {
-      es: "Área de calidad en corte isométrico: de papeles sueltos y un lote retenido a un sistema ordenado",
-      en: "Isometric quality area cutaway: from loose paperwork and a held lot to an organized system",
+      es: "Área de calidad en corte isométrico: de papeles sueltos y un lote retenido a un sistema ordenado, con lo que frena y lo que cambia señalado",
+      en: "Isometric quality area cutaway: from loose paperwork and a held lot to an organized system, with the bottlenecks and the changes pointed out",
     },
     before: {
       es: "Papeles sueltos, archivadores desbordados, la alarma encendida y un lote retenido.",

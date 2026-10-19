@@ -279,6 +279,23 @@ export type Project = {
   video?: { src: Asset; poster: Asset };
   /** Las fotos que acompañan al video en el panel `floor`. */
   tiles?: { src: string; alt: Localized; label: Localized }[];
+  /**
+   * Se presenta dentro de un aparato dibujado (`Devices`) en vez de la
+   * ventana: en el portátil, pantallas en bucle o el video con el rótulo de
+   * cada paso; al lado, si hay, el teléfono con las suyas.
+   */
+  device?: {
+    /** Proporción de la pantalla del portátil (ancho / alto). */
+    ratio: number;
+    slides?: { src: string; alt: Localized; label?: Localized }[];
+    video?: {
+      src: string;
+      poster: string;
+      /** Segundo en que entra cada paso del recorrido, su nombre y la frase. */
+      cues: { at: number; step: Localized; text: Localized }[];
+    };
+    phone?: { src: string; alt: Localized }[];
+  };
   /** Si el proyecto tiene caso completo, la ruta (y el ancla) donde vive. */
   caseHref?: string;
   /** Rótulo del botón cuando el caso no es suyo sino uno que lo contiene. */
@@ -333,6 +350,48 @@ export const PROJECTS: Project[] = [
     imageAlt: {
       es: "Anatris: el hombro en 3D con el deltoides marcado y su origen e inserción en la ficha clínica",
       en: "Anatris: the shoulder in 3D with the deltoid highlighted and its origin and insertion in the clinical panel",
+    },
+    /*
+     * Cuatro pantallas de la app en bucle, en el portátil: «mejora lo de
+     * Anatris, que vayan algunas imágenes en bucle» (Matthew, 18 oct 2026).
+     * Capturadas de la app en producción.
+     */
+    device: {
+      ratio: 16 / 9,
+      slides: [
+        {
+          src: "/proyectos/anatris-movimiento.webp",
+          alt: {
+            es: "Anatris en modo Movimiento: el cuerpo entero en 3D y el análisis de la abducción del hombro con el pectoral mayor como músculo protagonista",
+            en: "Anatris in Movement mode: the full 3D body and the shoulder abduction analysis with the pectoralis major as the main muscle",
+          },
+          label: { es: "Movimiento · abducción", en: "Movement · abduction" },
+        },
+        {
+          src: "/proyectos/anatris-deltoides.webp",
+          alt: {
+            es: "Anatris: el hombro en 3D con el deltoides marcado y su ficha clínica",
+            en: "Anatris: the shoulder in 3D with the deltoid highlighted and its clinical panel",
+          },
+          label: { es: "Explorar · deltoides", en: "Explore · deltoid" },
+        },
+        {
+          src: "/proyectos/anatris-pectoral.webp",
+          alt: {
+            es: "Anatris: el pectoral mayor marcado en el modelo, con su origen e inserción",
+            en: "Anatris: the pectoralis major highlighted on the model, with its origin and insertion",
+          },
+          label: { es: "Explorar · pectoral mayor", en: "Explore · pectoralis major" },
+        },
+        {
+          src: "/proyectos/anatris-aprender.webp",
+          alt: {
+            es: "Anatris en modo Aprender: origen, inserción e inervación de cada músculo del hombro, con sus fuentes",
+            en: "Anatris in Learn mode: origin, insertion and innervation of each shoulder muscle, with sources",
+          },
+          label: { es: "Aprender · anatomía", en: "Learn · anatomy" },
+        },
+      ],
     },
     /*
      * `anatris.app` no resuelve en DNS (comprobado el 3 oct 2026 con 8.8.8.8):
@@ -498,6 +557,58 @@ export const PROJECTS: Project[] = [
         en: "A replica of the file with demo data: record a sale and watch the inventory and the dashboard move.",
       },
     },
+    /*
+     * En la ficha, el mismo recorrido recortado a la hoja de Excel, en el
+     * portátil, con el rótulo de cada paso encima (los mismos del video
+     * entero, que sigue en el caso): «con el fondo verde el contraste está
+     * feo» (Matthew, 18 oct 2026).
+     */
+    device: {
+      ratio: 1200 / 780,
+      video: {
+        src: "/proyectos/contable/excel-pantalla.mp4",
+        poster: "/proyectos/contable/excel-pantalla-poster.webp",
+        cues: [
+          {
+            at: 0,
+            step: { es: "Menú", en: "Menu" },
+            text: { es: "Un solo archivo de Excel: once hojas conectadas por macros.", en: "One Excel file: eleven sheets wired together with macros." },
+          },
+          {
+            at: 3.2,
+            step: { es: "Ventas · XML SRI", en: "Sales · SRI XML" },
+            text: {
+              es: "Las facturas electrónicas del SRI entran solas: cliente, unidad de negocio y totales, sin volver a teclear.",
+              en: "SRI e-invoices come in on their own: customer, business unit and totals, nothing retyped.",
+            },
+          },
+          {
+            at: 11.2,
+            step: { es: "Kits y stock", en: "Kits & stock" },
+            text: {
+              es: "Cada kit se costea desde su despiece. Al venderlo, el stock de cada pieza baja solo y avisa antes de quedarse corto.",
+              en: "Each kit is costed from its bill of materials. When it sells, every component's stock drops and warns before running short.",
+            },
+          },
+          {
+            at: 19.2,
+            step: { es: "Dashboard", en: "Dashboard" },
+            text: {
+              es: "El tablero se recalcula con cada movimiento: ingresos, gastos, cartera y margen por unidad de negocio.",
+              en: "The dashboard recalculates with every entry: income, expenses, receivables and margin by business unit.",
+            },
+          },
+          {
+            at: 28.2,
+            step: { es: "Cierre de mes", en: "Month-end close" },
+            text: {
+              es: "El cierre ya no se arma a mano: sale de lo que ya está capturado.",
+              en: "Month-end close is no longer assembled by hand: it comes out of what's already captured.",
+            },
+          },
+        ],
+      },
+    },
     caseHref: "/proyectos/mejora-continua#oficina",
     caseLabel: {
       es: "Verlo dentro del caso de mejora continua",
@@ -547,6 +658,30 @@ export const PROJECTS: Project[] = [
       en: "Charms Ecuador home page showing a cold porcelain frame",
     },
     href: "https://charms-ecuador.vercel.app",
+    /*
+     * La web en el portátil y, al lado, el teléfono pasando por el inicio,
+     * el catálogo, una pieza y el cotizador: casi todos los pedidos llegan
+     * desde el teléfono. «Igual Charms» (Matthew, 18 oct 2026). Capturado
+     * de la web en producción.
+     */
+    device: {
+      ratio: 1200 / 750,
+      slides: [
+        {
+          src: "/proyectos/charms.webp",
+          alt: {
+            es: "Inicio de Charms Ecuador en el escritorio, con un cuadro en porcelana fría",
+            en: "Charms Ecuador home page on desktop, showing a cold porcelain frame",
+          },
+        },
+      ],
+      phone: [
+        { src: "/proyectos/charms-movil-inicio.webp", alt: { es: "Charms en el teléfono: inicio", en: "Charms on a phone: home" } },
+        { src: "/proyectos/charms-movil-catalogo.webp", alt: { es: "Charms en el teléfono: catálogo con precio desde", en: "Charms on a phone: catalog with starting prices" } },
+        { src: "/proyectos/charms-movil-producto.webp", alt: { es: "Charms en el teléfono: ficha del cuadro columpio", en: "Charms on a phone: swing frame product page" } },
+        { src: "/proyectos/charms-movil-cotizar.webp", alt: { es: "Charms en el teléfono: el cotizador con la figura de muestra", en: "Charms on a phone: the quote builder with the sample figure" } },
+      ],
+    },
     live: {
       url: "https://charms-ecuador.vercel.app",
       label: "charms-ecuador.vercel.app",

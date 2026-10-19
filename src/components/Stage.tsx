@@ -29,6 +29,7 @@ export default function Stage({
   frame,
   frameLg,
   tall = false,
+  bare = false,
   windowRef,
   feature,
   foot,
@@ -59,6 +60,11 @@ export default function Stage({
    * ello: ahí manda el alto del texto de al lado.
    */
   tall?: boolean;
+  /**
+   * Sin ventana: lo de dentro ocupa el hueco entero y trae su propio marco
+   * (los aparatos de `Devices`).
+   */
+  bare?: boolean;
   windowRef?: Ref<HTMLDivElement>;
   /** La cifra del pie. */
   feature?: { value: string; label: string };
@@ -123,6 +129,11 @@ export default function Stage({
 
       {/* La ventana */}
       <div className="p-area relative flex-1 px-5 sm:px-7">
+        {bare ? (
+          <div ref={windowRef} className="p-bare">
+            {children}
+          </div>
+        ) : (
         <div
           ref={windowRef}
           className="p-window"
@@ -142,6 +153,7 @@ export default function Stage({
 
           <div className="p-media">{children}</div>
         </div>
+        )}
       </div>
 
       {/*

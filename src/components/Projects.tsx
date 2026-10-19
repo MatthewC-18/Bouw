@@ -10,6 +10,7 @@ import {
 } from "react";
 import { COMPLIANCE, LEAN, PROJECTS, SHOWCASE, pickAsset, type Project } from "@/lib/content";
 import { dragonScreen } from "@/lib/dragonScreen";
+import { CuedVideo, Laptop, Phone, Slides } from "./Devices";
 import { useLang } from "@/lib/i18n";
 import LiveSystem from "./LiveSystem";
 import LinePeek from "./linea/LinePeek";
@@ -35,6 +36,47 @@ const KIND_LABEL: Record<Project["mediaKind"], { es: string; en: string }> = {
   drawing: { es: "Plano", en: "Drawing" },
   floor: { es: "Planta", en: "Floor" },
 };
+
+/**
+ * El proyecto dentro de su aparato (`Devices`): el portátil con las
+ * pantallas en bucle o el video con sus rótulos y, si hay, el teléfono al
+ * lado, adelantado y a la derecha.
+ */
+function DeviceScene({ project }: { project: Project }) {
+  const { t } = useLang();
+  const d = project.device;
+  if (!d) return null;
+  const screen = d.video ? (
+    <CuedVideo
+      src={d.video.src}
+      poster={d.video.poster}
+      label={t(project.title)}
+      cues={d.video.cues.map((c) => ({ at: c.at, step: t(c.step), text: t(c.text) }))}
+    />
+  ) : (
+    <Slides
+      slides={(d.slides ?? []).map((x) => ({ src: x.src, alt: t(x.alt), label: x.label ? t(x.label) : undefined }))}
+      sizes="(max-width: 1024px) 90vw, 45vw"
+    />
+  );
+  if (!d.phone) return <Laptop ratio={d.ratio} fit={94}>{screen}</Laptop>;
+  return (
+    <div className="relative" style={{ marginRight: "9cqw" }}>
+      <Laptop ratio={d.ratio} fit={80}>
+        {screen}
+      </Laptop>
+      <Phone className="absolute -right-[12%] bottom-[-4%] h-[76%]">
+        <Slides
+          slides={d.phone.map((x) => ({ src: x.src, alt: t(x.alt) }))}
+          sizes="(max-width: 1024px) 30vw, 12vw"
+          fit="top"
+          every={2.8}
+          dots={false}
+        />
+      </Phone>
+    </div>
+  );
+}
 
 /** Panel de medios de un proyecto, sobre el chasis común (`Stage`). */
 function Media({
@@ -117,6 +159,7 @@ function Media({
       perchId={perchId}
       ledgeId={`pie-${project.slug}`}
       perchCorner={perchCorner}
+      bare={Boolean(project.device)}
       press={
         live
           ? {
@@ -129,7 +172,9 @@ function Media({
           : undefined
       }
     >
-      {project.mediaKind === "floor" && video ? (
+      {project.device ? (
+        <DeviceScene project={project} />
+      ) : project.mediaKind === "floor" && video ? (
         /*
           El caso en la ficha (ver `LinePeek`): la línea pasa de antes a
           después en bucle, con la planta, el producto y los resultados.

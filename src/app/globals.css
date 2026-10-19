@@ -667,6 +667,143 @@ body {
   }
 }
 
+/*
+ * Sin ventana: el panel lleva un aparato dibujado (`Devices`) que ocupa el
+ * hueco entero y se coloca él solo.
+ */
+.p-bare {
+  position: relative;
+  width: 100cqw;
+  height: 100cqh;
+  display: grid;
+  place-items: center;
+}
+
+/*
+ * Los aparatos (`Devices.tsx`). El portátil mide lo que quepa: la pantalla
+ * ocupa 0,848 del ancho y su alto sale de su proporción (`--ratio`); bisel y
+ * base suman 0,062 del ancho. Con eso, el ancho que cabe a lo alto es
+ * `alto / (0,848 / ratio + 0,062)`.
+ */
+.device-laptop {
+  position: relative;
+  width: min(
+    calc(var(--fit) * 1cqw),
+    calc(var(--fit) * 1cqh / (0.848 / var(--ratio) + 0.062))
+  );
+  transition: transform 800ms var(--ease-out-expo);
+}
+.group:hover .device-laptop {
+  transform: translateY(-6px);
+}
+.device-laptop::after {
+  content: "";
+  position: absolute;
+  left: 2%;
+  right: 2%;
+  bottom: -5%;
+  height: 10%;
+  z-index: -1;
+  background: radial-gradient(closest-side, var(--p-shadow), transparent);
+}
+.device-lid {
+  position: relative;
+  margin: 0 6%;
+  padding: 1.6%;
+  border-radius: 14px 14px 3px 3px;
+  background: #0b0e13;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.09),
+    0 30px 60px -32px var(--p-shadow);
+}
+.device-cam {
+  position: absolute;
+  top: 0.55%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 999px;
+  background: #2b313a;
+}
+/* Las pantallas son contenedores: lo de dentro se adapta a su ancho, no al del panel */
+.device-screen {
+  container-type: inline-size;
+  position: relative;
+  overflow: hidden;
+  border-radius: 3px;
+  background: #000;
+}
+.device-base {
+  position: relative;
+  height: 0;
+  padding-top: 3.1%;
+  border-radius: 0 0 46% 46% / 0 0 100% 100%;
+  background: linear-gradient(#3b424b, #1d2228);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset;
+}
+.device-base::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 43%;
+  width: 14%;
+  height: 38%;
+  border-radius: 0 0 8px 8px;
+  background: rgba(0, 0, 0, 0.35);
+}
+:root[data-theme="light"] .device-base {
+  background: linear-gradient(#e6e9ed, #a9b1ba);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset;
+}
+:root[data-theme="light"] .device-base::after {
+  background: rgba(0, 0, 0, 0.12);
+}
+.device-phone {
+  aspect-ratio: 9 / 19;
+  padding: 2.6%;
+  border-radius: 15% / 7%;
+  background: #0b0e13;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 24px 50px -22px var(--p-shadow),
+    0 0 0 2px rgba(0, 0, 0, 0.25);
+  transition: transform 800ms var(--ease-out-expo);
+}
+.group:hover .device-phone {
+  transform: translateY(-10px);
+}
+.device-phone-screen {
+  container-type: inline-size;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 12.5% / 5.8%;
+  background: #fff;
+}
+.device-island {
+  position: absolute;
+  z-index: 2;
+  top: 4.2%;
+  left: 50%;
+  width: 30%;
+  height: 2.6%;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: #000;
+}
+@media (prefers-reduced-motion: reduce) {
+  .device-laptop,
+  .device-phone {
+    transition: none;
+  }
+  .group:hover .device-laptop,
+  .group:hover .device-phone {
+    transform: none;
+  }
+}
+
 .p-window-bar {
   height: 34px;
   background: var(--p-bar);

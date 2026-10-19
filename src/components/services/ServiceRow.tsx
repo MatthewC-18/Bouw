@@ -1,17 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
 import { setBrief } from "@/lib/brief";
-import { COMPLIANCE, LEAN, PROJECTS, pickAsset, type Localized, type Service } from "@/lib/content";
+import { COMPLIANCE, LEAN, PROJECTS, pickAsset, type Service } from "@/lib/content";
 import { useLang } from "@/lib/i18n";
-import FlowTwin from "../linea/FlowTwin";
 import LoopVideo from "../LoopVideo";
 import Reveal from "../Reveal";
 import Stage from "../Stage";
-import AuditCheck from "./AuditCheck";
+import AuditBoard from "./AuditBoard";
 import { ICONS } from "./icons";
 import KeywordSearch from "./KeywordSearch";
+import LeanBoard from "./LeanBoard";
 import PainSwitch from "./PainSwitch";
 
 /**
@@ -22,13 +22,12 @@ import PainSwitch from "./PainSwitch";
  * continua». Misma fila que un proyecto (panel de un lado, texto del otro,
  * el lado alternando) y debajo lo propio de un servicio:
  *
- * 1. Arriba, el panel con algo que se mueve. En Lean, la simulación de
- *    flujos de la que habla la tarjeta, funcionando: el escenario actual y
- *    las mejoras que el visitante enciende (`FlowTwin`). En cumplimiento, un
- *    simulacro de auditoría: marca lo que su planta cumple y ve qué vería un
- *    inspector (`AuditCheck`).
- * 2. Al lado, el titular y lo que lo respalda: las cifras medidas en el caso
- *    (Lean) o los cuatro entregables (cumplimiento).
+ * 1. Arriba, un tablero que pasa de hoy a con Bouw. En Lean, la planta, los
+ *    resultados en barras y el mapa de flujo de valor (`LeanBoard`). En
+ *    cumplimiento, el informe de auditoría de una planta de ejemplo, su
+ *    tablero de calidad y la trazabilidad de un lote (`AuditBoard`).
+ * 2. Al lado, el titular y las palabras con que se busca el servicio, en
+ *    grande; en Lean, también las cifras medidas en el caso.
  * 3. Debajo, en una sola fila: la planta antes y después, en video, y al
  *    lado el problema de hoy contra la solución, uno a uno.
  * 4. Y la llamada, que se lleva al formulario el servicio que se pidió.
@@ -38,11 +37,8 @@ export default function ServiceRow({ service, i }: { service: Service; i: number
   const mediaFirst = i % 2 === 1;
   const corner = mediaFirst ? "right" : "left";
   const lean = service.id === "lean";
-  // El resultado del simulacro de auditoría, si el visitante marcó algo
-  const auditLine = useRef<Localized | null>(null);
-
   const ask = () => {
-    setBrief({ service: auditLine.current ?? service.cta.brief });
+    setBrief({ service: service.cta.brief });
     document.getElementById("contacto")?.scrollIntoView({ behavior: "smooth" });
   };
 
@@ -57,15 +53,15 @@ export default function ServiceRow({ service, i }: { service: Service; i: number
   const floor = PROJECTS.find((p) => p.slug === LEAN.from);
   const caseHref = floor?.caseHref ?? "/proyectos/mejora-continua";
 
-  // En Lean el panel no es un enlace: dentro hay interruptores. Lleva al
-  // caso la acción del pie
+  // El panel no es un enlace: dentro está el selector de hoy y con Bouw.
+  // Lleva al caso la acción del pie
   const stage = lean ? (
     <Stage
       index={service.index}
-      category={lang === "es" ? "Simulación · pruébala" : "Simulation · try it"}
-      status={lang === "es" ? "Simulador" : "Simulator"}
+      category={lang === "es" ? "Flujo de valor · caso" : "Value stream · case"}
+      status={lang === "es" ? "Hoy → Bouw" : "Today → Bouw"}
       pulse
-      chip={lang === "es" ? "modelo de la línea · 4 estaciones" : "line model · 4 stations"}
+      chip={lang === "es" ? "mapa-de-flujo · línea de 4 estaciones" : "value-stream-map · 4-station line"}
       frame="16 / 11"
       frameLg="16 / 9"
       tall
@@ -76,24 +72,24 @@ export default function ServiceRow({ service, i }: { service: Service; i: number
       ledgeId={`pie-${service.slug}`}
       perchCorner={corner}
     >
-      <FlowTwin />
+      <LeanBoard />
     </Stage>
   ) : (
     <Stage
       index={service.index}
-      category={lang === "es" ? "Autoevaluación · BPM" : "Self-check · GMP"}
-      status={lang === "es" ? "Simulacro" : "Mock audit"}
+      category={lang === "es" ? "Informe · BPM" : "Report · GMP"}
+      status={lang === "es" ? "Hoy → Bouw" : "Today → Bouw"}
       pulse
-      chip={lang === "es" ? "simulacro-de-auditoria · tu planta" : "mock-audit · your plant"}
+      chip={lang === "es" ? "informe-de-auditoria · planta de ejemplo" : "audit-report · sample plant"}
       frame="4 / 3"
       frameLg="16 / 9"
       tall
       foot={{
-        title: lang === "es" ? "Simulacro de auditoría" : "Mock audit",
+        title: lang === "es" ? "Informe de auditoría" : "Audit report",
         body:
           lang === "es"
-            ? "Marca lo que tu planta ya cumple y mira qué encontraría hoy un inspector. Tu resultado viaja con la solicitud de diagnóstico."
-            : "Tick what your plant already does and see what an inspector would find today. Your result travels with the diagnosis request.",
+            ? "La misma planta hoy y con Bouw: los hallazgos del inspector, las CAPA, los lotes retenidos y el rastro de un lote hasta su materia prima."
+            : "The same plant today and with Bouw: the inspector's findings, CAPAs, lots on hold and one lot traced back to its raw materials.",
       }}
       action={lang === "es" ? "Agendar diagnóstico" : "Book the diagnosis"}
       onAction={ask}
@@ -101,12 +97,7 @@ export default function ServiceRow({ service, i }: { service: Service; i: number
       ledgeId={`pie-${service.slug}`}
       perchCorner={corner}
     >
-      <AuditCheck
-        audit={COMPLIANCE.audit}
-        onResult={(line) => {
-          auditLine.current = line;
-        }}
-      />
+      <AuditBoard audit={COMPLIANCE.audit} />
     </Stage>
   );
 

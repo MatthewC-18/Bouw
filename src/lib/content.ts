@@ -778,18 +778,25 @@ export const LEAN: Service & {
 export const COMPLIANCE: Service & {
   deliverables: { icon: ServiceIcon; title: Localized; body: Localized }[];
   /**
-   * El simulacro de auditoría (`AuditCheck`): el visitante marca lo que su
-   * planta ya cumple y ve su preparación y lo primero que encontraría un
-   * inspector. Es una autoevaluación: los pesos son nuestros, no de una norma.
+   * El informe de auditoría de una planta de ejemplo (`AuditBoard`), hoy y
+   * con Bouw: hallazgos por gravedad, preparación, CAPA, lotes retenidos y la
+   * trazabilidad de un lote. Antes era un simulacro en el que el visitante
+   * marcaba casillas; «lo de marcar no me gusta» (Matthew, 18 oct 2026). Los
+   * pesos y la gravedad son nuestros, no de una norma, y la planta es de
+   * ejemplo: el tablero lo dice.
    */
   audit: {
     intro: Localized;
     score: Localized;
-    finding: Localized;
-    clean: Localized;
     levels: { low: Localized; mid: Localized; high: Localized };
-    /** Marcadas al llegar, para que el tablero ya cuente algo. */
+    /** Lo que la planta de ejemplo ya cumple hoy. */
     start: string[];
+    /** Las cifras del tablero de calidad de la planta de ejemplo, hoy y con Bouw. */
+    sample: {
+      capaOpen: [number, number];
+      capaClosed: [number, number];
+      held: [number, number];
+    };
     items: {
       id: string;
       short: Localized;
@@ -930,24 +937,17 @@ export const COMPLIANCE: Service & {
   ],
   audit: {
     intro: {
-      es: "Simulacro de auditoría: marca lo que tu planta ya cumple",
-      en: "Mock audit: tick what your plant already does",
+      es: "Informe de auditoría BPM · planta de ejemplo",
+      en: "GMP audit report · sample plant",
     },
     score: { es: "Preparación", en: "Readiness" },
-    finding: {
-      es: "Lo primero que vería un inspector",
-      en: "The first thing an inspector would see",
-    },
-    clean: {
-      es: "Nada a la vista: tu planta pasaría la revisión.",
-      en: "Nothing in sight: your plant would pass the review.",
-    },
     levels: {
       low: { es: "No lista", en: "Not ready" },
       mid: { es: "En riesgo", en: "At risk" },
       high: { es: "Lista para inspección", en: "Ready for inspection" },
     },
     start: ["registros", "personal"],
+    sample: { capaOpen: [9, 0], capaClosed: [4, 13], held: [3, 0] },
     items: [
       {
         id: "trazabilidad",

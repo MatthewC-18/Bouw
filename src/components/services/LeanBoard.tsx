@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
-import { Line, NONE, P, type Levers } from "@/components/linea/engine";
+import { useRef } from "react";
+import { P } from "@/components/linea/engine";
 import { useLang } from "@/lib/i18n";
 import PhaseSwitch, { usePhase, type Phase } from "./PhaseSwitch";
 
@@ -29,33 +29,23 @@ import PhaseSwitch, { usePhase, type Phase } from "./PhaseSwitch";
  * la simulación del caso.
  */
 
-/** Minutos de la corrida de la que salen las cifras del mapa. */
-const RUN = 2400;
-
 type Profile = { lead: number; queues: number[] };
 
-/** Entrega media y piezas que esperan delante de cada estación, en una corrida larga. */
-function profile(levers: Levers): Profile {
-  const line = new Line(levers, 11);
-  const dt = 0.05;
-  for (let t = 0; t < 240; t += dt) line.step(dt);
-  const q = [0, 0, 0, 0];
-  let n = 0;
-  const leads: number[] = [];
-  for (let t = 0; t < RUN; t += dt) {
-    line.step(dt);
-    line.queues.forEach((x, i) => (q[i] += x.length));
-    n++;
-    const l = line.lead[line.lead.length - 1];
-    if (l) leads.push(l.total);
-  }
-  return {
-    lead: leads.reduce((s, x) => s + x, 0) / Math.max(leads.length, 1),
-    queues: q.map((x) => x / n),
-  };
-}
-
-const cache = new Map<Phase, Profile>();
+/*
+ * Entrega media y piezas que esperan delante de cada estación, en una corrida
+ * de 40 h del modelo (`engine.ts`, semilla 11, tras 4 h de arranque).
+ *
+ * Iban calculadas en el navegador al cargar la página: dos corridas de 52 800
+ * pasos, 0,67 s en un ordenador y casi 3 s de pantalla congelada en un
+ * teléfono, aunque el tablero estuviera tres pantallas más abajo («arregla la
+ * velocidad», Matthew, 19 oct 2026). Con semilla fija dan siempre lo mismo,
+ * así que van ya hechas. Si cambia `engine.ts`, se recalculan con la misma
+ * corrida y se copian aquí.
+ */
+const PROFILE: Record<Phase, Profile> = {
+  hoy: { lead: 29.03, queues: [6.35, 6.82, 0.65, 0.49] },
+  bouw: { lead: 8.1, queues: [0.31, 1.05, 0.35, 0.34] },
+};
 
 const COPY = {
   es: {
@@ -103,18 +93,7 @@ export default function LeanBoard() {
   const tx = COPY[lang];
   const root = useRef<HTMLDivElement>(null);
   const { phase, pick, running } = usePhase(root);
-  const [prof, setProf] = useState<Partial<Record<Phase, Profile>>>({});
-
-  // Las dos corridas, una por tanda para no trabar el primer pintado
-  useEffect(() => {
-    const ids = (["hoy", "bouw"] as const).map((p, i) =>
-      window.setTimeout(() => {
-        if (!cache.has(p)) cache.set(p, profile(p === "hoy" ? NONE : { ...NONE, setup: true, rework: true }));
-        setProf(Object.fromEntries(cache));
-      }, 150 + i * 120),
-    );
-    return () => ids.forEach((id) => window.clearTimeout(id));
-  }, []);
+  const prof = PROFILE;
 
   const nf = new Intl.NumberFormat(lang === "es" ? "es-EC" : "en-US", { maximumFractionDigits: 1, minimumFractionDigits: 1 });
   const ni = new Intl.NumberFormat(lang === "es" ? "es-EC" : "en-US", { maximumFractionDigits: 0 });

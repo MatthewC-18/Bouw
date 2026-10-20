@@ -13,10 +13,16 @@ import "./globals.css";
  * completan el sistema — Plex nació en IBM como tipografía de ingeniería,
  * así que dice lo mismo que dice la empresa.
  */
+/*
+ * Archivo solo en el corte que se usa: `.font-display` fija peso 600 y ancho
+ * normal para todos los titulares. Iba la variable entera, con los ejes de
+ * peso y ancho: 88 KB que competían con el CSS en el teléfono, para usar un
+ * solo corte (19 oct 2026, velocidad).
+ */
 const archivo = Archivo({
   variable: "--font-archivo",
   subsets: ["latin"],
-  axes: ["wdth"],
+  weight: "600",
   display: "swap",
 });
 
@@ -37,6 +43,9 @@ const instrument = Instrument_Serif({
   weight: "400",
   style: ["italic"],
   display: "swap",
+  // Sin precarga: es una frase, y en el teléfono la precarga le quitaba
+  // ancho de banda al CSS que hace falta para pintar
+  preload: false,
 });
 
 const plexMono = IBM_Plex_Mono({
@@ -44,6 +53,8 @@ const plexMono = IBM_Plex_Mono({
   subsets: ["latin"],
   weight: ["400", "500"],
   display: "swap",
+  // Rótulos pequeños: llegan después del primer pintado sin que se note
+  preload: false,
 });
 
 

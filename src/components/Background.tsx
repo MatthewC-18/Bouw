@@ -28,7 +28,31 @@ export default function Background({ scene = true }: { scene?: boolean }) {
    */
   const [attempt, setAttempt] = useState(0);
 
-  useEffect(() => setMounted(true), []);
+  /*
+   * La escena espera a que la página haya cargado y el navegador quede
+   * libre. Montaba en cuanto React terminaba de hidratar: el motor 3D, el
+   * modelo del dragón (1,1 MB) y la compilación de sus sombreadores
+   * competían con las imágenes y con el primer toque justo en los primeros
+   * segundos, que en el teléfono es cuando más se nota («arregla la
+   * velocidad», Matthew, 19 oct 2026). Como mucho, 2,5 s de espera de más.
+   */
+  useEffect(() => {
+    let idle = 0;
+    let timer = 0;
+    const go = () => setMounted(true);
+    const schedule = () => {
+      // Safari antiguo no tiene `requestIdleCallback`: un respiro corto basta
+      if (typeof window.requestIdleCallback === "function") idle = window.requestIdleCallback(go, { timeout: 2500 });
+      else timer = window.setTimeout(go, 300);
+    };
+    if (document.readyState === "complete") schedule();
+    else window.addEventListener("load", schedule, { once: true });
+    return () => {
+      window.removeEventListener("load", schedule);
+      if (idle) window.cancelIdleCallback(idle);
+      window.clearTimeout(timer);
+    };
+  }, []);
 
   useEffect(() => {
     let timer = 0;

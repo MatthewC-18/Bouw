@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { debug } from "@/lib/debug";
-import { LAST_STAGE } from "@/components/three/layouts";
+import { LAST_STAGE } from "@/components/three/stages";
 import { tickNow } from "@/lib/scrollTicker";
 
 /**

@@ -1,12 +1,8 @@
 import * as THREE from "three";
 
-/**
- * Etapas del recorrido: 0 la portada … `LAST_STAGE` contacto. Las calcula
- * `SceneRoot` a partir de las secciones; de ellas cuelgan la palabra BOUW de
- * la portada y el encuadre de la cámara.
- */
+import { LAST_STAGE } from "./stages";
 
-export const LAST_STAGE = 8;
+export { LAST_STAGE };
 
 /**
  * Cuánto existe la palabra sólida en esta etapa.

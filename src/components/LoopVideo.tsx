@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Props = {
   /**
@@ -30,6 +30,26 @@ type Props = {
  */
 export default function LoopVideo({ src, poster, label, className = "" }: Props) {
   const ref = useRef<HTMLVideoElement>(null);
+  /*
+   * El póster también espera. Con `poster` puesto desde el HTML, el navegador
+   * bajaba los tres al abrir la página (270 KB) aunque estuvieran pantallas
+   * más abajo, y en el teléfono le quitaban ancho de banda a lo de arriba.
+   * Ahora se pone cuando el video está a una pantalla y media de distancia.
+   */
+  const [near, setNear] = useState(false);
+
+  useEffect(() => {
+    const video = ref.current;
+    if (!video || near) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setNear(true);
+      },
+      { rootMargin: "150% 0px" },
+    );
+    io.observe(video);
+    return () => io.disconnect();
+  }, [near]);
 
   useEffect(() => {
     const video = ref.current;
@@ -57,7 +77,7 @@ export default function LoopVideo({ src, poster, label, className = "" }: Props)
     <video
       key={src}
       ref={ref}
-      poster={poster}
+      poster={near ? poster : undefined}
       muted
       loop
       playsInline

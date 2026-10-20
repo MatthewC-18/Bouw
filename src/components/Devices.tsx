@@ -185,7 +185,8 @@ export function Laptop({
 /** Un teléfono, de alto `h` (en % del alto del escenario). */
 export function Phone({ className = "", style, children }: { className?: string; style?: CSSProperties; children: ReactNode }) {
   return (
-    <div className={`device-phone ${className}`} style={style}>
+    // Posicionado siempre: la pantalla va con `inset` dentro de él
+    <div className={`device-phone ${/(^|\s)absolute(\s|$)/.test(className) ? "" : "relative"} ${className}`} style={style}>
       <span className="device-island" aria-hidden />
       <div className="device-phone-screen">{children}</div>
     </div>

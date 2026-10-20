@@ -60,17 +60,22 @@ function DeviceScene({ project }: { project: Project }) {
     />
   );
   if (!d.phone) return <Laptop ratio={d.ratio} fit={94}>{screen}</Laptop>;
+  /*
+   * Con teléfono, el teléfono manda: casi todo el alto del escenario, a la
+   * derecha y delante. El portátil queda detrás, a la izquierda, más chico
+   * («mejora la vista de celular de Charms», Matthew, 19 oct 2026).
+   */
   return (
-    <div className="relative" style={{ marginRight: "9cqw" }}>
-      <Laptop ratio={d.ratio} fit={80}>
+    <div className="relative h-full w-full">
+      <Laptop ratio={d.ratio} fit={74} className="absolute left-0 top-1/2 -translate-y-1/2">
         {screen}
       </Laptop>
-      <Phone className="absolute -right-[12%] bottom-[-4%] h-[76%]">
+      <Phone className="absolute right-[3%] top-1/2 h-[96%] -translate-y-1/2">
         <Slides
-          slides={d.phone.map((x) => ({ src: x.src, alt: t(x.alt) }))}
-          sizes="(max-width: 1024px) 30vw, 12vw"
+          slides={d.phone.map((x) => ({ src: x.src, alt: t(x.alt), label: x.label ? t(x.label) : undefined }))}
+          sizes="(max-width: 1024px) 40vw, 16vw"
           fit="top"
-          every={2.8}
+          every={3}
           dots={false}
         />
       </Phone>
@@ -218,7 +223,11 @@ function Media({
       {live && (
         <span
           data-dragon-ignore
-          className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[rgba(4,16,31,0.28)] opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+          // Con aparato no se oscurece nada: el velo era un rectángulo que no
+          // casaba con el portátil y el teléfono. Queda la píldora sola
+          className={`pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100 ${
+            project.device ? "" : "bg-[rgba(4,16,31,0.28)]"
+          }`}
         >
           <span className="flex items-center gap-3 rounded-full bg-(--p-accent) px-5 py-2.5 text-sm font-semibold text-(--p-on-accent) shadow-[0_12px_40px_-12px_rgba(0,0,0,0.6)]">
             <svg width="10" height="12" viewBox="0 0 10 12" aria-hidden>

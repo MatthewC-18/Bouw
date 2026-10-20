@@ -25,6 +25,16 @@ export const COMPANY = {
     es: "Automation & Digital Solutions",
     en: "Automation & Digital Solutions",
   } satisfies Localized,
+  /**
+   * La frase para acordarse de la empresa (Matthew, 19 oct 2026: «un slogan
+   * que haga que se acuerden»). Suena a regla, y es la regla con la que se
+   * trabaja: lo que se hace igual cada semana es lo primero que se mide.
+   * Va bajo el titular de la portada y cierra el pie.
+   */
+  slogan: {
+    es: "Si se repite, se automatiza.",
+    en: "If it repeats, automate it.",
+  } satisfies Localized,
   email: "bouw.contacto@gmail.com",
   phoneDisplay: "+593 96 368 4012",
   phoneRaw: "593963684012",
@@ -186,31 +196,147 @@ export const OFFICE_STATUS = {
 };
 
 /* ------------------------------------------------------------------ */
-/* Capítulos                                                           */
+/* Encuentra los desperdicios                                          */
 /* ------------------------------------------------------------------ */
 
 /**
- * Las bandas entre secciones, que ahora son capítulos.
+ * La planta para tocar (`PlantHunt`), entre la portada y los proyectos.
  *
- * Eran una cita pequeña en una esquina, y eso era lo que les quitaba fuerza:
- * la banda existe para que el dragón pase, y una frase de cuatro líneas a la
- * izquierda no se ve pasar nada. Ahora la primera frase va a toda la anchura
- * y el bicho la cruza por delante (ver `SceneBreak` y la capa de la escena en
- * `SceneRoot`). El resto queda debajo, pequeño.
+ * Matthew, 19 oct 2026: «algo que haga que el cliente interactúe sí o sí,
+ * pero no eso de marcar casillas, sino algo que obligue a que toquen algo y
+ * obtengan info». Aquí estaba el capítulo «Proyectos que ya funcionan», una
+ * pantalla con una frase.
  *
- * Cada una sigue haciendo un trabajo: anuncia lo que viene justo debajo con
- * un dato que se comprueba bajando dos dedos de pantalla.
+ * Es la planta de hoy del video de Lean. Tiene seis desperdicios escondidos
+ * y la información solo sale al tocarlos: qué es, qué cuesta y cómo se ve
+ * arreglado (un recorte de la misma planta ordenada). Con los seis, la
+ * planta entera pasa a ordenada y lo encontrado viaja al formulario.
+ *
+ * Coordenadas en % de `lean-antes.webp`; `fix`, en % de `lean-despues.webp`:
+ * dónde se ve el arreglo, que no siempre está en el mismo sitio (el operador
+ * que esperaba sigue de brazos cruzados en la ilustración ordenada; el
+ * arreglo de la espera es el que trabaja en la estación de en medio). Las
+ * cifras son las del caso de mejora continua y ninguna más.
  */
-export const BREAKS: { mark: string; title: Localized; body: Localized }[] = [
-  {
-    mark: "01",
-    title: { es: "Proyectos que ya funcionan.", en: "Projects already at work." },
-    body: {
-      es: "Dos los puedes abrir ahora mismo. Los demás funcionan dentro de la operación de nuestros clientes.",
-      en: "You can open two of them right now. The rest run inside our clients' operations.",
+export const HUNT = {
+  eyebrow: { es: "Pruébalo · 30 segundos", en: "Try it · 30 seconds" } satisfies Localized,
+  title: { es: "¿Dónde pierde horas esta planta?", en: "Where is this plant losing hours?" } satisfies Localized,
+  body: {
+    es: "Hay seis desperdicios escondidos. Toca la planta donde veas uno y te decimos qué es, qué cuesta y cómo se ve arreglado.",
+    en: "Six kinds of waste are hiding in it. Tap the plant where you spot one and we'll tell you what it is, what it costs and what it looks like fixed.",
+  } satisfies Localized,
+  hint: { es: "Toca donde veas que se pierde tiempo", en: "Tap where you see time being lost" } satisfies Localized,
+  found: { es: "encontrados", en: "found" } satisfies Localized,
+  today: { es: "Hoy", en: "Today" } satisfies Localized,
+  fixed: { es: "Con Bouw", en: "With Bouw" } satisfies Localized,
+  costs: { es: "Lo que cuesta", en: "What it costs" } satisfies Localized,
+  fix: { es: "Cómo se arregla", en: "How it gets fixed" } satisfies Localized,
+  reveal: { es: "Ver las respuestas", en: "Show the answers" } satisfies Localized,
+  again: { es: "Empezar de nuevo", en: "Start over" } satisfies Localized,
+  done: {
+    es: "Los encontraste todos. Así se ve la misma planta con un solo flujo.",
+    en: "You found them all. This is the same plant with a single flow.",
+  } satisfies Localized,
+  cta: { es: "Buscar los de mi planta", en: "Find the ones in my plant" } satisfies Localized,
+  spots: [
+    {
+      id: "espera",
+      x: 32.8,
+      y: 48,
+      fix: { x: 54.7, y: 58.9 },
+      name: { es: "Espera", en: "Waiting" },
+      cost: {
+        es: "Un operador parado, esperando a que la estación de antes le pase piezas.",
+        en: "An operator standing still, waiting for the station before to pass parts along.",
+      },
+      how: {
+        es: "Balanceo de línea: cada estación al ritmo de la línea, con el mapa de flujo de valor.",
+        en: "Line balancing: every station at the line's pace, with the value stream map.",
+      },
+      tool: "VSM",
     },
-  },
-];
+    {
+      id: "inventario",
+      x: 24.2,
+      y: 58.9,
+      fix: { x: 63, y: 74 },
+      name: { es: "Inventario en proceso", en: "Work in process" },
+      cost: {
+        es: "Piezas apiladas frente a la máquina más lenta. Ahí está el cuello de botella.",
+        en: "Parts piled up in front of the slowest machine. That's the bottleneck.",
+      },
+      how: {
+        es: "Nivelación de flujo: las piezas pasan una a una por la banda, sin montones.",
+        en: "Flow leveling: parts move one by one along the conveyor, no piles.",
+      },
+      tool: "WIP",
+    },
+    {
+      id: "movimiento",
+      x: 70.3,
+      y: 44.3,
+      fix: { x: 8, y: 46 },
+      name: { es: "Movimiento", en: "Motion" },
+      cost: {
+        es: "Buscar herramientas y piezas entre el desorden, varias veces por turno.",
+        en: "Hunting for tools and parts in the clutter, several times a shift.",
+      },
+      how: {
+        es: "5S y trabajo estándar: cada cosa en su sitio. En el caso de mejora continua, la preparación bajó 15 %.",
+        en: "5S and standard work: everything in its place. In the continuous improvement case, setup time dropped 15%.",
+      },
+      tool: "5S",
+    },
+    {
+      id: "transporte",
+      x: 58.6,
+      y: 80.9,
+      fix: { x: 50, y: 68.7 },
+      name: { es: "Transporte", en: "Transportation" },
+      cost: {
+        es: "Recorridos largos que se cruzan para llevar una caja de un lado a otro.",
+        en: "Long, crossing paths just to carry a box from one side to the other.",
+      },
+      how: {
+        es: "Rediseño de layout: lo que se usa junto va junto, y el flujo va en un solo sentido.",
+        en: "Layout redesign: what's used together sits together, and the flow runs one way.",
+      },
+      tool: "Layout",
+    },
+    {
+      id: "sobreproduccion",
+      x: 50,
+      y: 43.1,
+      fix: { x: 48.4, y: 35.8 },
+      name: { es: "Sobreproducción", en: "Overproduction" },
+      cost: {
+        es: "Cajas hechas antes de que alguien las pida, bloqueando el pasillo y el montacargas.",
+        en: "Boxes made before anyone ordered them, blocking the aisle and the forklift.",
+      },
+      how: {
+        es: "Producir al ritmo de lo que se vende, con el mapa de valor a la vista de todos.",
+        en: "Produce at the pace of sales, with the value map in plain sight.",
+      },
+      tool: "VSM",
+    },
+    {
+      id: "defectos",
+      x: 62.9,
+      y: 25.1,
+      fix: { x: 76.6, y: 27.3 },
+      name: { es: "Defectos", en: "Defects" },
+      cost: {
+        es: "Máquina en rojo: piezas que vuelven a pasar por reproceso.",
+        en: "A machine in the red: parts going back through rework.",
+      },
+      how: {
+        es: "Acciones correctivas con su causa raíz. En el caso, los reprocesos bajaron 20 %.",
+        en: "Corrective actions with their root cause. In the case, rework dropped 20%.",
+      },
+      tool: "Causa raíz",
+    },
+  ],
+};
 
 /* ------------------------------------------------------------------ */
 /* Proyectos                                                           */
@@ -294,7 +420,7 @@ export type Project = {
       /** Segundo en que entra cada paso del recorrido, su nombre y la frase. */
       cues: { at: number; step: Localized; text: Localized }[];
     };
-    phone?: { src: string; alt: Localized }[];
+    phone?: { src: string; alt: Localized; label?: Localized }[];
   };
   /** Si el proyecto tiene caso completo, la ruta (y el ancla) donde vive. */
   caseHref?: string;
@@ -352,9 +478,10 @@ export const PROJECTS: Project[] = [
       en: "Anatris: the shoulder in 3D with the deltoid highlighted and its origin and insertion in the clinical panel",
     },
     /*
-     * Cuatro pantallas de la app en bucle, en el portátil: «mejora lo de
-     * Anatris, que vayan algunas imágenes en bucle» (Matthew, 18 oct 2026).
-     * Capturadas de la app en producción.
+     * Pantallas de la app en bucle, en el portátil: «mejora lo de Anatris,
+     * que vayan algunas imágenes en bucle» (Matthew, 18 oct 2026); «añade
+     * más imágenes» (19 oct): ocho, del modelo 3D a los tests y el caso
+     * clínico. Capturadas de la app en producción.
      */
     device: {
       ratio: 16 / 9,
@@ -376,6 +503,14 @@ export const PROJECTS: Project[] = [
           label: { es: "Explorar · deltoides", en: "Explore · deltoid" },
         },
         {
+          src: "/proyectos/anatris-biomecanica.webp",
+          alt: {
+            es: "Anatris en modo Aprender: recorrido guiado de la abducción, fase de ajuste, con el supraespinoso como motor principal",
+            en: "Anatris in Learn mode: guided walkthrough of abduction, setting phase, with the supraspinatus as prime mover",
+          },
+          label: { es: "Biomecánica · abducción", en: "Biomechanics · abduction" },
+        },
+        {
           src: "/proyectos/anatris-pectoral.webp",
           alt: {
             es: "Anatris: el pectoral mayor marcado en el modelo, con su origen e inserción",
@@ -390,6 +525,30 @@ export const PROJECTS: Project[] = [
             en: "Anatris in Learn mode: origin, insertion and innervation of each shoulder muscle, with sources",
           },
           label: { es: "Aprender · anatomía", en: "Learn · anatomy" },
+        },
+        {
+          src: "/proyectos/anatris-tests.webp",
+          alt: {
+            es: "Anatris: la prueba de Jobe con qué valora, el procedimiento, el signo positivo y cómo graduar la respuesta",
+            en: "Anatris: the Jobe test with what it assesses, the procedure, the positive sign and how to grade the response",
+          },
+          label: { es: "Tests clínicos · Jobe", en: "Clinical tests · Jobe" },
+        },
+        {
+          src: "/proyectos/anatris-patologia.webp",
+          alt: {
+            es: "Anatris: patologías del hombro, de la rotura del manguito rotador al pinzamiento subacromial",
+            en: "Anatris: shoulder conditions, from rotator cuff tears to subacromial impingement",
+          },
+          label: { es: "Patología · manguito rotador", en: "Pathology · rotator cuff" },
+        },
+        {
+          src: "/proyectos/anatris-caso.webp",
+          alt: {
+            es: "Anatris: caso clínico de dolor en arco medio, con las preguntas que llevan a la hipótesis y a la exploración",
+            en: "Anatris: clinical case of painful mid arc, with the questions that lead to the hypothesis and the exam",
+          },
+          label: { es: "Caso clínico", en: "Clinical case" },
         },
       ],
     },
@@ -659,9 +818,11 @@ export const PROJECTS: Project[] = [
     },
     href: "https://charms-ecuador.vercel.app",
     /*
-     * La web en el portátil y, al lado, el teléfono pasando por el inicio,
-     * el catálogo, una pieza y el cotizador: casi todos los pedidos llegan
-     * desde el teléfono. «Igual Charms» (Matthew, 18 oct 2026). Capturado
+     * El teléfono delante y en grande, pasando por el inicio, los formatos,
+     * los más pedidos, una pieza y el cotizador: casi todos los pedidos
+     * llegan desde el teléfono. Detrás, la web en el portátil. «Igual
+     * Charms» (18 oct 2026); «mejora la vista de celular» (19 oct): las
+     * capturas van sin la sirena flotante, que tapaba el texto. Capturado
      * de la web en producción.
      */
     device: {
@@ -676,10 +837,31 @@ export const PROJECTS: Project[] = [
         },
       ],
       phone: [
-        { src: "/proyectos/charms-movil-inicio.webp", alt: { es: "Charms en el teléfono: inicio", en: "Charms on a phone: home" } },
-        { src: "/proyectos/charms-movil-catalogo.webp", alt: { es: "Charms en el teléfono: catálogo con precio desde", en: "Charms on a phone: catalog with starting prices" } },
-        { src: "/proyectos/charms-movil-producto.webp", alt: { es: "Charms en el teléfono: ficha del cuadro columpio", en: "Charms on a phone: swing frame product page" } },
-        { src: "/proyectos/charms-movil-cotizar.webp", alt: { es: "Charms en el teléfono: el cotizador con la figura de muestra", en: "Charms on a phone: the quote builder with the sample figure" } },
+        {
+          src: "/proyectos/charms-movil-inicio.webp",
+          alt: { es: "Charms en el teléfono: inicio", en: "Charms on a phone: home" },
+          label: { es: "Inicio", en: "Home" },
+        },
+        {
+          src: "/proyectos/charms-movil-regalar.webp",
+          alt: { es: "Charms en el teléfono: los seis formatos para regalar, con su precio desde", en: "Charms on a phone: the six gift formats, with starting prices" },
+          label: { es: "Formatos", en: "Formats" },
+        },
+        {
+          src: "/proyectos/charms-movil-pedidos.webp",
+          alt: { es: "Charms en el teléfono: los más pedidos, con precio y botón para cotizar", en: "Charms on a phone: best sellers, with price and a quote button" },
+          label: { es: "Más pedidos", en: "Best sellers" },
+        },
+        {
+          src: "/proyectos/charms-movil-producto.webp",
+          alt: { es: "Charms en el teléfono: ficha del cuadro columpio", en: "Charms on a phone: swing frame product page" },
+          label: { es: "Pieza", en: "Product" },
+        },
+        {
+          src: "/proyectos/charms-movil-cotizar.webp",
+          alt: { es: "Charms en el teléfono: el cotizador con la figura de muestra", en: "Charms on a phone: the quote builder with the sample figure" },
+          label: { es: "Cotizador", en: "Quote builder" },
+        },
       ],
     },
     live: {

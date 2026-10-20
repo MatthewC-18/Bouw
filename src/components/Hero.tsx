@@ -109,7 +109,18 @@ export default function Hero() {
             </span>
           </h1>
 
-          <p className="mt-8 max-w-xl text-xl leading-relaxed text-ink-soft">
+          {/* El eslogan: la regla para acordarse de la empresa */}
+          <p className="mt-7 inline-flex items-center gap-3 font-display text-[clamp(1.2rem,2.2vw,1.6rem)] font-bold leading-tight text-ink">
+            <span
+              aria-hidden
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-cyan-brand/50 text-[15px] text-cyan-light"
+            >
+              ↻
+            </span>
+            {t(COMPANY.slogan)}
+          </p>
+
+          <p className="mt-6 max-w-xl text-xl leading-relaxed text-ink-soft">
             {t(HERO.subtitle)}
           </p>
 

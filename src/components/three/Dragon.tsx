@@ -1186,7 +1186,10 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
     /* ---- Tamaño en pantalla, para buscar huecos ---- */
     const ppu =
       H / (2 * Math.tan(THREE.MathUtils.degToRad((cam.fov ?? 40) / 2)) * Math.max(cam.position.z, 1));
-    const domScale = DOM_SCALE * THREE.MathUtils.clamp(W / 1200, 0.55, 1);
+    // En el teléfono, algo más chico: ahí el texto ocupa el ancho entero y no
+    // hay margen donde quepa sin tapar una línea (Matthew, 19 oct 2026: «el
+    // celular no se ve bien todavía»)
+    const domScale = DOM_SCALE * THREE.MathUtils.clamp(W / 1200, 0.42, 1);
     const pxNow = `${ppu.toFixed(1)}|${domScale.toFixed(3)}`;
     if (pxNow !== pxKey.current) {
       pxKey.current = pxNow;
@@ -1352,7 +1355,10 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
      */
     const pickHover = () => {
       const hv = hover.current;
-      const x = hv.side > 0 ? W - Math.max(W * 0.1, 110) : Math.max(W * 0.1, 110);
+      // En pantallas estrechas no hay margen libre: se sostiene en el borde,
+      // medio asomado, en vez de encima del párrafo
+      const edge = W < 640 ? 30 : Math.max(W * 0.1, 110);
+      const x = hv.side > 0 ? W - edge : edge;
       const box = dragonPx.current;
       let bestY = H * 0.45;
       let bestScore = Infinity;

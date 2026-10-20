@@ -7,9 +7,8 @@ import Footer from "@/components/Footer";
 import Hero from "@/components/Hero";
 import HoursSheet from "@/components/HoursSheet";
 import Nav from "@/components/Nav";
+import PlantHunt from "@/components/PlantHunt";
 import Projects from "@/components/Projects";
-import SceneBreak from "@/components/SceneBreak";
-import { BREAKS } from "@/lib/content";
 
 export default function Home() {
   return (
@@ -29,7 +28,12 @@ export default function Home() {
       */}
       <main className="relative flex-1">
         <Hero />
-        <SceneBreak {...BREAKS[0]} />
+        {/*
+          Aquí iba el capítulo «Proyectos que ya funcionan»: una pantalla con
+          una frase. Ahora, la planta para tocar (Matthew, 19 oct 2026: «algo
+          que obligue a que toquen algo y obtengan info»).
+        */}
+        <PlantHunt />
         <Projects />
         {/*
           Después de Proyectos, sin capítulos a pantalla completa: eran dos

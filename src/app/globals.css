@@ -567,6 +567,9 @@ body {
   --p-window: oklch(0.17 0.025 var(--p-h));
   --p-bar: oklch(0.235 0.032 var(--p-h));
   --p-on-accent: #04101f;
+  /* La luz detrás del trabajo y el fondo de las pastillas del escaparate */
+  --p-light: oklch(0.58 0.14 var(--p-h) / 0.55);
+  --p-chip: oklch(0.17 0.025 var(--p-h) / 0.82);
 }
 
 :root[data-theme="light"] .project {
@@ -582,6 +585,8 @@ body {
   --p-window: oklch(0.993 0.004 var(--p-h));
   --p-bar: oklch(0.968 0.014 var(--p-h));
   --p-on-accent: #fbfaf7;
+  --p-light: oklch(0.84 0.1 var(--p-h) / 0.8);
+  --p-chip: rgba(255, 255, 255, 0.82);
 }
 
 /*
@@ -602,28 +607,44 @@ body {
   );
 }
 
-.p-stage {
+/*
+ * El escaparate (`Stage`): el trabajo sin caja alrededor, flotando sobre la
+ * luz del color de la ficha, con el número grande y a línea detrás. Ver el
+ * comentario de cabecera de `Stage.tsx`. Todo es degradado quieto: ni
+ * `filter` ni `blur`, se pinta una vez.
+ */
+.p-show {
   position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  border-radius: 28px;
-  background:
-    radial-gradient(90% 70% at 12% 0%, var(--p-stage-a), transparent 70%),
-    linear-gradient(155deg, var(--p-stage-a) 0%, var(--p-stage-b) 100%);
-  box-shadow: inset 0 0 0 1px var(--p-line);
 }
-
-/* Trama de puntos que se apaga hacia abajo: textura de plano, no de tarjeta */
-.p-stage::before {
-  content: "";
+.p-show-glow {
   position: absolute;
-  inset: 0;
+  inset: -6% -8% 0;
+  z-index: -1;
   pointer-events: none;
-  background-image: radial-gradient(var(--p-line) 1px, transparent 1.2px);
-  background-size: 20px 20px;
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 75%);
-  mask-image: linear-gradient(to bottom, #000 0%, transparent 75%);
+  background:
+    radial-gradient(44% 9% at 50% 84%, var(--p-shadow), transparent 100%),
+    radial-gradient(58% 52% at 50% 52%, var(--p-light), transparent 74%);
+}
+.p-show-index {
+  position: absolute;
+  top: -0.12em;
+  z-index: -1;
+  pointer-events: none;
+  font-size: clamp(6.5rem, 14vw, 12.5rem);
+  line-height: 0.8;
+  letter-spacing: -0.05em;
+  color: transparent;
+  -webkit-text-stroke: 1.5px oklch(from var(--p-accent) l c h / 0.42);
+  background: linear-gradient(180deg, oklch(from var(--p-accent) l c h / 0.14), transparent 75%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  transition: -webkit-text-stroke-color 600ms;
+}
+.group:hover .p-show-index {
+  -webkit-text-stroke-color: var(--p-accent);
 }
 
 /*
@@ -759,9 +780,14 @@ body {
 :root[data-theme="light"] .device-base::after {
   background: rgba(0, 0, 0, 0.12);
 }
+/*
+ * El bisel del teléfono va con `inset` y no con `padding`: un `padding` en
+ * % se mide contra el ancho del padre, y el teléfono cambia de padre según
+ * la escena. Los % de `inset` se miden contra el propio teléfono: 2,2 % del
+ * alto y 4,6 % del ancho dan el mismo grosor con la proporción 9/19.
+ */
 .device-phone {
   aspect-ratio: 9 / 19;
-  padding: 2.6%;
   border-radius: 15% / 7%;
   background: #0b0e13;
   box-shadow:
@@ -775,9 +801,8 @@ body {
 }
 .device-phone-screen {
   container-type: inline-size;
-  position: relative;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 2.2% 4.6%;
   overflow: hidden;
   border-radius: 12.5% / 5.8%;
   background: #fff;
@@ -1411,6 +1436,33 @@ html[data-scrolling] body {
   }
   .kw-word {
     transition: none;
+  }
+}
+
+/*
+ * Encuentra los desperdicios (`PlantHunt`): los puntos por descubrir laten
+ * suave, como un radar, para que se encuentren también en el teléfono.
+ */
+.hunt {
+  --hunt-good: #3ecf8e;
+}
+:root[data-theme="light"] .hunt {
+  --hunt-good: #17784f;
+}
+.hunt-ping {
+  animation: hunt-ping 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes hunt-ping {
+  75%,
+  100% {
+    transform: scale(2.1);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hunt-ping {
+    animation: none;
+    opacity: 0;
   }
 }
 

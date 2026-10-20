@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
+import { Archivo, IBM_Plex_Mono, IBM_Plex_Sans, Instrument_Serif } from "next/font/google";
 import { LanguageProvider } from "@/lib/i18n";
 import { THEME_SCRIPT } from "@/lib/theme";
 import "./globals.css";
@@ -23,6 +23,18 @@ const plexSans = IBM_Plex_Sans({
   variable: "--font-plex-sans",
   subsets: ["latin"],
   weight: ["400", "500", "600"],
+  display: "swap",
+});
+
+/*
+ * La letra del eslogan (`Slogan`): una serif en cursiva, la única del sitio,
+ * para que la frase se lea como la firma de la empresa.
+ */
+const instrument = Instrument_Serif({
+  variable: "--font-instrument",
+  subsets: ["latin"],
+  weight: "400",
+  style: ["italic"],
   display: "swap",
 });
 
@@ -131,7 +143,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="es"
-      className={`${archivo.variable} ${plexSans.variable} ${plexMono.variable} h-full antialiased`}
+      className={`${archivo.variable} ${plexSans.variable} ${plexMono.variable} ${instrument.variable} h-full antialiased`}
       data-theme="light"
       suppressHydrationWarning
     >

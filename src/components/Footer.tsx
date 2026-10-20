@@ -3,6 +3,7 @@
 import { COMPANY, FOOTER, NAV } from "@/lib/content";
 import { useLang } from "@/lib/i18n";
 import LogoMark from "./LogoMark";
+import Slogan from "./Slogan";
 
 /** `home`: prefijo de los anclas, igual que en `Nav`. */
 export default function Footer({ home = "" }: { home?: string }) {
@@ -13,12 +14,9 @@ export default function Footer({ home = "" }: { home?: string }) {
     <footer className="relative border-t border-white/[0.06] bg-navy-950/95">
       <div className="mx-auto max-w-6xl px-6 py-16 lg:px-10">
         {/* El eslogan cierra la página, en grande: es lo último que se lee */}
-        <p className="mb-14 border-b border-white/[0.06] pb-12 font-display text-[clamp(2.25rem,6vw,4.75rem)] font-bold leading-[0.95] tracking-tight text-ink">
-          <span className="mr-4 align-middle text-[0.6em] text-cyan-light" aria-hidden>
-            ↻
-          </span>
-          {t(COMPANY.slogan)}
-        </p>
+        <div className="mb-14 border-b border-white/[0.06] pb-12">
+          <Slogan className="text-[clamp(3rem,8.5vw,6.75rem)]" />
+        </div>
         <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
           <div className="lg:col-span-2">
             <div className="flex items-center gap-3">

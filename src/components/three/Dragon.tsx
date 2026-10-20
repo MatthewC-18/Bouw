@@ -280,6 +280,11 @@ const smooth = THREE.MathUtils.smoothstep;
 type PerchSpot = {
   id: string;
   el: HTMLElement;
+  /**
+   * El color de la sección o la ficha donde está (`data-tone`, en grados
+   * OKLCH): se le tiñe el borde al posarse ahí. Nulo: cián de la marca.
+   */
+  tone: THREE.Color | null;
   /** Punto de apoyo elegido, en coordenadas de documento. */
   x: number;
   y: number;
@@ -399,6 +404,32 @@ function surfaceAt(s: PerchSpot, x: number, reach: number) {
   }
   // Fuera de la palabra, la altura de la letra más cercana: sin escalón
   return Number.isFinite(top) ? top : nearTop;
+}
+
+/* ------------------------------------------------------------------ */
+/* Tono de la sección                                                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * El borde del dragón toma algo del color de donde se posa (Matthew, 19 oct
+ * 2026: «el dragón igual se ve sobrio, tal vez algún brillo»). Así el color
+ * de los proyectos sigue en las secciones de abajo también en él. Las líneas
+ * del grabado se quedan en el cián de la marca; solo el borde se tiñe, y a
+ * medias (`RIM_TINT`).
+ */
+const RIM_BASE = new THREE.Color(BRAND.cyanLight);
+const RIM_TINT = 0.55;
+const rimScratch = new THREE.Color();
+
+/**
+ * El tono de la sección, en grados OKLCH, pasado a color. El tono HSL de un
+ * mismo color queda unos 20° por debajo del OKLCH: basta para un borde.
+ */
+function toneOf(el: HTMLElement): THREE.Color | null {
+  const host = el.closest<HTMLElement>("[data-tone]");
+  const h = host ? Number.parseFloat(host.dataset.tone ?? "") : Number.NaN;
+  if (!Number.isFinite(h)) return null;
+  return new THREE.Color().setHSL((((h - 20) % 360) + 360) % 360 / 360, 0.8, 0.62);
 }
 
 /* ------------------------------------------------------------------ */
@@ -977,6 +1008,7 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
         list.push({
           id,
           el,
+          tone: toneOf(el),
           x,
           y: top,
           cur: keep ? old.cur : x,
@@ -1909,12 +1941,19 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
 
     /* ---- Piel ---- */
     // El grabado respira posado, sube con el ratón cerca y arde con el fuego
+    // Algo más encendido que antes: «el dragón igual se ve sobrio» (19 oct)
     uniforms.uLineGlow.value = reducedMotion
-      ? 0.6
-      : 0.45 + Math.sin(t * 1.3) * 0.12 + alert.current * 0.55 + blaze * 1.3 + roar * 1.6 + air * 0.2;
+      ? 0.75
+      : 0.62 + Math.sin(t * 1.3) * 0.14 + alert.current * 0.55 + blaze * 1.3 + roar * 1.6 + air * 0.2;
     uniforms.uMouth.value = blaze * flicker + roar * 0.35;
     // Sobre el navy, las alas oscuras se perdían en el fondo: más borde cian
-    uniforms.uRimStrength.value = lightMode ? 0.32 : 0.58;
+    uniforms.uRimStrength.value = lightMode ? 0.42 : 0.74;
+    // El borde se tiñe, despacio, del tono de donde está posado
+    {
+      const here = spots.current.find((p) => p.id === target.current);
+      const want = here?.tone ? rimScratch.copy(RIM_BASE).lerp(here.tone, RIM_TINT) : RIM_BASE;
+      (uniforms.uRimColor.value as THREE.Color).lerp(want, 1 - Math.pow(0.08, d));
+    }
 
     // En el aire el cuerpo acusa la batida: sube con cada golpe de ala
     if (!reducedMotion) {

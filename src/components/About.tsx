@@ -2,6 +2,7 @@
 
 import { ABOUT, COMMITMENTS, COMPANY, OFFICES } from "@/lib/content";
 import { useLang } from "@/lib/i18n";
+import Tone from "./Tone";
 
 /**
  * Nosotros — segundo pliego del dossier.
@@ -14,7 +15,8 @@ export default function About() {
   const { t, lang } = useLang();
 
   return (
-    <section id="nosotros" className="sheet relative">
+    <section id="nosotros" data-tone={265} className="sheet relative">
+      <Tone hue={265} />
       <div className="sheet-rule h-px w-full" />
       <div className="relative z-10 mx-auto flex max-w-[1560px] items-center justify-between px-6 py-4 font-mono text-[10px] uppercase tracking-[0.3em] text-plan-ink/50 lg:px-16">
         <span className="ink-chip px-2.5 py-1">BOUW</span>

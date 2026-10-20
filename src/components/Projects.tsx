@@ -293,6 +293,7 @@ function ProjectRow({ project, i }: { project: Project; i: number }) {
 
   return (
     <article
+      data-tone={project.hue}
       className="project group relative isolate"
       style={
         {

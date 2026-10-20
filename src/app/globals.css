@@ -50,6 +50,7 @@
   --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --font-serif: var(--font-instrument), ui-serif, Georgia, serif;
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -1464,6 +1465,66 @@ html[data-scrolling] body {
     animation: none;
     opacity: 0;
   }
+}
+
+/*
+ * La luz de color de las secciones de abajo (`Tone`). Misma luz e intensidad
+ * que las fichas de proyecto, solo cambia el tono (`--t-h`). Dos manchas en
+ * esquinas opuestas y una raya fina que brilla arriba. Degradados quietos:
+ * se pintan una vez.
+ */
+.tone-glow {
+  --t-light: oklch(0.58 0.14 var(--t-h) / 0.3);
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(40% 46% at 8% 14%, var(--t-light), transparent 72%),
+    radial-gradient(36% 42% at 94% 86%, var(--t-light), transparent 72%);
+}
+:root[data-theme="light"] .tone-glow {
+  --t-light: oklch(0.86 0.09 var(--t-h) / 0.6);
+}
+.tone-line {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 0;
+  width: min(66%, 900px);
+  height: 1px;
+  translate: -50% 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    oklch(0.82 0.13 var(--t-h) / 0.85),
+    transparent
+  );
+  box-shadow: 0 0 18px 1px oklch(0.75 0.14 var(--t-h) / 0.45);
+}
+:root[data-theme="light"] .tone-line {
+  background: linear-gradient(90deg, transparent, oklch(0.6 0.14 var(--t-h) / 0.7), transparent);
+  box-shadow: 0 0 16px 1px oklch(0.7 0.12 var(--t-h) / 0.35);
+}
+
+/*
+ * La promesa del eslogan (`Slogan`): degradado de marca, del cián al
+ * naranja del fuego, con un brillo suave detrás de las letras.
+ */
+.slogan-glow {
+  background: linear-gradient(100deg, #7fe6f2 0%, #4fd6e8 30%, #f2a35e 72%, #e87722 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 22px rgba(79, 214, 232, 0.28));
+  padding-right: 0.08em;
+}
+:root[data-theme="light"] .slogan-glow {
+  background: linear-gradient(100deg, #0e8fa3 0%, #1aa7b8 30%, #d9661a 78%, #c4520c 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: none;
 }
 
 /* La planta del tablero de Lean (`LeanBoard`): un acercamiento lento, de ida y vuelta */

@@ -105,6 +105,7 @@ export default function ServiceRow({ service, i }: { service: Service; i: number
 
   return (
     <article
+      data-tone={service.hue}
       className="project relative isolate"
       style={
         {

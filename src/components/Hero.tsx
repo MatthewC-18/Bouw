@@ -5,6 +5,7 @@ import { COMPANY, HERO } from "@/lib/content";
 import { useLang } from "@/lib/i18n";
 import { onLayoutChange, onScrollFrame, tickNow } from "@/lib/scrollTicker";
 import OfficeStatus from "./OfficeStatus";
+import Slogan from "./Slogan";
 import PlanSplit from "./PlanSplit";
 
 export default function Hero() {
@@ -109,16 +110,8 @@ export default function Hero() {
             </span>
           </h1>
 
-          {/* El eslogan: la regla para acordarse de la empresa */}
-          <p className="mt-7 inline-flex items-center gap-3 font-display text-[clamp(1.2rem,2.2vw,1.6rem)] font-bold leading-tight text-ink">
-            <span
-              aria-hidden
-              className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-cyan-brand/50 text-[15px] text-cyan-light"
-            >
-              ↻
-            </span>
-            {t(COMPANY.slogan)}
-          </p>
+          {/* El eslogan: la regla para acordarse de la empresa (ver `Slogan`) */}
+          <Slogan className="mt-6 text-[clamp(1.9rem,3.6vw,2.9rem)]" />
 
           <p className="mt-6 max-w-xl text-xl leading-relaxed text-ink-soft">
             {t(HERO.subtitle)}

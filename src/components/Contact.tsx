@@ -13,6 +13,7 @@ import { getBrief, getBriefServer, subscribeBrief, setBrief, type Brief } from "
 import { useLang } from "@/lib/i18n";
 import FireCta from "./FireCta";
 import Reveal from "./Reveal";
+import Tone from "./Tone";
 
 const FIELD =
   "w-full border border-white/10 bg-navy-950/70 px-4 py-3.5 text-sm text-ink placeholder:text-ink-dim/60 outline-none transition-colors focus:border-cyan-brand focus:bg-navy-950";
@@ -187,8 +188,10 @@ export default function Contact() {
         naranja y cián a plena luz. Es la sección que decide si alguien
         escribe, y era la menos legible de la página.
       */
+      data-tone={35}
       className="veil relative border-t border-white/[0.06] py-20 lg:py-28"
     >
+      <Tone hue={35} line={false} />
       <div className="pointer-events-none absolute left-1/2 top-0 h-px w-2/3 -translate-x-1/2 bg-gradient-to-r from-transparent via-cyan-brand/60 to-transparent" />
 
       {/*

@@ -6,6 +6,7 @@ import { DIAGNOSIS, FIELDS, SYMPTOMS, type FieldId } from "@/lib/content";
 import { setBrief } from "@/lib/brief";
 import { useLang } from "@/lib/i18n";
 import Reveal from "./Reveal";
+import Tone from "./Tone";
 
 /**
  * Diagnóstico — sustituye a la rejilla de servicios.
@@ -99,8 +100,10 @@ export default function Diagnosis() {
   return (
     <section
       id="servicios"
+      data-tone={195}
       className="veil relative border-y border-white/[0.06] py-20 lg:py-28"
     >
+      <Tone hue={195} />
       <div className="relative mx-auto max-w-6xl px-6 lg:px-10">
         <Reveal className="max-w-2xl">
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-orange-light">

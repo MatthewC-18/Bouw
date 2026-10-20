@@ -6,6 +6,7 @@ import { useState, type CSSProperties } from "react";
 import { setBrief } from "@/lib/brief";
 import { HUNT } from "@/lib/content";
 import { useLang } from "@/lib/i18n";
+import Tone from "./Tone";
 
 type Spot = (typeof HUNT.spots)[number];
 
@@ -76,7 +77,8 @@ export default function PlantHunt() {
   };
 
   return (
-    <section className="hunt relative py-20 lg:py-28">
+    <section data-tone={45} className="hunt relative py-20 lg:py-28">
+      <Tone hue={45} />
       <div className="mx-auto max-w-[1560px] px-6 lg:px-16">
         {/* Cabecera, con el contador */}
         <div className="flex flex-wrap items-end justify-between gap-6">

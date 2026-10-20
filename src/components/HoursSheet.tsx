@@ -9,6 +9,7 @@ import {
 } from "@/lib/content";
 import { setBrief } from "@/lib/brief";
 import { useLang } from "@/lib/i18n";
+import Tone from "./Tone";
 
 /**
  * La cuenta de horas — cuarto pliego del dossier.
@@ -150,7 +151,8 @@ export default function HoursSheet() {
   const unitWeeks = lang === "es" ? "semanas" : "weeks";
 
   return (
-    <section id="proceso" className="sheet relative">
+    <section id="proceso" data-tone={75} className="sheet relative">
+      <Tone hue={75} />
       <span className="crop-mark left-5 top-5 border-l border-t" aria-hidden />
       <span className="crop-mark right-5 top-5 border-r border-t" aria-hidden />
 

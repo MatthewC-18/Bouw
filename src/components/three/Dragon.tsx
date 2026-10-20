@@ -52,6 +52,11 @@ type Props = {
 /* Pre-carga                                                           */
 /* ------------------------------------------------------------------ */
 
+/*
+ * Comprimido con meshopt (`scripts/comprimir-dragon.mjs`): normales, UV y
+ * pesos cuantizados; las posiciones van tal cual, en float, porque el
+ * divisor de la portada y la caja del bicho las leen en espacio local.
+ */
 const MODEL_PATH = "/dragon.glb";
 useGLTF.preload(MODEL_PATH);
 

@@ -15,9 +15,9 @@ import type { CSSProperties, KeyboardEvent, ReactNode, Ref } from "react";
  *
  * 1. El trabajo (el portátil, el teléfono, el tablero) flota sobre una luz
  *    del color de la ficha, sin borde ni fondo de caja.
- * 2. Detrás, el número de la ficha en grande y a línea, como en una revista.
- * 3. Arriba a la derecha, el estado en una pastilla (en vivo, simulador…).
- * 4. Abajo, la cifra que lo resume (o la frase, en los servicios) y lo que
+ * 2. Arriba, el número de la ficha en grande y a línea, como en una
+ *    revista, y a la derecha el estado en una pastilla (en vivo…).
+ * 3. Abajo, la cifra que lo resume (o la frase, en los servicios) y lo que
  *    pasa al tocarlo.
  *
  * El color sale de `.project` en `globals.css`: misma luz e intensidad para
@@ -126,17 +126,22 @@ export default function Stage({
           }
         : {})}
     >
-      {/* La luz del color de la ficha y el número detrás */}
+      {/* La luz del color de la ficha */}
       <span aria-hidden className="p-show-glow" />
-      <span aria-hidden className={`p-show-index font-display font-bold ${perchCorner === "left" ? "right-0" : "left-0"}`}>
-        {index}
-      </span>
 
       {/*
         Arriba, el estado en su pastilla. El tipo (`category`) ya no se
         escribe aquí: lo dice el texto de al lado, con el mismo rótulo.
       */}
-      <div className="relative z-10 flex items-center gap-3 pb-3" title={category}>
+      <div className="relative z-10 flex items-end gap-3 pb-3" title={category}>
+        {/*
+          El número de la ficha, grande y a línea. Iba detrás del portátil y
+          no se leía («los números quedan por detrás de la compu», Matthew,
+          19 oct 2026): ahora va en su fila, encima del trabajo.
+        */}
+        <span aria-hidden className="p-show-index font-display font-bold">
+          {index}
+        </span>
         <span className="ml-auto inline-flex shrink-0 items-center gap-2 rounded-full border border-(--p-line) bg-(--p-chip) px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-(--p-accent)">
           <span className={`h-1.5 w-1.5 rounded-full bg-(--p-accent) ${pulse ? "live-dot" : ""}`} aria-hidden />
           {status}

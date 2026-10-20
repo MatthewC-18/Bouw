@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, IBM_Plex_Mono, IBM_Plex_Sans, Instrument_Serif } from "next/font/google";
 import { LanguageProvider } from "@/lib/i18n";
+import { SITE_URL } from "@/lib/site";
 import { THEME_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
@@ -45,18 +46,6 @@ const plexMono = IBM_Plex_Mono({
   display: "swap",
 });
 
-/*
- * Dominio real del despliegue.
- *
- * Estaba en `bouw.vercel.app`, que resultó estar ocupado por otra cuenta: al
- * crear el proyecto Vercel asignó `bouw-eight`. Con la URL equivocada, el
- * `metadataBase` construía las canónicas y las tarjetas de Open Graph
- * apuntando al sitio de un desconocido — o sea que compartir un enlace de
- * BOUW llevaba a otra parte.
- *
- * Cuando haya dominio propio (bouw.ec o similar), se cambia solo aquí.
- */
-const SITE_URL = "https://bouw-eight.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

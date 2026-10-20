@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import About from "@/components/About";
 import DebugPanel from "@/components/DebugPanel";
 import Background from "@/components/Background";
@@ -9,6 +10,15 @@ import HoursSheet from "@/components/HoursSheet";
 import Nav from "@/components/Nav";
 import PlantHunt from "@/components/PlantHunt";
 import Projects from "@/components/Projects";
+
+/*
+ * La dirección buena de la portada, para que Google no cuente como páginas
+ * repetidas las visitas que llegan con parámetros de anuncios (`?utm_…`).
+ * Va aquí y no en el `layout`: ahí la heredarían los casos.
+ */
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 export default function Home() {
   return (

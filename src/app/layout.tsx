@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, IBM_Plex_Mono, IBM_Plex_Sans, Instrument_Serif } from "next/font/google";
 import { LanguageProvider } from "@/lib/i18n";
+import { COMPANY } from "@/lib/content";
 import { SITE_URL } from "@/lib/site";
 import { THEME_SCRIPT } from "@/lib/theme";
 import "./globals.css";
@@ -60,8 +61,13 @@ const plexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  /*
+   * En español y con lo que se busca: iba «Automation & Digital Solutions»,
+   * en inglés, y es lo que sale en Google y en la pestaña para un público
+   * que busca en español (3 nov 2026, revisión antes de mostrarla).
+   */
   title: {
-    default: "BOUW | Automation & Digital Solutions",
+    default: "BOUW | Automatización, Lean y calidad · Quito y Monterrey",
     template: "%s | BOUW",
   },
   description:
@@ -115,7 +121,7 @@ export const metadata: Metadata = {
     type: "website",
     url: SITE_URL,
     siteName: "BOUW",
-    title: "BOUW | Automation & Digital Solutions",
+    title: "BOUW · Si se repite, se automatiza",
     description:
       "Del diseño a la realidad: automatización, calidad y consultoría de procesos. Quito · Monterrey.",
     locale: "es_EC",
@@ -123,7 +129,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "BOUW | Automation & Digital Solutions",
+    title: "BOUW · Si se repite, se automatiza",
     description:
       "Del diseño a la realidad: automatización, calidad y consultoría de procesos.",
   },
@@ -132,6 +138,25 @@ export const metadata: Metadata = {
    * viven en src/app/ y Next.js arma las etiquetas solo. Los genera
    * Bouw/logo/web.py desde el vector del logo.
    */
+};
+
+const ORGANIZATION = {
+  "@context": "https://schema.org",
+  "@type": "ProfessionalService",
+  name: COMPANY.name,
+  slogan: COMPANY.slogan.es,
+  description:
+    "Ingeniería de procesos, calidad y automatización para empresas que fabrican: Lean, BPM, ISO, CAPA y automatización de procesos.",
+  url: SITE_URL,
+  logo: `${SITE_URL}/icon.png`,
+  image: `${SITE_URL}/opengraph-image.png`,
+  email: COMPANY.email,
+  telephone: `+${COMPANY.phoneRaw}`,
+  areaServed: ["EC", "MX"],
+  address: [
+    { "@type": "PostalAddress", addressLocality: "Quito", addressCountry: "EC" },
+    { "@type": "PostalAddress", addressLocality: "Monterrey", addressCountry: "MX" },
+  ],
 };
 
 export const viewport: Viewport = {
@@ -158,6 +183,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           plantilla, y a quien viene a contratar le quita lo único que espera
           encontrar donde siempre.
         */}
+        {/*
+          Ficha de empresa para los buscadores (schema.org): nombre, web,
+          contacto y las dos sedes, solo con los datos que ya están en la
+          página. Google la usa para mostrar la empresa con su contacto.
+        */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(ORGANIZATION) }}
+        />
         <LanguageProvider>
           {children}
         </LanguageProvider>

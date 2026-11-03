@@ -2005,27 +2005,29 @@ export const SYMPTOMS: Symptom[] = [
 
 export const DIAGNOSIS = {
   eyebrow: { es: "Qué te pasa", en: "What's going on" } satisfies Localized,
+  /*
+   * Ya no se «marca»: se toca la frase y la respuesta sale debajo, en la
+   * misma tarjeta (Matthew, 18 y 19 oct 2026: nada de marcar casillas;
+   * «que toquen algo y obtengan info»).
+   */
   title: {
-    es: "Marca lo que reconozcas",
-    en: "Tick whatever sounds familiar",
+    es: "¿Cuál te suena?",
+    en: "Which one sounds familiar?",
   } satisfies Localized,
   subtitle: {
-    es: "Son frases que nos dicen los clientes cuando nos llaman. Marca las que se parezcan a tu semana y abajo verás qué haríamos primero.",
-    en: "These are things clients tell us when they call. Tick the ones that sound like your week and you'll see what we'd do first.",
+    es: "Son frases que nos dicen los clientes cuando nos llaman. Toca las que se parezcan a tu semana y te decimos qué haríamos primero.",
+    en: "These are things clients tell us when they call. Tap the ones that sound like your week and we'll tell you what we'd do first.",
   } satisfies Localized,
   empty: {
-    es: "Marca al menos una frase para ver qué haríamos. Si ninguna se parece a tu semana, puede que todavía no nos necesites, y preferimos decírtelo aquí.",
-    en: "Tick at least one to see what we'd do. If none of them sound like your week, you may not need us yet, and we'd rather tell you here.",
+    es: "Toca al menos una frase para ver qué haríamos. Si ninguna se parece a tu semana, puede que todavía no nos necesites, y preferimos decírtelo aquí.",
+    en: "Tap at least one to see what we'd do. If none of them sound like your week, you may not need us yet, and we'd rather tell you here.",
   } satisfies Localized,
+  firstMove: { es: "Lo primero que haríamos", en: "What we'd do first" } satisfies Localized,
   movesTitle: { es: "Lo que haríamos primero", en: "What we'd do first" } satisfies Localized,
   needsTitle: { es: "Lo que hace falta de tu lado", en: "What we'd need from you" } satisfies Localized,
   fieldsTitle: { es: "Dónde cae el trabajo", en: "Where the work lands" } satisfies Localized,
   cta: { es: "Llevar esto al formulario", en: "Take this to the form" } satisfies Localized,
   taken: { es: "Copiado abajo", en: "Copied below" } satisfies Localized,
-  count: {
-    es: "marcado · marcados",
-    en: "ticked · ticked",
-  } satisfies Localized,
 };
 
 /* ------------------------------------------------------------------ */

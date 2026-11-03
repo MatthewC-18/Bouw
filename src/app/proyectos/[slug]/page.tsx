@@ -42,7 +42,7 @@ export async function generateMetadata({
           url: "/opengraph-image.png",
           width: 1200,
           height: 630,
-          alt: "BOUW | Automation & Digital Solutions",
+          alt: "BOUW: el logotipo con el dragón sobre fondo azul noche",
         },
       ],
     },

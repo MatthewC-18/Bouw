@@ -42,7 +42,7 @@ export default function Footer({ home = "" }: { home?: string }) {
                 key={n.id}
                 href={`${home}#${n.id}`}
                 data-cursor="link"
-                className="text-sm text-ink-dim transition-colors hover:text-cyan-light"
+                className="-my-1 py-1 text-sm text-ink-dim transition-colors hover:text-cyan-light"
               >
                 {t(n.label)}
               </a>
@@ -56,7 +56,7 @@ export default function Footer({ home = "" }: { home?: string }) {
             <a
               href={`mailto:${COMPANY.email}`}
               data-cursor="link"
-              className="text-ink-dim transition-colors hover:text-cyan-light"
+              className="-my-1 py-1 text-ink-dim transition-colors hover:text-cyan-light"
             >
               {COMPANY.email}
             </a>
@@ -65,7 +65,7 @@ export default function Footer({ home = "" }: { home?: string }) {
               target="_blank"
               rel="noreferrer noopener"
               data-cursor="link"
-              className="text-ink-dim transition-colors hover:text-cyan-light"
+              className="-my-1 py-1 text-ink-dim transition-colors hover:text-cyan-light"
             >
               {COMPANY.phoneDisplay}
             </a>

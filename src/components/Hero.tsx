@@ -72,12 +72,13 @@ export default function Hero() {
       */}
       <div className="relative z-10 mx-auto w-full max-w-6xl px-6 pt-[17rem] pb-24 md:pt-32 lg:px-10">
         <div className="max-w-3xl">
-          <div className="mb-8 flex items-center gap-4">
-            <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-cyan-light">
+          {/* En una línea también en el teléfono: se partía en dos y en dos */}
+          <div className="mb-8 flex items-center gap-3 whitespace-nowrap sm:gap-4">
+            <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-cyan-light sm:tracking-[0.3em]">
               {t(HERO.eyebrow)}
             </span>
-            <span className="h-px w-16 bg-gradient-to-r from-cyan-brand to-transparent" />
-            <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-ink-dim">
+            <span className="h-px w-8 shrink-0 bg-gradient-to-r from-cyan-brand to-transparent sm:w-16" />
+            <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink-dim sm:tracking-[0.3em]">
               EST. {COMPANY.yearsExperience}+
             </span>
           </div>
@@ -139,7 +140,9 @@ export default function Hero() {
             <a
               href="#proceso"
               data-cursor="link"
-              className="border-b border-white/25 pb-0.5 text-sm text-ink-soft transition-colors duration-300 hover:border-cyan-light hover:text-cyan-light"
+              // Más alto para el dedo (una capa invisible alrededor), con el
+              // subrayado igual de pegado al texto
+              className="relative border-b border-white/25 pb-0.5 text-sm text-ink-soft transition-colors duration-300 after:absolute after:-inset-x-2 after:-inset-y-3 after:content-[''] hover:border-cyan-light hover:text-cyan-light"
             >
               {t(HERO.ctaSecondary)}
             </a>

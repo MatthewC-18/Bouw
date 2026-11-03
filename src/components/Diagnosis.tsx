@@ -16,13 +16,19 @@ import Tone from "./Tone";
  * Y sobre todo, el orden equivocado: obligaba al visitante a traducir su
  * problema al vocabulario de la consultora antes de poder leer nada.
  *
- * Aquí marca frases que reconoce y la disciplina sale como resultado. La
+ * Aquí toca frases que reconoce y la disciplina sale como resultado. La
  * información técnica de los servicios —qué se entrega, cuánto dura— no se
  * ha perdido: aparece en el panel de la derecha, pero después de que él haya
  * dicho lo que le pasa.
  *
- * Y lo que marque se lo lleva al formulario, para que no tenga que volver a
- * escribirlo con sus palabras diez segundos después de haberlo marcado.
+ * Y lo que toque se lo lleva al formulario, para que no tenga que volver a
+ * escribirlo con sus palabras diez segundos después.
+ *
+ * 19 oct 2026: eran casillas de una lista, y «lo de marcar» no le gusta a
+ * Matthew; quería algo que se toque y dé información al momento. Ahora cada
+ * frase es una tarjeta: al tocarla se enciende y debajo sale lo primero que
+ * haríamos, ahí mismo. En el teléfono el resumen queda muy abajo, y así la
+ * respuesta aparece donde se tocó.
  */
 export default function Diagnosis() {
   const { t, lang } = useLang();
@@ -120,47 +126,64 @@ export default function Diagnosis() {
         </Reveal>
 
         <div className="mt-10 grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
-          {/* Los síntomas: filas con filete, no tarjetas */}
-          <ul className="border-t border-white/10">
-            {SYMPTOMS.map((s) => {
+          {/*
+            Las frases, como tarjetas que se tocan. Botones con
+            `aria-pressed`: se leen como lo que son, interruptores, pero no
+            parecen una lista de casillas.
+          */}
+          <ul className="grid content-start gap-2.5 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+            {SYMPTOMS.map((s, i) => {
               const on = picked.includes(s.id);
               return (
-                <li key={s.id} className="border-b border-white/10">
-                  <label
+                <li key={s.id} className="min-w-0">
+                  <button
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => toggle(s.id)}
                     data-cursor="link"
-                    className="flex cursor-pointer items-start gap-4 py-3.5 transition-colors duration-200 hover:bg-white/[0.02]"
+                    className={`group/sym relative flex h-full w-full flex-col overflow-hidden rounded-2xl border p-4 text-left transition-[border-color,background-color,translate] duration-300 hover:-translate-y-0.5 sm:p-5 ${
+                      on
+                        ? "border-cyan-brand/70 bg-cyan-brand/[0.09]"
+                        : "border-ink-dim/25 bg-ink/[0.025] hover:border-cyan-brand/45"
+                    }`}
                   >
-                    <input
-                      type="checkbox"
-                      checked={on}
-                      onChange={() => toggle(s.id)}
-                      className="peer sr-only"
-                    />
-                    {/*
-                      Un cuadrado, no un círculo ni un interruptor: esto es
-                      una casilla de una hoja de inspección, y el resto de la
-                      página está dibujada con esa misma regla.
-                    */}
-                    <span
-                      aria-hidden
-                      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center border transition-colors duration-200 ${
-                        on
-                          ? "border-cyan-brand bg-cyan-brand text-navy-950"
-                          : "border-white/25 text-transparent"
-                      }`}
-                    >
-                      <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 8.5l3.2 3.2L13 4.8" />
-                      </svg>
+                    <span className="flex items-start gap-3">
+                      <span
+                        aria-hidden
+                        className={`mt-0.5 font-mono text-[11px] tabular-nums transition-colors duration-300 ${
+                          on ? "text-cyan-light" : "text-ink-dim"
+                        }`}
+                      >
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <span
+                        className={`min-w-0 flex-1 text-[15.5px] font-medium leading-snug transition-colors duration-300 ${
+                          on ? "text-ink" : "text-ink-soft"
+                        }`}
+                      >
+                        {t(s.label)}
+                      </span>
+                      <span
+                        aria-hidden
+                        className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[15px] leading-none transition-[background-color,color,rotate] duration-300 ${
+                          on
+                            ? "rotate-45 bg-cyan-brand text-navy-950"
+                            : "border border-ink-dim/35 text-ink-dim group-hover/sym:border-cyan-brand/60 group-hover/sym:text-cyan-light"
+                        }`}
+                      >
+                        +
+                      </span>
                     </span>
-                    <span
-                      className={`text-[16px] leading-snug transition-colors duration-200 ${
-                        on ? "text-ink" : "text-ink-soft"
-                      }`}
-                    >
-                      {t(s.label)}
-                    </span>
-                  </label>
+                    {/* La respuesta, en la misma tarjeta, en cuanto se toca */}
+                    {on && (
+                      <span className="pain-in mt-3.5 block border-t border-cyan-brand/25 pt-3.5">
+                        <span className="block font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-light">
+                          {t(DIAGNOSIS.firstMove)}
+                        </span>
+                        <span className="mt-1.5 block text-[14px] leading-relaxed text-ink-soft">{t(s.firstMove)}</span>
+                      </span>
+                    )}
+                  </button>
                 </li>
               );
             })}
@@ -173,7 +196,7 @@ export default function Diagnosis() {
               sitio se lee cada fotograma en vez de medirse una vez.
             */}
             <div
-              className="border border-white/10 bg-navy-950/80 p-7 sm:p-9"
+              className="rounded-2xl border border-ink-dim/25 bg-navy-950/80 p-7 sm:p-9"
               data-perch="resultado"
               data-perch-corner="right"
               data-perch-focus
@@ -182,14 +205,16 @@ export default function Diagnosis() {
               <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-ink-dim">
                 {picked.length === 0
                   ? lang === "es"
-                    ? "Sin marcar"
-                    : "Nothing ticked"
+                    ? "Ninguna todavía"
+                    : "None yet"
                   : `${picked.length} ${
                       lang === "es"
                         ? picked.length === 1
-                          ? "marcado"
-                          : "marcados"
-                        : "ticked"
+                          ? "te suena"
+                          : "te suenan"
+                        : picked.length === 1
+                          ? "sounds familiar"
+                          : "sound familiar"
                     }`}
               </p>
 
@@ -265,7 +290,7 @@ export default function Diagnosis() {
                     type="button"
                     onClick={carry}
                     data-cursor="link"
-                    className="w-full bg-cyan-brand px-6 py-3.5 text-sm font-semibold text-navy-950 transition-colors duration-300 hover:bg-cyan-light"
+                    className="w-full rounded-full bg-cyan-brand px-6 py-3.5 text-sm font-semibold text-navy-950 transition-colors duration-300 hover:bg-cyan-light"
                   >
                     {taken ? t(DIAGNOSIS.taken) : t(DIAGNOSIS.cta)}
                   </button>

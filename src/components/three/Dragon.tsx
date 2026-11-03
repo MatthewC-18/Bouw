@@ -1225,8 +1225,9 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
       H / (2 * Math.tan(THREE.MathUtils.degToRad((cam.fov ?? 40) / 2)) * Math.max(cam.position.z, 1));
     // En el teléfono, algo más chico: ahí el texto ocupa el ancho entero y no
     // hay margen donde quepa sin tapar una línea (Matthew, 19 oct 2026: «el
-    // celular no se ve bien todavía»)
-    const domScale = DOM_SCALE * THREE.MathUtils.clamp(W / 1200, 0.42, 1);
+    // celular no se ve bien todavía»). 3 nov: de 0.42 a 0.36, posado sobre
+    // los titulares a lo ancho todavía tapaba el final de la línea de arriba
+    const domScale = DOM_SCALE * THREE.MathUtils.clamp(W / 1200, 0.36, 1);
     const pxNow = `${ppu.toFixed(1)}|${domScale.toFixed(3)}`;
     if (pxNow !== pxKey.current) {
       pxKey.current = pxNow;

@@ -37,16 +37,47 @@ function flush() {
  * `width` y `height`— y se lo quitaba medio segundo después. Medido sin la
  * escena 3D, eso solo tiraba la sección de Proyectos de 80 a 15 fps.
  *
- * Mientras dura el gesto, `<html data-scrolling>` y el CSS deja el cuerpo sin
- * eventos de puntero: no hay hover que arrancar. Son dos escrituras por gesto
- * —al empezar y al parar—, no una por fotograma.
+ * Mientras dura el gesto, una capa fija y transparente por encima de todo
+ * recibe el puntero: lo de debajo no tiene hover que arrancar. Son dos
+ * escrituras por gesto —al empezar y al parar—, no una por fotograma.
+ *
+ * 25 nov 2026: antes era `<html data-scrolling>` con
+ * `html[data-scrolling] body { pointer-events: none }` en el CSS. Medido en
+ * la portada (Intel UHD): cada cambio del atributo recalculaba el estilo de
+ * todo el documento, de 90 a 240 ms, dos veces por gesto, justo al empezar a
+ * bajar y al parar. La capa cuesta 0,4 ms: cambia un solo elemento.
  */
 let scrollIdle = 0;
+let scrolling = false;
+let shield: HTMLDivElement | null = null;
+
+function setShield(on: boolean) {
+  if (!shield) {
+    shield = document.createElement("div");
+    shield.setAttribute("aria-hidden", "true");
+    shield.dataset.scrollShield = "";
+    shield.style.cssText =
+      "position:fixed;inset:0;z-index:2147483647;pointer-events:none;contain:strict";
+    document.body.appendChild(shield);
+  }
+  shield.style.pointerEvents = on ? "auto" : "none";
+}
+
 function markScrolling() {
-  const root = document.documentElement;
-  if (!root.hasAttribute("data-scrolling")) root.setAttribute("data-scrolling", "");
+  if (!scrolling) {
+    scrolling = true;
+    setShield(true);
+  }
   window.clearTimeout(scrollIdle);
-  scrollIdle = window.setTimeout(() => root.removeAttribute("data-scrolling"), 160);
+  scrollIdle = window.setTimeout(() => {
+    scrolling = false;
+    setShield(false);
+  }, 160);
+}
+
+/** Si la página se está moviendo ahora mismo (rueda, dedo o teclado). */
+export function isScrolling() {
+  return scrolling;
 }
 
 function onScroll() {

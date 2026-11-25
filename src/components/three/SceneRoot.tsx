@@ -18,7 +18,7 @@ import WordMark from "./WordMark";
 import { LAST_STAGE } from "./layouts";
 import { spreadFor } from "./scenes";
 import { BRAND } from "./logoShapes";
-import { onLayoutChange, onScrollFrame, tickNow } from "@/lib/scrollTicker";
+import { isScrolling, onLayoutChange, onScrollFrame, tickNow } from "@/lib/scrollTicker";
 import { dragonScreen } from "@/lib/dragonScreen";
 import { debug } from "@/lib/debug";
 import { perf } from "@/lib/perfFlags";
@@ -366,7 +366,6 @@ function FrameCap({ fps }: { fps: number }) {
     let raf = 0;
     let last = 0;
     const step = fps > 0 ? 1000 / fps : 0;
-    const root = document.documentElement;
 
     /*
      * A ritmo entero mientras la página se mueve o el dragón vuela o anda.
@@ -379,7 +378,7 @@ function FrameCap({ fps }: { fps: number }) {
      * los mismos tirones con dragón que sin él).
      */
     const pinnedToPage = () =>
-      root.hasAttribute("data-scrolling") || dragonScreen.moving;
+      isScrolling() || dragonScreen.moving;
 
     const tick = (t: number) => {
       raf = requestAnimationFrame(tick);

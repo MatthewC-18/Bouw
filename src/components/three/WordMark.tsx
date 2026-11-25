@@ -7,6 +7,7 @@ import { LAST_STAGE, markPresence } from "./layouts";
 import { applyPlanFade, applyPlanSplit } from "./planSplitMaterial";
 import { BRAND } from "./logoShapes";
 import { perch } from "./perch";
+import { newShaderGate, shadersReady } from "./shaderGate";
 import { spreadFor } from "./scenes";
 import {
   PERCH_LOCAL,
@@ -99,6 +100,7 @@ export default function WordMark({ stageRef, pointerRef, reducedMotion }: Props)
   const placement = useMemo(() => ({ position: new THREE.Vector3(), scale: 1 }), []);
   const targetRot = useRef(new THREE.Vector2());
   const intro = useRef(0);
+  const shaders = useRef(newShaderGate());
   const wDip = useRef(0);
   const wVel = useRef(0);
 
@@ -180,6 +182,14 @@ export default function WordMark({ stageRef, pointerRef, reducedMotion }: Props)
 
     const g = group.current;
     if (!g) return;
+
+    // No aparece hasta tener sus shaders compilados (`shaderGate`): su primer
+    // dibujo congelaba la página unos 2 s en gráficas Intel. La entrada letra
+    // a letra empieza cuando ya se puede ver.
+    if (!shadersReady(shaders.current, state.gl, g, state.camera, state.scene, t)) {
+      g.visible = false;
+      return;
+    }
 
     if (presence < 0.002) {
       g.visible = false;
@@ -298,7 +308,7 @@ export default function WordMark({ stageRef, pointerRef, reducedMotion }: Props)
   });
 
   return (
-    <group ref={group} dispose={null}>
+    <group ref={group} visible={false} dispose={null}>
       {geo.map((l, i) => (
         <group
           key={l.char}

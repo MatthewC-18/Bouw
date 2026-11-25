@@ -937,15 +937,6 @@ body {
 }
 
 /* ---- Reveal on scroll ---- */
-/*
- * Mientras se hace scroll, el cuerpo no recibe el puntero: así ningún hover
- * arranca porque el contenido pase por debajo del ratón. Lo pone y lo quita
- * `scrollTicker` al empezar y al parar el gesto.
- */
-html[data-scrolling] body {
-  pointer-events: none;
-}
-
 .reveal {
   opacity: 0;
   transform: translateY(28px);

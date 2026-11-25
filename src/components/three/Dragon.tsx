@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
+import { newShaderGate, shadersReady } from "./shaderGate";
 import * as THREE from "three";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 import FireBreath from "./FireBreath";
@@ -583,6 +584,7 @@ function overlapRatio(
 
 export default function Dragon({ reducedMotion, pointerRef }: Props) {
   const group = useRef<THREE.Group>(null);
+  const shaders = useRef(newShaderGate());
   const sim = useRef(0);
   /** Fase del aleteo, 0 … 1 del clip `vuelo`. */
   const flap = useRef(0);
@@ -1206,6 +1208,12 @@ export default function Dragon({ reducedMotion, pointerRef }: Props) {
   useFrame((state, delta) => {
     const g = group.current;
     if (!g) return;
+    // No sale hasta tener sus shaders compilados (`shaderGate`): su primer
+    // dibujo congelaba la página un segundo en gráficas Intel
+    if (!shadersReady(shaders.current, state.gl, g, state.camera, state.scene, state.clock.elapsedTime)) {
+      g.visible = false;
+      return;
+    }
     const { uniforms, actions, bones } = model;
     if (debug.on && !debug.uniforms) debug.uniforms = uniforms;
 

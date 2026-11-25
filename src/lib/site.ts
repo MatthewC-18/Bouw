@@ -7,7 +7,8 @@
  * apuntando al sitio de un desconocido — o sea que compartir un enlace de
  * BOUW llevaba a otra parte.
  *
- * Cuando haya dominio propio (bouw.ec o similar), se cambia solo aquí: lo
- * leen el `layout`, `robots.txt` y `sitemap.xml`.
+ * 24 nov 2026: ya hay dominio propio, bouwlatam.com. La raíz redirige a
+ * `www` (308), así que la dirección canónica es la de `www`. Se cambia solo
+ * aquí: lo leen el `layout`, `robots.txt` y `sitemap.xml`.
  */
-export const SITE_URL = "https://bouw-eight.vercel.app";
+export const SITE_URL = "https://www.bouwlatam.com";

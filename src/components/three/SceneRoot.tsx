@@ -414,6 +414,17 @@ export default function SceneRoot() {
   const [reducedMotion, setReducedMotion] = useState(false);
   const [small, setSmall] = useState(false);
   const [quality, setQuality] = useState<TierConfig>(() => detectTier());
+  /*
+   * Estudio de luz solo en gráficas potentes, y se decide una vez.
+   *
+   * 25 nov 2026: en gráficas integradas (Intel, móviles) el `Environment`
+   * congelaba la primera visita ~1,7 s: convierte su luz en un mapa de
+   * reflejos (PMREM) con shaders que se compilan y se dibujan en el acto, sin
+   * forma de hacerlo en segundo plano. Comparado en pantalla, con y sin él el
+   * dragón y la palabra se ven igual. Se fija al montar: si cambiara después
+   * (al bajar de nivel por fps), todos los materiales se recompilarían.
+   */
+  const [studioLight] = useState(() => !perf.noenv && detectTier().tier === "high");
   const [dpr, setDpr] = useState(() => maxDpr(quality.pixelBudget));
   const [degraded, setDegraded] = useState(false);
   const [bloomOn, setBloomOn] = useState(true);
@@ -645,7 +656,7 @@ export default function SceneRoot() {
       />}
 
       {/* Estudio de luz propio: sin descargar HDRIs externos */}
-      {!perf.noenv && <Environment resolution={256} frames={1}>
+      {studioLight && <Environment resolution={256} frames={1}>
         {/* Domo superior: blanco de estudio, apenas tibio */}
         <Lightformer
           intensity={2.0}

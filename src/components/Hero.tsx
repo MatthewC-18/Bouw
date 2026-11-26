@@ -114,7 +114,11 @@ export default function Hero() {
           {/* El eslogan: la regla para acordarse de la empresa (ver `Slogan`) */}
           <Slogan className="mt-6 text-[clamp(1.9rem,3.6vw,2.9rem)]" />
 
-          <p className="mt-6 max-w-xl text-xl leading-relaxed text-ink-soft">
+          {/*
+            Más angosto en portátiles: a 1366 px (la pantalla más común) la
+            palabra BOUW en 3D tapaba el final de las líneas.
+          */}
+          <p className="mt-6 max-w-xl text-xl leading-relaxed text-ink-soft lg:max-w-[min(36rem,38vw)]">
             {t(HERO.subtitle)}
           </p>
 

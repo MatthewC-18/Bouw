@@ -45,6 +45,7 @@ export default function Stage({
   ledgeId,
   perchCorner,
   press,
+  fixedAspect,
   children,
 }: {
   index: string;
@@ -90,6 +91,12 @@ export default function Stage({
   perchCorner: "left" | "right";
   /** Si el panel entero es un botón: qué dice y qué hace. */
   press?: { label: string; onPress: () => void };
+  /**
+   * Proporción fija del escaparate, la misma para cualquier contenido. La
+   * vitrina la usa: si el alto cambiara al pasar de proyecto, el dragón
+   * volvería a medir toda la página cada pocos segundos.
+   */
+  fixedAspect?: string;
   children: ReactNode;
 }) {
   /*
@@ -98,9 +105,11 @@ export default function Stage({
    * quedarse chico en medio de un recuadro casi cuadrado. Los tableros de
    * los servicios siguen más altos, que si no no se leen.
    */
-  const aspect = bare
-    ? "aspect-[5/4] sm:aspect-[16/11] lg:aspect-[3/2]"
-    : `aspect-[10/11] sm:aspect-[6/5] ${tall ? "lg:aspect-[4/3]" : "lg:aspect-[3/2]"}`;
+  const aspect =
+    fixedAspect ??
+    (bare
+      ? "aspect-[5/4] sm:aspect-[16/11] lg:aspect-[3/2]"
+      : `aspect-[10/11] sm:aspect-[6/5] ${tall ? "lg:aspect-[4/3]" : "lg:aspect-[3/2]"}`);
 
   const actionClass =
     "group/act ml-auto inline-flex shrink-0 items-center gap-2 rounded-full border border-(--p-line) bg-(--p-chip) px-3.5 py-2 font-mono text-[10px] uppercase tracking-[0.2em] text-ink transition-colors duration-500 hover:border-(--p-accent) hover:text-(--p-accent)";

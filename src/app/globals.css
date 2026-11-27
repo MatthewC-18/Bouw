@@ -1533,3 +1533,21 @@ body {
   }
 }
 
+
+/* ---- Vitrina de proyectos (`ProjectShowcase`) ---- */
+/*
+ * La barra del proyecto elegido se llena en lo que dura su turno; al
+ * terminar, la vitrina pasa al siguiente (`animationend`). Pausada fuera de
+ * la vista o con el ratón encima: `animation-play-state` desde el componente.
+ */
+.vit-bar {
+  transform: scaleX(0);
+  animation-name: vit-bar;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+@keyframes vit-bar {
+  to {
+    transform: scaleX(1);
+  }
+}

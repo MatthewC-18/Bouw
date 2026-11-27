@@ -1,7 +1,7 @@
 # Marca BOUW
 
 **Fecha:** 2026-09-06
-**Prueba:** `guia-ideal-alambrec/sistema/marca/bouw-sello-final.png`
+**Prueba:** `bouw-sello-final.png` (en la carpeta de trabajo de la marca)
 
 ---
 

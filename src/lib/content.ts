@@ -1082,7 +1082,8 @@ export const LEAN: Service & {
 } = {
   id: "lean",
   slug: "lean",
-  index: "02",
+  // Número dentro del selector de servicios (antes, su lugar en la lista común)
+  index: "01",
   hue: 62,
   from: "mejora-continua",
   badge: {
@@ -1251,7 +1252,7 @@ export const COMPLIANCE: Service & {
 } = {
   id: "cumplimiento",
   slug: "cumplimiento",
-  index: "05",
+  index: "02",
   hue: 290,
   badge: { es: "Cumplimiento normativo & BPM", en: "Regulatory compliance & GMP" },
   title: {

@@ -38,7 +38,9 @@ const PROJECT_STAGES = 4;
 function stageAnchors(): HTMLElement[] {
   const byId = (id: string) => document.getElementById(id);
   const rows = Array.from(
-    document.querySelectorAll<HTMLElement>("#proyectos article"),
+    // `data-stage-row`: filas que no son ficha pero cuentan como etapa (el
+    // selector de servicios, desde que se ve un servicio a la vez)
+    document.querySelectorAll<HTMLElement>("#proyectos article, #proyectos [data-stage-row]"),
   );
   /*
    * Con menos fichas que etapas, el encabezado de la sección ocupa la que

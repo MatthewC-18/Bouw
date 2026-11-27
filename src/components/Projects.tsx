@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { COMPLIANCE, LEAN } from "@/lib/content";
 import { useLang } from "@/lib/i18n";
 import ProjectShowcase from "./ProjectShowcase";
@@ -16,13 +17,24 @@ import ServiceRow from "./services/ServiceRow";
  * servicios siguen igual, con su chasis (`Stage`) y sus colores (`.project`
  * en `globals.css`).
  *
+ * Los servicios, uno a la vez (26 nov 2026, Matthew: «pon el selector en
+ * servicios»): Lean y cumplimiento BPM medían 2,7 pantallas uno debajo del
+ * otro. Con el selector se ve uno y el otro está a un toque.
+ *
  * Ojo con el dragón: cada `article` de la sección es una etapa de la escena
- * (`stageAnchors` en `SceneRoot`, cuatro como máximo, y el encabezado ocupa
- * la que falte). Ahora son tres: la vitrina, Lean y cumplimiento.
+ * (`stageAnchors` en `SceneRoot`, cuatro justas, y el encabezado ocupa la que
+ * falte). Con un servicio a la vista solo quedaban tres; el selector cuenta
+ * como fila (`data-stage-row`): encabezado, vitrina, selector y servicio.
+ * Con una menos, la etapa se queda en 0 en toda la página y el dragón no sale
+ * de la portada, sin ningún error.
  */
+
+const SERVICES = [LEAN, COMPLIANCE];
 
 export default function Projects() {
   const { t, lang } = useLang();
+  const [svc, setSvc] = useState(0);
+  const service = SERVICES[svc];
 
   return (
     /*
@@ -70,13 +82,47 @@ export default function Projects() {
           <ProjectShowcase />
         </div>
 
-        {/*
-          Los servicios con su tablero, después de la vitrina. Conservan el
-          lado alterno que tenían (`i` impar: el video a la izquierda).
-        */}
-        <div className="mt-24 space-y-24 lg:mt-32 lg:space-y-32">
-          <ServiceRow service={LEAN} i={1} />
-          <ServiceRow service={COMPLIANCE} i={2} />
+        {/* Los servicios con su tablero, uno a la vez */}
+        <div className="mt-24 lg:mt-32">
+          <div
+            data-stage-row
+            className="flex flex-col gap-4 border-b border-white/[0.08] pb-6 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-cyan-light">
+              {lang === "es" ? "Servicios funcionando" : "Services at work"}
+            </span>
+            <div
+              role="tablist"
+              aria-label={lang === "es" ? "Servicios" : "Services"}
+              className="inline-flex w-full rounded-full border border-ink-dim/25 p-1 sm:w-auto"
+            >
+              {SERVICES.map((s, i) => {
+                const on = i === svc;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    role="tab"
+                    id={`servicio-tab-${s.id}`}
+                    aria-selected={on}
+                    aria-controls="servicio-panel"
+                    onClick={() => setSvc(i)}
+                    data-cursor="link"
+                    className={`flex-1 rounded-full px-4 py-2.5 text-[13px] font-semibold leading-tight transition-colors duration-300 sm:flex-none sm:px-5 ${
+                      on ? "bg-cyan-brand text-navy-950" : "text-ink-soft hover:text-ink"
+                    }`}
+                  >
+                    {t(s.badge)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div id="servicio-panel" role="tabpanel" aria-labelledby={`servicio-tab-${service.id}`} className="mt-12 lg:mt-16">
+            {/* El mismo lado para los dos: cambiar no hace saltar la fila */}
+            <ServiceRow key={service.id} service={service} i={1} />
+          </div>
         </div>
       </div>
     </section>

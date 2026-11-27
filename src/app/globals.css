@@ -1551,3 +1551,51 @@ body {
     transform: scaleX(1);
   }
 }
+
+/*
+ * La invitación de la vitrina (26 nov 2026: «que les indique que le den
+ * clic a cada proyecto»). El punto de cada fila va en el tono de su
+ * proyecto, con la misma luz e intensidad que `.project` en cada modo.
+ */
+.vit-dot {
+  background: oklch(0.8 0.115 var(--dot-h));
+}
+:root[data-theme="light"] .vit-dot {
+  background: oklch(0.55 0.13 var(--dot-h));
+}
+.vit-hand {
+  display: inline-flex;
+}
+.vit-hand.is-on svg {
+  animation: vit-hand 1.6s ease-in-out infinite;
+}
+@keyframes vit-hand {
+  0%,
+  60%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  30% {
+    transform: translate(-2px, 2px) scale(0.88);
+  }
+}
+.vit-swipe.is-on svg {
+  animation: vit-swipe 1.4s ease-in-out infinite;
+}
+@keyframes vit-swipe {
+  0%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateX(5px);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vit-hand.is-on svg,
+  .vit-swipe.is-on svg {
+    animation: none;
+  }
+}

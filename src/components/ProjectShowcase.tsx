@@ -8,6 +8,7 @@ import {
   useState,
   type CSSProperties,
 } from "react";
+import { ChevronsRight, MousePointerClick, Pointer } from "lucide-react";
 import { PROJECTS, VITRINA, type Localized, type Project } from "@/lib/content";
 import { setBrief } from "@/lib/brief";
 import { dragonScreen } from "@/lib/dragonScreen";
@@ -34,6 +35,13 @@ import { Media } from "./ProjectMedia";
  * Pasa sola cada `STEP_MS` mientras está a la vista, para quien solo baja;
  * se detiene con el ratón encima y se queda quieta para siempre en cuanto se
  * toca algo. Con «reducir movimiento», nunca pasa sola.
+ *
+ * 26 nov 2026, Matthew: «debe haber algo que les indique que le den clic a
+ * cada proyecto». Encima de la lista, la invitación con su mano que toca
+ * (`vit-hand`) y el contador «02 / 06»; cada fila con el punto de su color y
+ * una flecha que entra al pasar el ratón; en el teléfono, «Desliza y toca»
+ * y unas flechas al borde de las pastillas. Lo que se mueve solo se mueve
+ * mientras la vitrina pasa sola y está a la vista.
  *
  * Alto fijo: el escaparate tiene proporción fija y los textos de todos los
  * proyectos se apilan en la misma celda (se ve uno). Si el alto cambiara al
@@ -270,12 +278,28 @@ export default function ProjectShowcase() {
       <div className="relative grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-12 lg:gap-12">
         {/* La lista */}
         <div className="min-w-0 lg:col-span-5 xl:col-span-4">
+          {/* La invitación: que se note que cada proyecto se toca */}
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <p className="inline-flex items-center gap-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-(--p-accent)">
+              <span aria-hidden className={`vit-hand ${running ? "is-on" : ""}`}>
+                <MousePointerClick className="hidden lg:block" size={17} strokeWidth={1.8} />
+                <Pointer className="lg:hidden" size={17} strokeWidth={1.8} />
+              </span>
+              <span className="hidden lg:inline">{es ? "Haz clic en un proyecto" : "Click a project"}</span>
+              <span className="lg:hidden">{es ? "Desliza y toca un proyecto" : "Swipe and tap a project"}</span>
+            </p>
+            <span className="font-mono text-[11px] tabular-nums text-ink-dim" aria-live="polite">
+              {num(active)} / {num(LIST.length - 1)}
+            </span>
+          </div>
+
           {/* Teléfono: pastillas que se deslizan de lado */}
+          <div className="relative lg:hidden">
           <div
             ref={chips}
             role="tablist"
             aria-label={es ? "Proyectos" : "Projects"}
-            className="-mx-6 flex snap-x gap-1.5 overflow-x-auto px-6 pb-1 [mask-image:linear-gradient(to_right,black_82%,transparent)] [scrollbar-width:none] lg:hidden"
+            className="-mx-6 flex snap-x gap-1.5 overflow-x-auto px-6 pb-1 pr-12 [mask-image:linear-gradient(to_right,black_78%,transparent)] [scrollbar-width:none]"
           >
             {LIST.map((p, i) => {
               const on = i === active;
@@ -290,12 +314,24 @@ export default function ProjectShowcase() {
                     on ? "border-(--p-accent) bg-(--p-accent-soft) text-ink" : "border-ink-dim/25 text-ink-soft"
                   }`}
                 >
-                  <span className="mr-1.5 font-mono text-[10px] text-ink-dim">{num(i)}</span>
+                  <span
+                    aria-hidden
+                    className="vit-dot mr-2 inline-block h-2 w-2 rounded-full align-middle"
+                    style={{ "--dot-h": p.hue } as CSSProperties}
+                  />
                   {t(p.title)}
                   {on && auto && bar}
                 </button>
               );
             })}
+          </div>
+            {/* Hay más a la derecha */}
+            <span
+              aria-hidden
+              className={`vit-swipe pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-(--p-accent) ${running ? "is-on" : ""}`}
+            >
+              <ChevronsRight size={20} strokeWidth={2} />
+            </span>
           </div>
 
           {/* Escritorio: la lista entera */}
@@ -311,8 +347,15 @@ export default function ProjectShowcase() {
                     aria-selected={on}
                     onClick={() => pick(i)}
                     data-cursor="link"
-                    className="group/row relative flex w-full items-center gap-4 border-t border-ink-dim/15 py-3 text-left"
+                    className={`group/row relative flex w-full items-center gap-3.5 border-t border-ink-dim/15 px-3 py-3 text-left transition-colors duration-300 ${
+                      on ? "bg-(--p-accent-soft)" : "hover:bg-ink/[0.035]"
+                    }`}
                   >
+                    <span
+                      aria-hidden
+                      className={`vit-dot h-2.5 w-2.5 shrink-0 rounded-full transition-transform duration-300 ${on ? "scale-125" : "group-hover/row:scale-125"}`}
+                      style={{ "--dot-h": p.hue } as CSSProperties}
+                    />
                     <span className={`font-mono text-[11px] tabular-nums ${on ? "text-(--p-accent)" : "text-ink-dim"}`}>
                       {num(i)}
                     </span>
@@ -337,6 +380,17 @@ export default function ProjectShowcase() {
                         {t(state)}
                       </span>
                     )}
+                    {/* La flecha: el elegido la lleva fija; los demás, al pasar el ratón */}
+                    <span
+                      aria-hidden
+                      className={`w-4 shrink-0 text-right transition-[opacity,translate] duration-300 ${
+                        on
+                          ? "text-(--p-accent)"
+                          : "-translate-x-1.5 text-ink-dim opacity-0 group-hover/row:translate-x-0 group-hover/row:opacity-100"
+                      }`}
+                    >
+                      →
+                    </span>
                     {on && auto && bar}
                   </button>
                 </li>
